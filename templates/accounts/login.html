@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:440px;margin:60px auto">
+  <div class="card">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Welcome Back</div>
+      <div style="color:var(--muted);font-size:13px">Login to your MatchOracle account</div>
+    </div>
+    <form method="post">{% csrf_token %}
+      <div class="field"><label>Email</label><input type="email" name="email" placeholder="you@email.com" required></div>
+      <div class="field"><label>Password</label><input type="password" name="password" placeholder="Your password" required></div>
+      <button type="submit" class="btn btn-green btn-full" style="margin-top:8px">Login</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">No account? <a href="/accounts/register/" style="color:var(--accent)">Sign up free</a></div>
+  </div>
+</div>
+{% endblock %}

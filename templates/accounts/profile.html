@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Profile - MatchOracle{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:40px;">
+  <h1 style="font-family:'Orbitron',sans-serif;font-size:24px;margin-bottom:28px;">My Account</h1>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div class="card">
+      <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;">Account Info</div>
+      <div style="font-size:18px;font-weight:700;">{{ user.get_full_name|default:user.email }}</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:4px;">{{ user.email }}</div>
+      <div style="margin-top:16px;display:flex;align-items:center;gap:8px;">
+        <span style="background:{% if user.plan == 'pro' %}rgba(245,158,11,.15){% elif user.plan == 'basic' %}rgba(0,212,255,.15){% else %}rgba(100,116,139,.15){% endif %};color:{% if user.plan == 'pro' %}var(--gold){% elif user.plan == 'basic' %}var(--accent){% else %}var(--muted){% endif %};border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;text-transform:uppercase;">{{ user.plan }}</span>
+        {% if user.plan_expires %}<span style="font-size:12px;color:var(--muted);">Expires {{ user.plan_expires|date:"M d, Y" }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;">Usage</div>
+      <div style="font-size:32px;font-weight:900;color:var(--accent);">{{ user.total_predictions }}</div>
+      <div style="color:var(--muted);font-size:13px;">Total Predictions</div>
+      {% if user.plan == 'free' %}<div style="margin-top:12px;font-size:13px;color:var(--gold);">{{ user.trials_remaining }} free trials remaining</div>{% endif %}
+    </div>
+  </div>
+  {% if user.api_key %}
+  <div class="card" style="margin-bottom:24px;">
+    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;">Your API Key</div>
+    <div style="background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:13px;color:var(--accent);word-break:break-all;">{{ user.api_key }}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:8px;">Use as header: <code>X-MatchOracle-Key: your-key</code></div>
+  </div>
+  {% endif %}
+  {% if user.plan == 'free' or user.plan == 'basic' %}
+  <div class="card" style="border-color:var(--gold);">
+    <div style="font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">Upgrade Your Plan</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      {% if user.plan == 'free' %}<a href="/accounts/subscribe/basic/" class="btn btn-primary" style="justify-content:center;">Basic — ₦2,000/month</a>{% endif %}
+      <a href="/accounts/subscribe/pro/" class="btn btn-gold" style="justify-content:center;">Pro — ₦15,000/year</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MatchOracle{% endblock %} — Football Intelligence Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+{% load static %}
+<style>
+:root{--bg:#050810;--surface:#0d1117;--card:#111827;--border:#1f2937;--accent:#00d4ff;--accent2:#7c3aed;--green:#10b981;--red:#ef4444;--gold:#f59e0b;--text:#f1f5f9;--muted:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(0,212,255,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(124,58,237,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 16px;}
+
+/* NAV */
+nav{background:rgba(5,8,16,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:1200px;margin:0 auto;}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;}
+.nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nav-link{padding:8px 14px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:all .2s;}
+.nav-link:hover,.nav-link.active{color:var(--text);background:rgba(255,255,255,.06);}
+.btn-nav{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer;}
+.btn-primary{background:var(--accent);color:#050810;}
+.btn-primary:hover{opacity:.85;}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent);}
+.btn-outline:hover{background:rgba(0,212,255,.1);}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.card-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-weight:600;}
+
+/* FORMS */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+label{font-size:12px;color:var(--muted);font-weight:500;}
+input,select,textarea{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;width:100%;}
+input:focus,select:focus{border-color:var(--accent);}
+input::placeholder{color:var(--muted);}
+select option{background:var(--card);}
+
+.btn{padding:12px 24px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .25s;text-decoration:none;display:inline-block;text-align:center;}
+.btn-green{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#050810;}
+.btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white;}
+.btn-red{background:var(--red);color:white;}
+.btn-full{width:100%;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;}
+.alert-success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;}
+.alert-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+.alert-info{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:#7dd3fc;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* FOOTER */
+footer{text-align:center;padding:30px 0;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:60px;}
+
+/* BADGE */
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.badge-blue{background:rgba(0,212,255,.15);color:var(--accent);}
+.badge-green{background:rgba(16,185,129,.15);color:var(--green);}
+.badge-gold{background:rgba(245,158,11,.15);color:var(--gold);}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red);}
+
+@media(max-width:768px){
+  .grid2,.grid3,.grid4{grid-template-columns:1fr;}
+  .nav-links{gap:4px;}
+  .nav-link{padding:6px 10px;font-size:12px;}
+}
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">⚽ MatchOracle</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pricing/" class="nav-link">Pricing</a>
+      <a href="/api/v1/docs/" class="nav-link">API</a>
+      {% if user.is_authenticated %}
+        <a href="/dashboard/" class="nav-link">Dashboard</a>
+        <a href="/accounts/logout/" class="btn-nav btn-outline">Logout</a>
+      {% else %}
+        <a href="/accounts/login/" class="btn-nav btn-outline">Login</a>
+        <a href="/accounts/register/" class="btn-nav btn-primary">Sign Up Free</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% if messages %}
+<div class="wrap" style="margin-top:16px">
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% else %}alert-info{% endif %}">
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div>⚽ MatchOracle — Football Intelligence Engine &nbsp;·&nbsp; Powered by V1 + Claude AI</div>
+  <div style="margin-top:6px">© 2024 MatchOracle &nbsp;·&nbsp; <a href="/pricing/" style="color:var(--accent);text-decoration:none">Pricing</a> &nbsp;·&nbsp; <a href="/api/v1/docs/" style="color:var(--accent);text-decoration:none">API Docs</a></div>
+</footer>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

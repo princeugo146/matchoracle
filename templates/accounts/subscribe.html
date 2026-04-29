@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Subscribe - MatchOracle{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:480px;padding-top:60px;">
+  <div class="card" style="text-align:center;">
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;margin-bottom:8px;">Subscribe to {{ plan_data.name }}</div>
+    <div style="font-size:36px;font-weight:900;color:var(--accent);margin-bottom:8px;">{{ plan_data.price_display }}</div>
+    <div style="margin-bottom:24px;">{% for feature in plan_data.features %}<div style="font-size:13px;color:var(--muted);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">✓ {{ feature }}</div>{% endfor %}</div>
+    <form method="POST">{% csrf_token %}
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px;">Pay with Paystack</button>
+    </form>
+    <div style="font-size:12px;color:var(--muted);margin-top:14px;">Secure payment via Paystack. Your API key will be emailed instantly after payment.</div>
+    <a href="/pricing/" style="display:block;margin-top:16px;font-size:13px;color:var(--muted);">← Back to pricing</a>
+  </div>
+</div>
+{% endblock %}

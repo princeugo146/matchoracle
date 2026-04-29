@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.engine-btn{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .25s;text-align:center;width:100%;}
+.engine-btn.active{border-color:var(--accent);background:rgba(0,212,255,.08);}
+.engine-btn:hover{border-color:var(--accent);}
+.panel{display:none;}.panel.active{display:block;animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.prob-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.prob-bar-wrap{flex:1;height:10px;background:var(--border);border-radius:10px;overflow:hidden;}
+.prob-bar-fill{height:100%;border-radius:10px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;}
+.plan-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.plan-free{background:rgba(100,116,139,.2);color:var(--muted);}
+.plan-basic{background:rgba(0,212,255,.15);color:var(--accent);}
+.plan-pro{background:rgba(124,58,237,.2);color:#a78bfa;}
+.loading-overlay{display:none;text-align:center;padding:30px;}
+.loading-overlay.show{display:block;}
+.spin{width:40px;height:40px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:sp .8s linear infinite;margin:0 auto 12px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.result-out{display:none;}.result-out.show{display:block;animation:fadeIn .4s ease;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:28px">
+
+<!-- TOP BAR -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
+  <div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Dashboard</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Welcome back, {{ user.first_name|default:user.email }}</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="plan-badge plan-{{ user.plan }}">{{ user.plan|upper }} PLAN</span>
+    {% if user.plan == 'free' %}
+      <a href="/pricing/" class="btn btn-green" style="padding:8px 16px;font-size:13px">Upgrade</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- STATS ROW -->
+<div class="grid4" style="margin-bottom:28px">
+  <div class="card" style="text-align:center">
+    <div class="stat-num" style="color:var(--accent)">{{ stats.total }}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">Total Predictions</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="stat-num" style="color:var(--green)">
+      {% if user.plan == 'free' %}{{ user.days_remaining }} left{% else %}{{ user.days_remaining }}d{% endif %}
+    </div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">{% if user.plan == 'free' %}Free Trials{% else %}Days Left{% endif %}</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="stat-num" style="color:var(--gold)">{{ user.predictions_today }}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">Today's Usage</div>
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="stat-num" style="color:var(--accent2)">{{ stats.engine_a }}</div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">Match Predictions</div>
+  </div>
+</div>
+
+<!-- API KEY -->
+<div class="card" style="margin-bottom:28px;background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.2)">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="flex:1">
+      <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px">Your API Key</div>
+      <div style="font-family:monospace;font-size:13px;color:var(--text)" id="apiKeyDisplay">{{ user.api_key|slice:":20" }}••••••••••••••••••••</div>
+    </div>
+    <button onclick="toggleKey()" class="btn" style="background:var(--border);color:var(--text);padding:8px 14px;font-size:12px">Show/Hide</button>
+    <button onclick="copyKey()" class="btn btn-green" style="padding:8px 14px;font-size:12px">Copy Key</button>
+  </div>
+</div>
+
+<!-- ENGINE SELECTOR -->
+<div class="grid4" style="margin-bottom:24px">
+  <button class="engine-btn active" onclick="switchEng('a',this)">
+    <div style="font-size:24px;margin-bottom:6px">🎯</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;color:var(--accent)">ENGINE A</div>
+    <div style="font-size:12px;font-weight:600;margin-top:3px">Match Prediction</div>
+  </button>
+  <button class="engine-btn" onclick="switchEng('b',this)">
+    <div style="font-size:24px;margin-bottom:6px">⭐</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;color:#a78bfa">ENGINE B</div>
+    <div style="font-size:12px;font-weight:600;margin-top:3px">Player Rating</div>
+  </button>
+  <button class="engine-btn" onclick="switchEng('c',this)">
+    <div style="font-size:24px;margin-bottom:6px">🏆</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;color:#34d399">ENGINE C</div>
+    <div style="font-size:12px;font-weight:600;margin-top:3px">Team Ranking</div>
+  </button>
+  <button class="engine-btn" onclick="switchEng('d',this)">
+    <div style="font-size:24px;margin-bottom:6px">🎮</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.5px;color:#fb923c">ENGINE D</div>
+    <div style="font-size:12px;font-weight:600;margin-top:3px">Simulation</div>
+  </button>
+</div>
+
+<!-- ENGINE A -->
+<div class="panel active" id="panel-a">
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">🏠 Home Team</div>
+      <div class="field"><label>Team Name</label><input id="a_hn" placeholder="Arsenal"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Goals Scored/game</label><input type="number" id="a_hgs" placeholder="2.1" step="0.1"></div>
+        <div class="field"><label>Goals Conceded/game</label><input type="number" id="a_hgc" placeholder="0.9" step="0.1"></div>
+      </div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="a_hf" placeholder="W W D W W"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Win Rate %</label><input type="number" id="a_hwr" placeholder="68"></div>
+        <div class="field"><label>Key Injuries</label><input type="number" id="a_hi" placeholder="0" min="0" max="5"></div>
+      </div>
+      <div class="field"><label>League Position</label><input type="number" id="a_hp" placeholder="2"></div>
+    </div>
+    <div class="card"><div class="card-title">✈️ Away Team</div>
+      <div class="field"><label>Team Name</label><input id="a_an" placeholder="Real Madrid"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Goals Scored/game</label><input type="number" id="a_ags" placeholder="2.4" step="0.1"></div>
+        <div class="field"><label>Goals Conceded/game</label><input type="number" id="a_agc" placeholder="0.8" step="0.1"></div>
+      </div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="a_af" placeholder="W W W D W"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Win Rate %</label><input type="number" id="a_awr" placeholder="55"></div>
+        <div class="field"><label>Key Injuries</label><input type="number" id="a_ai" placeholder="1" min="0" max="5"></div>
+      </div>
+      <div class="field"><label>League Position</label><input type="number" id="a_ap" placeholder="1"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-title">⚔️ Head to Head</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field"><label>Home Wins (last 10)</label><input type="number" id="a_h2hh" placeholder="4"></div>
+      <div class="field"><label>Draws</label><input type="number" id="a_h2hd" placeholder="3"></div>
+      <div class="field"><label>Away Wins</label><input type="number" id="a_h2ha" placeholder="3"></div>
+    </div>
+  </div>
+  <button class="btn btn-green btn-full" onclick="runA()">⚡ RUN MATCH PREDICTION</button>
+  <div class="loading-overlay" id="a_load"><div class="spin"></div><div style="color:var(--muted)">Analysing with V1 + AI...</div></div>
+  <div class="result-out" id="a_result" style="margin-top:16px">
+    <div class="card" style="border-top:3px solid var(--accent)">
+      <div class="card-title">📊 PREDICTION RESULT</div>
+      <div id="a_bars"></div>
+      <div id="a_verdict" style="margin-top:16px;padding:14px;background:rgba(0,212,255,.06);border-radius:10px;border:1px solid rgba(0,212,255,.15)"></div>
+      <div id="a_insight" style="margin-top:12px;padding:14px;background:rgba(124,58,237,.06);border-radius:10px;border:1px solid rgba(124,58,237,.15);font-size:13px;line-height:1.7"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ENGINE B -->
+<div class="panel" id="panel-b">
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">👤 Player Info</div>
+      <div class="field"><label>Player Name</label><input id="b_name" placeholder="Erling Haaland"></div>
+      <div class="field"><label>Position</label>
+        <select id="b_pos"><option value="ST">Striker (ST)</option><option value="CAM">Attacking Mid (CAM)</option><option value="CM">Central Mid (CM)</option><option value="CB">Centre-Back (CB)</option><option value="GK">Goalkeeper (GK)</option></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Goals</label><input type="number" id="b_goals" placeholder="22"></div>
+        <div class="field"><label>Assists</label><input type="number" id="b_assists" placeholder="8"></div>
+      </div>
+      <div class="field"><label>Games Played</label><input type="number" id="b_games" placeholder="28"></div>
+    </div>
+    <div class="card"><div class="card-title">📊 Stats</div>
+      <div class="field"><label>Pass Accuracy %</label><input type="number" id="b_pass" placeholder="84"></div>
+      <div class="field"><label>Shots on Target %</label><input type="number" id="b_shot" placeholder="61"></div>
+      <div class="field"><label>Dribble Success %</label><input type="number" id="b_drib" placeholder="55"></div>
+      <div class="field"><label>Injury Status</label>
+        <select id="b_inj"><option value="fit">Fit</option><option value="doubt">Doubt</option><option value="minor">Minor Injury</option><option value="major">Major Injury</option></select>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-full" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white" onclick="runB()">⭐ CALCULATE PLAYER RATING</button>
+  <div class="loading-overlay" id="b_load"><div class="spin" style="border-top-color:#a78bfa"></div><div style="color:var(--muted)">Calculating rating...</div></div>
+  <div class="result-out" id="b_result" style="margin-top:16px">
+    <div class="card" style="border-top:3px solid #a78bfa">
+      <div class="card-title">⭐ PLAYER RATING</div>
+      <div id="b_output"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ENGINE C -->
+<div class="panel" id="panel-c">
+  <div class="card" style="margin-bottom:16px"><div class="card-title">➕ Add Team</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Team Name</label><input id="c_name" placeholder="Manchester City"></div>
+      <div class="field"><label>Base ELO</label><input type="number" id="c_elo" placeholder="1000"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field"><label>Wins</label><input type="number" id="c_w" placeholder="18"></div>
+      <div class="field"><label>Draws</label><input type="number" id="c_d" placeholder="6"></div>
+      <div class="field"><label>Losses</label><input type="number" id="c_l" placeholder="4"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field"><label>Goals For</label><input type="number" id="c_gf" placeholder="62"></div>
+      <div class="field"><label>Goals Against</label><input type="number" id="c_ga" placeholder="28"></div>
+      <div class="field"><label>Opp Strength (1-10)</label><input type="number" id="c_opp" placeholder="6.5" step="0.5"></div>
+    </div>
+    <button class="btn btn-full" style="background:linear-gradient(135deg,#34d399,#059669);color:#050810" onclick="addTeam()">🏆 ADD TEAM TO RANKING</button>
+  </div>
+  <div class="card"><div class="card-title">🏆 POWER RANKINGS (ELO)</div>
+    <div id="c_table"><div style="color:var(--muted);text-align:center;padding:30px">Add teams above to build your ranking</div></div>
+  </div>
+</div>
+
+<!-- ENGINE D -->
+<div class="panel" id="panel-d">
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">🏠 Home Team</div>
+      <div class="field"><label>Team Name</label><input id="d_hn" placeholder="Liverpool"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Attack (1-100)</label><input type="number" id="d_hatk" placeholder="85"></div>
+        <div class="field"><label>Defence (1-100)</label><input type="number" id="d_hdef" placeholder="78"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>ELO</label><input type="number" id="d_helo" placeholder="1350"></div>
+        <div class="field"><label>Key Injuries</label>
+          <select id="d_hinj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">✈️ Away Team</div>
+      <div class="field"><label>Team Name</label><input id="d_an" placeholder="Bayern Munich"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Attack (1-100)</label><input type="number" id="d_aatk" placeholder="88"></div>
+        <div class="field"><label>Defence (1-100)</label><input type="number" id="d_adef" placeholder="80"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>ELO</label><input type="number" id="d_aelo" placeholder="1380"></div>
+        <div class="field"><label>Key Injuries</label>
+          <select id="d_ainj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-title">⚙️ Settings</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field"><label>Competition</label>
+        <select id="d_comp"><option value="league">League</option><option value="champions">Champions League</option><option value="cup">Cup</option></select>
+      </div>
+      <div class="field"><label>Simulations</label>
+        <select id="d_sims"><option value="1000">1,000</option><option value="10000" selected>10,000</option><option value="100000">100,000</option></select>
+      </div>
+      <div class="field"><label>Weather</label>
+        <select id="d_wx"><option value="normal">Normal</option><option value="rain">Rain</option><option value="wind">Wind</option></select>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-full" style="background:linear-gradient(135deg,#fb923c,#d97706);color:#050810" onclick="runD()">🎮 RUN FULL SIMULATION</button>
+  <div class="loading-overlay" id="d_load"><div class="spin" style="border-top-color:#fb923c"></div><div style="color:var(--muted)">Running Monte Carlo simulation...</div></div>
+  <div class="result-out" id="d_result" style="margin-top:16px">
+    <div class="card" style="border-top:3px solid #fb923c">
+      <div class="card-title">🎮 SIMULATION RESULT</div>
+      <div id="d_output"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT PREDICTIONS -->
+{% if recent %}
+<div style="margin-top:40px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">Recent Predictions</div>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="color:var(--muted);font-size:11px;letter-spacing:1.5px;text-transform:uppercase">
+        <th style="text-align:left;padding:10px 12px">Engine</th>
+        <th style="text-align:left;padding:10px 12px">Details</th>
+        <th style="text-align:left;padding:10px 12px">Confidence</th>
+        <th style="text-align:left;padding:10px 12px">Date</th>
+      </tr></thead>
+      <tbody>
+        {% for p in recent %}
+        <tr style="border-top:1px solid rgba(255,255,255,.04)">
+          <td style="padding:12px"><span class="badge badge-blue">Engine {{ p.engine }}</span></td>
+          <td style="padding:12px;color:var(--muted)">
+            {% if p.engine == 'A' %}{{ p.input_data.home.name|default:"?" }} vs {{ p.input_data.away.name|default:"?" }}
+            {% elif p.engine == 'B' %}{{ p.input_data.name|default:"Player" }}
+            {% else %}{{ p.input_data.home.name|default:"?" }} vs {{ p.input_data.away.name|default:"?" }}{% endif %}
+          </td>
+          <td style="padding:12px;font-weight:600;color:var(--green)">{{ p.confidence }}%</td>
+          <td style="padding:12px;color:var(--muted)">{{ p.created_at|date:"d M Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const API_KEY = '{{ user.api_key }}';
+
+function switchEng(id, btn) {
+  document.querySelectorAll('.engine-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+function toggleKey() {
+  const el = document.getElementById('apiKeyDisplay');
+  el.textContent = el.textContent.includes('•') ? API_KEY : API_KEY.slice(0,20) + '••••••••••••••••••••';
+}
+function copyKey() {
+  navigator.clipboard.writeText(API_KEY).then(() => alert('API Key copied!'));
+}
+
+async function callEngine(engine, data) {
+  const load = document.getElementById(engine.toLowerCase() + '_load');
+  const result = document.getElementById(engine.toLowerCase() + '_result');
+  load.classList.add('show'); result.classList.remove('show');
+  try {
+    const r = await fetch(`/dashboard/engine/${engine}/`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body: JSON.stringify(data)
+    });
+    const d = await r.json();
+    load.classList.remove('show');
+    if (d.success) { result.classList.add('show'); return d.result; }
+    else alert('Error: ' + (d.error || 'Unknown error'));
+  } catch(e) { load.classList.remove('show'); alert('Network error. Please try again.'); }
+  return null;
+}
+
+function probBar(label, pct, color) {
+  return `<div class="prob-row">
+    <div style="width:130px;font-size:13px;font-weight:600">${label}</div>
+    <div class="prob-bar-wrap"><div class="prob-bar-fill" style="width:0%;background:${color}" data-t="${pct}"></div></div>
+    <div style="width:44px;text-align:right;font-size:13px;font-weight:700">${pct}%</div>
+  </div>`;
+}
+
+function animBars() { setTimeout(() => document.querySelectorAll('[data-t]').forEach(e => e.style.width = e.dataset.t + '%'), 100); }
+
+async function runA() {
+  const data = {
+    home: { name: v('a_hn'), goals_scored: v('a_hgs'), goals_conceded: v('a_hgc'), form: v('a_hf'), win_rate: v('a_hwr'), injuries: v('a_hi'), position: v('a_hp') },
+    away: { name: v('a_an'), goals_scored: v('a_ags'), goals_conceded: v('a_agc'), form: v('a_af'), win_rate: v('a_awr'), injuries: v('a_ai'), position: v('a_ap') },
+    h2h: { home_wins: v('a_h2hh'), draws: v('a_h2hd'), away_wins: v('a_h2ha') }
+  };
+  const r = await callEngine('A', data);
+  if (!r) return;
+  const hn = v('a_hn') || 'Home'; const an = v('a_an') || 'Away';
+  document.getElementById('a_bars').innerHTML =
+    probBar(hn + ' Win', r.home_win, 'linear-gradient(90deg,#00d4ff,#0099cc)') +
+    probBar('Draw', r.draw, 'linear-gradient(90deg,#f59e0b,#d97706)') +
+    probBar(an + ' Win', r.away_win, 'linear-gradient(90deg,#ef4444,#b91c1c)');
+  animBars();
+  const icon = r.verdict === hn ? '🏠' : r.verdict === an ? '✈️' : '🤝';
+  document.getElementById('a_verdict').innerHTML = `<strong style="color:var(--accent);font-size:16px">${icon} ${r.verdict === 'Draw' ? 'Closely contested — Draw possible' : r.verdict + ' predicted to win'}</strong><br><span style="color:var(--muted);font-size:12px">Confidence: ${r.confidence}% · Hybrid V1+AI</span>`;
+  document.getElementById('a_insight').innerHTML = `<div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">🤖 AI INSIGHT</div>${r.ai?.insight || 'V1 algorithm analysis complete.'}`;
+}
+
+async function runB() {
+  const data = { name: v('b_name'), position: v('b_pos'), goals: v('b_goals'), assists: v('b_assists'), games: v('b_games'), pass_accuracy: v('b_pass'), shots_on_target: v('b_shot'), dribble_success: v('b_drib'), injury_status: v('b_inj') };
+  const r = await callEngine('B', data);
+  if (!r) return;
+  const colors = {'World Class':'#f59e0b','Elite':'#00d4ff','Quality':'#10b981','Average':'#94a3b8','Below Average':'#ef4444'};
+  const c = colors[r.tier] || '#94a3b8';
+  document.getElementById('b_output').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:64px;font-weight:900;color:${c}">${r.rating}</div>
+      <div style="font-size:14px;color:${c};font-weight:700;margin-top:6px">${r.tier}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${v('b_name') || 'Player'} · ${v('b_pos')}</div>
+    </div>
+    <div style="padding:14px;background:rgba(124,58,237,.06);border-radius:10px;border:1px solid rgba(124,58,237,.15);font-size:13px;line-height:1.7">
+      <div style="font-size:10px;letter-spacing:2px;color:#a78bfa;margin-bottom:8px">🤖 AI INSIGHT</div>
+      ${r.ai?.insight || 'V1 rating calculated based on position-weighted stats.'}
+    </div>`;
+}
+
+let rankings = [];
+async function addTeam() {
+  const data = { name: v('c_name'), wins: v('c_w'), draws: v('c_d'), losses: v('c_l'), goals_for: v('c_gf'), goals_against: v('c_ga'), opp_strength: v('c_opp'), base_elo: v('c_elo') || 1000 };
+  try {
+    const r = await fetch('/dashboard/ranking/add/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify(data) });
+    const d = await r.json();
+    if (d.success) { rankings = d.rankings; renderRankings(); }
+  } catch(e) { alert('Error adding team'); }
+}
+
+function renderRankings() {
+  if (!rankings.length) return;
+  const rows = rankings.map((t,i) => {
+    const gd = t.goals_for - t.goals_against;
+    return `<tr style="border-top:1px solid rgba(255,255,255,.04)">
+      <td style="padding:12px;font-family:'Orbitron',sans-serif;font-weight:700">${i+1}</td>
+      <td style="padding:12px;font-weight:600">${t.name}</td>
+      <td style="padding:12px;font-family:'Orbitron',sans-serif;color:var(--accent)">${t.power_elo}</td>
+      <td style="padding:12px;color:var(--green)">${t.wins}</td>
+      <td style="padding:12px;color:var(--gold)">${t.draws}</td>
+      <td style="padding:12px;color:var(--red)">${t.losses}</td>
+      <td style="padding:12px;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>0?'+':''}${gd}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('c_table').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1.5px">
+      <th style="text-align:left;padding:10px 12px">#</th><th style="text-align:left;padding:10px 12px">Team</th><th style="text-align:left;padding:10px 12px">ELO</th>
+      <th style="padding:10px 12px">W</th><th style="padding:10px 12px">D</th><th style="padding:10px 12px">L</th><th style="padding:10px 12px">GD</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function runD() {
+  const data = {
+    home: { name: v('d_hn'), attack: v('d_hatk'), defence: v('d_hdef'), elo: v('d_helo'), injuries: v('d_hinj') },
+    away: { name: v('d_an'), attack: v('d_aatk'), defence: v('d_adef'), elo: v('d_aelo'), injuries: v('d_ainj') },
+    simulations: v('d_sims'), competition: v('d_comp'), weather: v('d_wx')
+  };
+  const r = await callEngine('D', data);
+  if (!r) return;
+  const hn = v('d_hn')||'Home'; const an = v('d_an')||'Away';
+  const [lsh, lsa] = r.likely_score.split('-');
+  document.getElementById('d_output').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:24px;padding:24px;text-align:center">
+      <div><div style="color:var(--muted);font-size:13px;margin-bottom:8px">${hn}</div><div style="font-family:'Orbitron',sans-serif;font-size:64px;font-weight:900;color:#fb923c">${lsh}</div></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:24px;color:var(--muted)">—</div>
+      <div><div style="color:var(--muted);font-size:13px;margin-bottom:8px">${an}</div><div style="font-family:'Orbitron',sans-serif;font-size:64px;font-weight:900">${lsa}</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      ${probBar(hn+' Win', r.home_win, 'linear-gradient(90deg,#fb923c,#d97706)')}
+      ${probBar('Draw', r.draw, 'linear-gradient(90deg,#f59e0b,#d97706)')}
+      ${probBar(an+' Win', r.away_win, 'linear-gradient(90deg,#ef4444,#b91c1c)')}
+    </div>
+    <div style="padding:14px;background:rgba(251,146,60,.06);border-radius:10px;border:1px solid rgba(251,146,60,.15);font-size:13px;line-height:1.7">
+      <div style="font-size:10px;letter-spacing:2px;color:#fb923c;margin-bottom:8px">🤖 AI MATCH ANALYSIS</div>
+      ${r.ai?.insight || 'V1 Monte Carlo simulation complete. ' + r.simulations.toLocaleString() + ' runs processed.'}
+    </div>`;
+  animBars();
+}
+
+function v(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Pricing{% endblock %}
+{% block content %}
+<div class="wrap" style="padding:60px 0">
+<div style="text-align:center;margin-bottom:48px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:32px;font-weight:700;margin-bottom:12px">Simple Pricing</div>
+  <div style="color:var(--muted)">Start free. Upgrade when you're ready.</div>
+</div>
+<div class="grid3">
+  {% for key,plan in plans.items %}
+  <div class="card" style="text-align:center;{% if key == 'pro' %}border-color:var(--accent);position:relative;{% endif %}">
+    {% if key == 'pro' %}<div class="badge badge-blue" style="margin-bottom:16px">BEST VALUE</div>{% endif %}
+    <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">{{ plan.name }}</div>
+    <div style="font-size:40px;font-weight:700;margin-bottom:4px">{% if plan.price == 0 %}Free{% else %}{{ symbol }}{{ plan.price|floatformat:0 }}{% endif %}</div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:28px">{% if plan.price == 0 %}6 predictions total{% elif plan.duration_days == 30 %}per month{% else %}per year{% endif %}</div>
+    <div style="font-size:13px;line-height:2.2;text-align:left;margin-bottom:24px">
+      ✅ {{ plan.predictions_per_day }} predictions/day<br>
+      ✅ All 4 Intelligence Engines<br>
+      {% if plan.api_access %}✅ API Access + Personal Key<br>{% else %}❌ No API access<br>{% endif %}
+      ✅ Weekly match forecasts<br>
+      {% if key == 'pro' %}✅ Priority AI processing<br>✅ Advanced analytics<br>{% endif %}
+    </div>
+    {% if key == 'free' %}<a href="/accounts/register/" class="btn btn-full" style="background:var(--border);color:var(--text)">Get Started Free</a>
+    {% elif key == 'basic' %}<a href="/accounts/subscribe/basic/" class="btn btn-full btn-green">Subscribe Basic</a>
+    {% else %}<a href="/accounts/subscribe/pro/" class="btn btn-full" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white">Subscribe Pro</a>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+</div>
+{% endblock %}
