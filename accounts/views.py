@@ -6,6 +6,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -36,7 +37,8 @@ def login_view(request):
             user = authenticate(request, username=email, password=password)
             if user:
                 login(request, user)
-                return redirect(request.GET.get('next', 'dashboard'))
+                next_url = request.GET.get('next', reverse('dashboard'))
+                return redirect(next_url)
             messages.error(request, 'Invalid email or password.')
     else:
         form = LoginForm()
