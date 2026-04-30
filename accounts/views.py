@@ -23,7 +23,7 @@ def register(request):
             login(request, user)
             send_welcome_email(user)
             messages.success(request, f'Welcome to MatchOracle! You have 6 free predictions.')
-            return redirect('dashboard')
+            return redirect(reverse('dashboard'))
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -46,7 +46,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('home')
+    return redirect(reverse('home'))
 
 @login_required
 def profile(request):
@@ -56,7 +56,7 @@ def profile(request):
 def subscribe(request, plan):
     if plan not in ['basic', 'pro']:
         messages.error(request, 'Invalid plan.')
-        return redirect('pricing')
+        return redirect(reverse('pricing'))
     
     cfg = settings.MATCHORACLE
     plan_info = cfg['PLANS'][plan]
@@ -81,13 +81,13 @@ def verify_payment(request):
     reference = request.GET.get('reference')
     if not reference:
         messages.error(request, 'No payment reference found.')
-        return redirect('dashboard')
+        return redirect(reverse('dashboard'))
 
     try:
         payment = Payment.objects.get(reference=reference, user=request.user)
     except Payment.DoesNotExist:
         messages.error(request, 'Payment not found.')
-        return redirect('dashboard')
+        return redirect(reverse('dashboard'))
 
     # Verify with Paystack
     cfg = settings.MATCHORACLE
@@ -109,10 +109,10 @@ def verify_payment(request):
 
             send_subscription_email(request.user, payment.plan)
             messages.success(request, f'🎉 Payment successful! Your {payment.plan.title()} plan is now active.')
-            return redirect('dashboard')
+            return redirect(reverse('dashboard'))
 
     messages.error(request, 'Payment verification failed. Contact support.')
-    return redirect('dashboard')
+    return redirect(reverse('dashboard'))
 
 def send_welcome_email(user):
     try:
