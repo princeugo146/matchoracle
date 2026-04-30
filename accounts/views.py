@@ -1,6 +1,7 @@
 import uuid
 import requests
 import json
+import logging
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
@@ -14,6 +15,8 @@ from django.http import JsonResponse
 from .models import User, Payment
 from .forms import RegisterForm, LoginForm
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 def register(request):
     if request.method == 'POST':
@@ -115,6 +118,16 @@ def verify_payment(request):
     return redirect(reverse('dashboard'))
 
 def send_welcome_email(user):
+    """
+    Send welcome email to new users.
+
+    IMPORTANT: For Gmail, you MUST use an App Password, not your regular password.
+    1. Enable 2FA on your Google account
+    2. Go to https://myaccount.google.com/apppasswords
+    3. Select "Mail" and "Windows Computer" (or your device)
+    4. Copy the 16-character password
+    5. Set EMAIL_HOST_PASSWORD to this app password in Railway variables
+    """
     try:
         send_mail(
             subject='Welcome to MatchOracle ⚽',
@@ -138,10 +151,20 @@ The MatchOracle Team
             recipient_list=[user.email],
             fail_silently=True,
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {user.email}: {str(e)}")
 
 def send_subscription_email(user, plan):
+    """
+    Send subscription confirmation email after a successful payment.
+
+    IMPORTANT: For Gmail, you MUST use an App Password, not your regular password.
+    1. Enable 2FA on your Google account
+    2. Go to https://myaccount.google.com/apppasswords
+    3. Select "Mail" and "Windows Computer" (or your device)
+    4. Copy the 16-character password
+    5. Set EMAIL_HOST_PASSWORD to this app password in Railway variables
+    """
     cfg = settings.MATCHORACLE
     plan_info = cfg['PLANS'][plan]
     try:
@@ -167,5 +190,5 @@ The MatchOracle Team
             recipient_list=[user.email],
             fail_silently=True,
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"Failed to send subscription email to {user.email}: {str(e)}")
