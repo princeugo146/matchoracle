@@ -7,6 +7,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-matchorac
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']
 
+# CSRF Configuration for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://matchoracle-production.up.railway.app',
+    'http://matchoracle-production.up.railway.app',  # for local testing if needed
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
