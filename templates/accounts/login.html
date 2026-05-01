@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:440px;margin:70px auto">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:40px;margin-bottom:12px">⚽</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Welcome Back</div>
+    <div style="color:var(--text2);font-size:14px">Login to your MatchOracle account</div>
+  </div>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="field"><label>Email Address</label><input type="email" name="email" placeholder="you@email.com" required autofocus></div>
+      <div class="field"><label>Password</label><input type="password" name="password" placeholder="Your password" required></div>
+      {% if form.errors %}<div class="alert alert-error">{{ form.errors }}</div>{% endif %}
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;padding:13px">Login to Dashboard</button>
+    </form>
+    <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text2)">
+      No account? <a href="/accounts/register/" style="color:var(--accent);font-weight:600">Sign up free</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
