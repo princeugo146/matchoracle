@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Live Scores{% endblock %}
+{% block extra_css %}
+<style>
+.match-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:8px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; cursor:pointer; transition:all .2s; text-decoration:none; color:var(--text); }
+.match-card:hover { border-color:rgba(0,212,255,0.2); transform:translateY(-1px); }
+.match-card.live { border-left:3px solid var(--red); }
+.match-card.finished { opacity:.65; }
+.team-name { font-weight:600; font-size:14px; }
+.score-center { text-align:center; min-width:80px; }
+.score-val { font-family:'Orbitron',sans-serif; font-size:28px; font-weight:700; }
+.status-txt { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; margin-top:3px; font-weight:700; }
+.league-hdr { display:flex; align-items:center; gap:8px; padding:8px 14px; background:rgba(255,255,255,0.02); border-radius:8px; margin-bottom:6px; font-size:11px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; font-weight:700; }
+.tab { padding:8px 18px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--text2); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; }
+.tab.active { background:rgba(0,212,255,0.1); border-color:var(--accent); color:var(--accent); }
+.countdown-bar { height:3px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; margin-top:8px; }
+.countdown-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); animation:countdown60 60s linear infinite; }
+@keyframes countdown60 { from{width:100%;} to{width:0%;} }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:clamp(22px,4vw,36px);font-weight:700;margin-bottom:4px">Live Scores</div>
+      <div style="color:var(--text2);font-size:13px">All major leagues · Auto-updates every 60s</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      {% if live_count > 0 %}<div style="display:flex;align-items:center;gap:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--red);font-weight:700;letter-spacing:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1s infinite"></span>{{ live_count }} LIVE</div>{% endif %}
+      <button onclick="location.reload()" class="btn btn-secondary" style="padding:8px 14px;font-size:12px">🔄 Refresh</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="tab active" onclick="filter('all',this)">All</button>
+    <button class="tab" onclick="filter('live',this)">🔴 Live</button>
+    <button class="tab" onclick="filter('upcoming',this)">⏰ Upcoming</button>
+    <button class="tab" onclick="filter('finished',this)">✅ Finished</button>
+  </div>
+  <div class="countdown-bar"><div class="countdown-fill" id="cbar"></div></div>
+  <div style="font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:20px">Auto-refresh in <span id="cdown">60</span>s</div>
+  {% regroup live|dictsort:"league" by league as live_leagues %}
+  {% if live %}
+    {% for lg in live_leagues %}
+    <div class="league-section">
+      <div class="league-hdr">⚽ {{ lg.grouper }} <span style="margin-left:auto">{{ lg.list|length }}</span></div>
+      {% for m in lg.list %}
+      <div class="match-card {% if m.minute %}live{% elif m.status == 'FT' %}finished{% endif %}" onclick="predictThis('{{ m.home }}','{{ m.away }}')">
+        <div class="team-name">{% if m.home_logo %}<img src="{{ m.home_logo }}" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px">{% endif %}{{ m.home }}</div>
+        <div class="score-center">
+          {% if m.home_score is not None %}
+          <div class="score-val {% if m.minute %}" style="color:var(--red){% elif m.status == 'FT' %}" style="color:var(--muted){% endif %}">{{ m.home_score }}–{{ m.away_score }}</div>
+          <div class="status-txt {% if m.minute %}' style='color:var(--red){% else %}' style='color:var(--muted){% endif %}">{% if m.minute %}{{ m.minute }}'{% else %}FT{% endif %}</div>
+          {% else %}
+          <div class="score-val" style="color:var(--muted);font-size:18px">{{ m.date|slice:":5"|default:"TBD" }}</div>
+          <div class="status-txt" style="color:var(--accent)">Upcoming</div>
+          {% endif %}
+          <div style="margin-top:6px"><a href="/dashboard/" style="font-size:10px;color:var(--accent);text-decoration:none;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);border-radius:5px;padding:2px 8px">Predict ⚡</a></div>
+        </div>
+        <div class="team-name" style="text-align:right">{{ m.away }}{% if m.away_logo %}<img src="{{ m.away_logo }}" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-left:6px">{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% regroup today|dictsort:"league" by league as today_leagues %}
+  {% if today %}
+  <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin:24px 0 12px;text-transform:uppercase">Today's Fixtures</div>
+  {% for lg in today_leagues %}
+  <div class="league-section">
+    <div class="league-hdr">⚽ {{ lg.grouper }}</div>
+    {% for m in lg.list %}
+    <div class="match-card upcoming" onclick="predictThis('{{ m.home }}','{{ m.away }}')">
+      <div class="team-name">{{ m.home }}</div>
+      <div class="score-center">
+        <div class="score-val" style="color:var(--muted);font-size:18px">{{ m.date|slice:":5"|default:"TBD" }}</div>
+        <div class="status-txt" style="color:var(--accent)">Upcoming</div>
+        <div style="margin-top:6px"><a href="/dashboard/" style="font-size:10px;color:var(--accent);text-decoration:none;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);border-radius:5px;padding:2px 8px">Predict ⚡</a></div>
+      </div>
+      <div class="team-name" style="text-align:right">{{ m.away }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% if not live and not today %}
+  <div style="text-align:center;padding:80px 20px;color:var(--text2)">
+    <div style="font-size:60px;margin-bottom:20px">⚽</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:8px">No live matches right now</div>
+    <div style="font-size:14px;color:var(--muted)">Check back during match days for live scores</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let cd = 60;
+const timer = setInterval(() => {
+  cd--;
+  const el = document.getElementById('cdown');
+  if (el) el.textContent = cd;
+  if (cd <= 0) { clearInterval(timer); location.reload(); }
+}, 1000);
+
+function filter(type, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.match-card').forEach(c => {
+    if (type === 'all') c.style.display = '';
+    else if (type === 'live') c.style.display = c.classList.contains('live') ? '' : 'none';
+    else if (type === 'upcoming') c.style.display = c.classList.contains('upcoming') ? '' : 'none';
+    else if (type === 'finished') c.style.display = c.classList.contains('finished') ? '' : 'none';
+  });
+}
+
+function predictThis(home, away) {
+  sessionStorage.setItem('predict_home', home);
+  sessionStorage.setItem('predict_away', away);
+  window.location.href = '/dashboard/';
+}
+</script>
+{% endblock %}

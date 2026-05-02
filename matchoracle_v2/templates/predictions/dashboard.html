@@ -1,0 +1,622 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.engine-tab { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 10px; cursor:pointer; transition:all .25s; text-align:center; position:relative; overflow:hidden; }
+.engine-tab::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .25s; }
+.engine-tab.a-active { border-color:var(--accent); }
+.engine-tab.a-active::before { background:radial-gradient(ellipse at top,rgba(0,212,255,0.1),transparent); opacity:1; }
+.engine-tab.b-active { border-color:#a78bfa; }
+.engine-tab.b-active::before { background:radial-gradient(ellipse at top,rgba(167,139,250,0.1),transparent); opacity:1; }
+.engine-tab.c-active { border-color:var(--green); }
+.engine-tab.c-active::before { background:radial-gradient(ellipse at top,rgba(16,185,129,0.1),transparent); opacity:1; }
+.engine-tab.d-active { border-color:var(--orange); }
+.engine-tab.d-active::before { background:radial-gradient(ellipse at top,rgba(251,146,60,0.1),transparent); opacity:1; }
+.engine-tab.nl-active { border-color:#f472b6; }
+.engine-tab.nl-active::before { background:radial-gradient(ellipse at top,rgba(244,114,182,0.1),transparent); opacity:1; }
+.engine-tab:hover { border-color:var(--border2); transform:translateY(-2px); }
+.panel { display:none; animation:fadeUp .35s ease; }
+.panel.show { display:block; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+.compare-box { background:rgba(255,255,255,0.03); border:1px solid var(--border2); border-radius:10px; padding:14px; }
+.score-big { font-family:'Orbitron',sans-serif; font-size:64px; font-weight:900; line-height:1; }
+.gauge-ring { width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 10px; }
+.gauge-val { font-family:'Orbitron',sans-serif; font-size:38px; font-weight:900; }
+.live-mini { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--card2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; font-size:13px; }
+.live-score { font-family:'Orbitron',sans-serif; font-weight:700; }
+.stat-mini { text-align:center; }
+.stat-mini .n { font-family:'Orbitron',sans-serif; font-size:28px; font-weight:700; }
+.stat-mini .l { font-size:11px; color:var(--muted); margin-top:3px; }
+.tip-card { background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:10px; }
+.rank-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+.rank-row:last-child { border-bottom:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+<!-- TOP BAR -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+  <div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Dashboard</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Welcome back, {{ user.first_name|default:user.email }} 👋</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="plan-badge plan-{{ user.plan }}">{{ user.plan|upper }}</span>
+    {% if user.plan == 'free' %}
+      <a href="/pricing/" class="btn btn-primary" style="padding:8px 16px;font-size:12px">⬆ Upgrade</a>
+    {% endif %}
+    <a href="/dashboard/history/" class="btn btn-secondary" style="padding:8px 14px;font-size:12px">📈 History</a>
+  </div>
+</div>
+
+<!-- STATS ROW -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">
+  <div class="card stat-mini">
+    <div class="n" style="color:var(--accent)">{{ stats.total }}</div>
+    <div class="l">Total Predictions</div>
+  </div>
+  <div class="card stat-mini">
+    <div class="n" style="color:var(--green)">{% if user.plan == 'free' %}{{ user.days_remaining }}{% else %}{{ user.days_remaining }}d{% endif %}</div>
+    <div class="l">{% if user.plan == 'free' %}Trials Left{% else %}Days Left{% endif %}</div>
+  </div>
+  <div class="card stat-mini">
+    <div class="n" style="color:var(--gold)">{{ user.predictions_today }}</div>
+    <div class="l">Used Today</div>
+  </div>
+  <div class="card stat-mini">
+    <div class="n" style="color:var(--accent2)">{{ stats.accuracy }}%</div>
+    <div class="l">Accuracy</div>
+  </div>
+  <div class="card stat-mini">
+    <div class="n" style="color:var(--orange)">{{ user.referral_count }}</div>
+    <div class="l">Referrals</div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+<div>
+
+<!-- ENGINE TABS -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
+  <button class="engine-tab a-active" onclick="switchEngine('a',this,'a-active')">
+    <div style="font-size:22px;margin-bottom:5px">🎯</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;color:var(--accent)">ENG A</div>
+    <div style="font-size:11px;font-weight:600;margin-top:2px">Predict</div>
+  </button>
+  <button class="engine-tab" onclick="switchEngine('b',this,'b-active')">
+    <div style="font-size:22px;margin-bottom:5px">⭐</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;color:#a78bfa">ENG B</div>
+    <div style="font-size:11px;font-weight:600;margin-top:2px">Rate</div>
+  </button>
+  <button class="engine-tab" onclick="switchEngine('c',this,'c-active')">
+    <div style="font-size:22px;margin-bottom:5px">🏆</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;color:var(--green)">ENG C</div>
+    <div style="font-size:11px;font-weight:600;margin-top:2px">Rank</div>
+  </button>
+  <button class="engine-tab" onclick="switchEngine('d',this,'d-active')">
+    <div style="font-size:22px;margin-bottom:5px">🎮</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;color:var(--orange)">ENG D</div>
+    <div style="font-size:11px;font-weight:600;margin-top:2px">Simulate</div>
+  </button>
+  <button class="engine-tab" onclick="switchEngine('nl',this,'nl-active')">
+    <div style="font-size:22px;margin-bottom:5px">💬</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1.5px;color:#f472b6">AI ASK</div>
+    <div style="font-size:11px;font-weight:600;margin-top:2px">Ask AI</div>
+  </button>
+</div>
+
+<!-- PANEL A: MATCH PREDICTION -->
+<div class="panel show" id="panel-a">
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title">🏠 Home Team</div>
+      <div class="field"><label>Team Name</label><input id="a_hn" placeholder="e.g. Arsenal"></div>
+      <div class="form-row">
+        <div class="field"><label>Goals Scored/game</label><input type="number" id="a_hgs" placeholder="2.1" step="0.1"></div>
+        <div class="field"><label>Goals Conceded/game</label><input type="number" id="a_hgc" placeholder="0.9" step="0.1"></div>
+      </div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="a_hf" placeholder="W W D W W"></div>
+      <div class="form-row">
+        <div class="field"><label>Win Rate %</label><input type="number" id="a_hwr" placeholder="68"></div>
+        <div class="field"><label>Key Injuries</label><input type="number" id="a_hi" placeholder="0" min="0" max="5"></div>
+      </div>
+      <div class="field"><label>League Position (1-20)</label><input type="number" id="a_hp" placeholder="2"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">✈️ Away Team</div>
+      <div class="field"><label>Team Name</label><input id="a_an" placeholder="e.g. Real Madrid"></div>
+      <div class="form-row">
+        <div class="field"><label>Goals Scored/game</label><input type="number" id="a_ags" placeholder="2.4" step="0.1"></div>
+        <div class="field"><label>Goals Conceded/game</label><input type="number" id="a_agc" placeholder="0.8" step="0.1"></div>
+      </div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="a_af" placeholder="W W W D W"></div>
+      <div class="form-row">
+        <div class="field"><label>Win Rate %</label><input type="number" id="a_awr" placeholder="55"></div>
+        <div class="field"><label>Key Injuries</label><input type="number" id="a_ai" placeholder="1" min="0" max="5"></div>
+      </div>
+      <div class="field"><label>League Position (1-20)</label><input type="number" id="a_ap" placeholder="1"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">⚔️ Head-to-Head (last 10 matches)</div>
+    <div class="form-row3">
+      <div class="field"><label>Home Wins</label><input type="number" id="a_h2hh" placeholder="4" min="0" max="10"></div>
+      <div class="field"><label>Draws</label><input type="number" id="a_h2hd" placeholder="3" min="0" max="10"></div>
+      <div class="field"><label>Away Wins</label><input type="number" id="a_h2ha" placeholder="3" min="0" max="10"></div>
+    </div>
+  </div>
+  <button class="btn btn-engine-a btn-full" style="padding:14px;font-size:14px;font-family:'Orbitron',sans-serif;letter-spacing:2px" onclick="runEngine('A')">⚡ RUN PREDICTION ENGINE</button>
+  <div class="loading-overlay" id="a_load"><div class="spin"></div><div class="loading-text">V1 + AI Hybrid Analysis</div><div class="loading-steps" id="a_steps">Initialising...</div></div>
+  <div class="result-card result-a" id="a_result">
+    <div class="card-title">📊 PREDICTION RESULT</div>
+    <div id="a_bars"></div>
+    <div id="a_verdict"></div>
+    <div class="compare-grid">
+      <div class="compare-box">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:700;margin-bottom:6px">V1 ENGINE</div>
+        <div id="a_v1" style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700"></div>
+        <div id="a_v1_detail" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+      </div>
+      <div class="compare-box">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:6px">AI ENGINE</div>
+        <div id="a_ai_res" style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700"></div>
+        <div id="a_ai_detail" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="ai-insight"><div class="ai-insight-label">🤖 AI INSIGHT</div><div class="ai-insight-text" id="a_insight"></div></div>
+  </div>
+</div>
+
+<!-- PANEL B: PLAYER RATING -->
+<div class="panel" id="panel-b">
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title">👤 Player Info</div>
+      <div class="field"><label>Player Name</label><input id="b_name" placeholder="e.g. Erling Haaland"></div>
+      <div class="field"><label>Position</label>
+        <select id="b_pos">
+          <option value="ST">Striker (ST)</option><option value="LW">Left Wing (LW)</option><option value="RW">Right Wing (RW)</option>
+          <option value="CAM">Attacking Mid (CAM)</option><option value="CM">Central Mid (CM)</option><option value="CDM">Defensive Mid (CDM)</option>
+          <option value="LB">Left-Back (LB)</option><option value="RB">Right-Back (RB)</option><option value="CB">Centre-Back (CB)</option><option value="GK">Goalkeeper (GK)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Goals</label><input type="number" id="b_goals" placeholder="22"></div>
+        <div class="field"><label>Assists</label><input type="number" id="b_assists" placeholder="8"></div>
+      </div>
+      <div class="field"><label>Games Played</label><input type="number" id="b_games" placeholder="28"></div>
+      <div class="field"><label>Injury Status</label>
+        <select id="b_inj"><option value="fit">Fully Fit</option><option value="doubt">Doubt (75%)</option><option value="minor">Minor Injury (50%)</option><option value="major">Major Injury (20%)</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Performance Stats</div>
+      <div class="field"><label>Pass Accuracy %</label><input type="number" id="b_pass" placeholder="84"></div>
+      <div class="field"><label>Shots on Target %</label><input type="number" id="b_shot" placeholder="61"></div>
+      <div class="field"><label>Dribble Success %</label><input type="number" id="b_drib" placeholder="55"></div>
+      <div class="field"><label>Tackle Success %</label><input type="number" id="b_tackle" placeholder="50"></div>
+      <div class="field"><label>Aerial Duels Won %</label><input type="number" id="b_aerial" placeholder="60"></div>
+      <div class="field"><label>Distance Covered (km/g)</label><input type="number" id="b_dist" placeholder="10.8" step="0.1"></div>
+    </div>
+  </div>
+  <button class="btn btn-engine-b btn-full" style="padding:14px;font-size:14px;font-family:'Orbitron',sans-serif;letter-spacing:2px" onclick="runEngine('B')">⭐ CALCULATE PLAYER RATING</button>
+  <div class="loading-overlay" id="b_load"><div class="spin" style="border-top-color:#a78bfa"></div><div class="loading-text">Calculating Rating...</div></div>
+  <div class="result-card result-b" id="b_result">
+    <div class="card-title">⭐ PLAYER RATING</div>
+    <div id="b_output" style="text-align:center;padding:20px 0"></div>
+    <div class="ai-insight"><div class="ai-insight-label">🤖 AI INSIGHT</div><div class="ai-insight-text" id="b_insight"></div></div>
+  </div>
+</div>
+
+<!-- PANEL C: TEAM RANKING -->
+<div class="panel" id="panel-c">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">➕ Add Team to ELO Ranking</div>
+    <div class="form-row">
+      <div class="field"><label>Team Name</label><input id="c_name" placeholder="e.g. Manchester City"></div>
+      <div class="field"><label>Base ELO (default 1000)</label><input type="number" id="c_elo" placeholder="1000"></div>
+    </div>
+    <div class="form-row3">
+      <div class="field"><label>Wins</label><input type="number" id="c_w" placeholder="18"></div>
+      <div class="field"><label>Draws</label><input type="number" id="c_d" placeholder="6"></div>
+      <div class="field"><label>Losses</label><input type="number" id="c_l" placeholder="4"></div>
+    </div>
+    <div class="form-row3">
+      <div class="field"><label>Goals For</label><input type="number" id="c_gf" placeholder="62"></div>
+      <div class="field"><label>Goals Against</label><input type="number" id="c_ga" placeholder="28"></div>
+      <div class="field"><label>Opp. Strength (1-10)</label><input type="number" id="c_opp" placeholder="6.5" step="0.5"></div>
+    </div>
+    <button class="btn btn-engine-c btn-full" style="padding:13px;font-size:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px" onclick="addTeam()">🏆 ADD & RANK TEAM</button>
+  </div>
+  <div class="card">
+    <div class="card-title">🏆 POWER RANKINGS (ELO)</div>
+    <div id="c_table"><div style="color:var(--muted);text-align:center;padding:30px;font-size:14px">Add teams above to build your ranking table</div></div>
+  </div>
+</div>
+
+<!-- PANEL D: SIMULATION -->
+<div class="panel" id="panel-d">
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-title">🏠 Home Team</div>
+      <div class="field"><label>Team Name</label><input id="d_hn" placeholder="e.g. Liverpool"></div>
+      <div class="form-row">
+        <div class="field"><label>Attack (1-100)</label><input type="number" id="d_hatk" placeholder="85"></div>
+        <div class="field"><label>Defence (1-100)</label><input type="number" id="d_hdef" placeholder="78"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>ELO Rating</label><input type="number" id="d_helo" placeholder="1350"></div>
+        <div class="field"><label>Key Injuries</label>
+          <select id="d_hinj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✈️ Away Team</div>
+      <div class="field"><label>Team Name</label><input id="d_an" placeholder="e.g. Bayern Munich"></div>
+      <div class="form-row">
+        <div class="field"><label>Attack (1-100)</label><input type="number" id="d_aatk" placeholder="88"></div>
+        <div class="field"><label>Defence (1-100)</label><input type="number" id="d_adef" placeholder="80"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>ELO Rating</label><input type="number" id="d_aelo" placeholder="1380"></div>
+        <div class="field"><label>Key Injuries</label>
+          <select id="d_ainj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">⚙️ Simulation Settings</div>
+    <div class="form-row3">
+      <div class="field"><label>Competition</label>
+        <select id="d_comp"><option value="league">League</option><option value="champions">Champions League</option><option value="cup">Cup</option><option value="friendly">Friendly</option></select>
+      </div>
+      <div class="field"><label>Simulations</label>
+        <select id="d_sims"><option value="1000">1,000 (Fast)</option><option value="10000" selected>10,000 (Balanced)</option><option value="100000">100,000 (Deep)</option></select>
+      </div>
+      <div class="field"><label>Weather</label>
+        <select id="d_wx"><option value="normal">Normal</option><option value="rain">Heavy Rain</option><option value="wind">Strong Wind</option><option value="heat">Extreme Heat</option></select>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-engine-d btn-full" style="padding:14px;font-size:14px;font-family:'Orbitron',sans-serif;letter-spacing:2px" onclick="runEngine('D')">🎮 RUN FULL SIMULATION</button>
+  <div class="loading-overlay" id="d_load"><div class="spin" style="border-top-color:var(--orange)"></div><div class="loading-text">Running Monte Carlo Simulation...</div><div class="loading-steps" id="d_steps">Generating match events...</div></div>
+  <div class="result-card result-d" id="d_result">
+    <div class="card-title">🎮 SIMULATION RESULT</div>
+    <div id="d_output"></div>
+    <div class="ai-insight"><div class="ai-insight-label">🤖 AI MATCH ANALYSIS</div><div class="ai-insight-text" id="d_insight"></div></div>
+  </div>
+</div>
+
+<!-- PANEL NL: NATURAL LANGUAGE -->
+<div class="panel" id="panel-nl">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">💬 Ask the AI Anything About Football</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.7">Type any football prediction question in plain English. The AI will analyse and give you a detailed prediction.</div>
+    <div class="field">
+      <label>Your Question</label>
+      <textarea id="nl_question" placeholder="e.g. Who will win the Champions League final between Arsenal and Real Madrid? Arsenal's striker is injured..." style="height:100px;resize:vertical"></textarea>
+    </div>
+    <button class="btn btn-engine-nl btn-full" style="padding:13px;font-size:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px" onclick="runEngine('NL')">💬 ASK AI ENGINE</button>
+  </div>
+  <div class="loading-overlay" id="nl_load"><div class="spin" style="border-top-color:#f472b6"></div><div class="loading-text">AI is thinking...</div></div>
+  <div class="result-card" id="nl_result" style="border-top:3px solid #f472b6">
+    <div class="card-title">💬 AI RESPONSE</div>
+    <div id="nl_output"></div>
+  </div>
+</div>
+
+<!-- RECENT PREDICTIONS -->
+{% if recent %}
+<div style="margin-top:28px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700">Recent Predictions</div>
+    <a href="/dashboard/history/" style="color:var(--accent);font-size:12px;text-decoration:none">View All →</a>
+  </div>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px">
+        <th style="text-align:left;padding:8px 10px">Engine</th>
+        <th style="text-align:left;padding:8px 10px">Match</th>
+        <th style="text-align:left;padding:8px 10px">Prediction</th>
+        <th style="text-align:left;padding:8px 10px">Confidence</th>
+        <th style="text-align:left;padding:8px 10px">Date</th>
+      </tr></thead>
+      <tbody>
+        {% for p in recent %}
+        <tr style="border-top:1px solid rgba(255,255,255,0.04)">
+          <td style="padding:10px"><span class="badge badge-blue">Eng {{ p.engine }}</span></td>
+          <td style="padding:10px;color:var(--text2)">
+            {% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% elif p.engine == 'B' %}{{ p.input_data.name|default:"Player" }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:10px;font-weight:600;color:var(--accent)">{{ p.predicted_result|default:"—" }}</td>
+          <td style="padding:10px"><span style="color:{% if p.confidence >= 70 %}var(--green){% elif p.confidence >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ p.confidence }}%</span></td>
+          <td style="padding:10px;color:var(--muted)">{{ p.created_at|date:"d M" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+</div><!-- end main left column -->
+
+<!-- RIGHT SIDEBAR -->
+<div>
+
+  <!-- API KEY -->
+  <div class="card" style="margin-bottom:16px;border-color:rgba(0,212,255,0.15)">
+    <div class="card-title">🔑 Your API Key</div>
+    <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.12);border-radius:8px;padding:10px;word-break:break-all;margin-bottom:10px" id="apiKeyDisp">{{ user.api_key|slice:":20" }}••••</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="toggleApiKey()" class="btn btn-secondary" style="flex:1;padding:7px;font-size:11px">Show</button>
+      <button onclick="copyApiKey()" class="btn btn-primary" style="flex:1;padding:7px;font-size:11px">Copy</button>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Referral: <span style="color:var(--accent);font-weight:700">{{ user.referral_code }}</span></div>
+  </div>
+
+  <!-- LIVE SCORES MINI -->
+  {% if live_scores %}
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">🔴 Live Now</div>
+      <a href="/scores/" style="color:var(--accent);font-size:11px;text-decoration:none">All →</a>
+    </div>
+    {% for s in live_scores %}
+    <div class="live-mini">
+      <div style="flex:1;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.home }}</div>
+      <div class="live-score" style="{% if s.minute %}color:var(--red){% else %}color:var(--muted){% endif %};font-size:13px;padding:0 8px">
+        {% if s.home_score is not None %}{{ s.home_score }}-{{ s.away_score }}{% else %}vs{% endif %}
+      </div>
+      <div style="flex:1;font-size:12px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.away }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- WEEKLY TIPS -->
+  {% if tips %}
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:0">📅 Weekly Tips</div>
+      <a href="/dashboard/tips/" style="color:var(--accent);font-size:11px;text-decoration:none">All →</a>
+    </div>
+    {% for tip in tips %}
+    <div class="tip-card">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">{{ tip.home_team }} vs {{ tip.away_team }}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">{{ tip.tip }}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:11px;color:var(--muted)">{{ tip.competition }}</span>
+        <span style="font-size:11px;color:var(--green)">{{ tip.confidence }}% conf</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- TEAM RANKINGS -->
+  {% if rankings %}
+  <div class="card">
+    <div class="card-title">🏆 My Rankings</div>
+    {% for r in rankings %}
+    <div class="rank-row">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:700;width:24px;color:var(--muted)">{{ forloop.counter }}</div>
+      <div style="flex:1;font-weight:600;font-size:13px">{{ r.name }}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent)">{{ r.power_elo }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div><!-- end sidebar -->
+</div><!-- end main grid -->
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const API_KEY = '{{ user.api_key }}';
+let currentEngine = 'a';
+let shown = false;
+
+function switchEngine(id, btn, activeClass) {
+  document.querySelectorAll('.engine-tab').forEach(b => {
+    b.classList.remove('a-active','b-active','c-active','d-active','nl-active');
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+  btn.classList.add(activeClass);
+  document.getElementById('panel-' + id).classList.add('show');
+  currentEngine = id;
+}
+
+function toggleApiKey() {
+  shown = !shown;
+  document.getElementById('apiKeyDisp').textContent = shown ? API_KEY : API_KEY.slice(0,20) + '••••';
+}
+
+function copyApiKey() {
+  navigator.clipboard.writeText(API_KEY).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+function probBar(label, pct, color) {
+  return `<div class="prob-row">
+    <div class="prob-label">${label}</div>
+    <div class="prob-bar-wrap"><div class="prob-bar-fill" style="width:0%;background:${color}" data-t="${pct}"></div></div>
+    <div class="prob-pct">${pct}%</div>
+  </div>`;
+}
+
+function animBars() {
+  setTimeout(() => document.querySelectorAll('[data-t]').forEach(e => e.style.width = e.dataset.t + '%'), 80);
+}
+
+function showLoading(id) {
+  document.getElementById(id + '_load').classList.add('show');
+  document.getElementById(id + '_result')?.classList.remove('show');
+}
+
+function hideLoading(id) {
+  document.getElementById(id + '_load').classList.remove('show');
+}
+
+function g(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+
+async function runEngine(engine) {
+  const id = engine.toLowerCase();
+  showLoading(id);
+
+  let data = {};
+  if (engine === 'A') {
+    data = {
+      home: { name: g('a_hn'), goals_scored: g('a_hgs'), goals_conceded: g('a_hgc'), form: g('a_hf'), win_rate: g('a_hwr'), injuries: g('a_hi'), position: g('a_hp') },
+      away: { name: g('a_an'), goals_scored: g('a_ags'), goals_conceded: g('a_agc'), form: g('a_af'), win_rate: g('a_awr'), injuries: g('a_ai'), position: g('a_ap') },
+      h2h: { home_wins: g('a_h2hh'), draws: g('a_h2hd'), away_wins: g('a_h2ha') }
+    };
+  } else if (engine === 'B') {
+    data = { name: g('b_name'), position: g('b_pos'), goals: g('b_goals'), assists: g('b_assists'), games: g('b_games'), pass_accuracy: g('b_pass'), shots_on_target: g('b_shot'), dribble_success: g('b_drib'), tackle_success: g('b_tackle'), aerial_duels: g('b_aerial'), distance_covered: g('b_dist'), injury_status: g('b_inj') };
+  } else if (engine === 'D') {
+    data = {
+      home: { name: g('d_hn'), attack: g('d_hatk'), defence: g('d_hdef'), elo: g('d_helo'), injuries: g('d_hinj') },
+      away: { name: g('d_an'), attack: g('d_aatk'), defence: g('d_adef'), elo: g('d_aelo'), injuries: g('d_ainj') },
+      simulations: g('d_sims'), competition: g('d_comp'), weather: g('d_wx')
+    };
+  } else if (engine === 'NL') {
+    data = { question: g('nl_question') };
+  }
+
+  try {
+    const resp = await fetch(`/dashboard/engine/${engine}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(data)
+    });
+    const d = await resp.json();
+    hideLoading(id);
+
+    if (d.success) {
+      renderResult(engine, d.result, data);
+    } else if (d.error === 'subscription_expired') {
+      alert('⚠️ Your free trials are used up. Please subscribe to continue.');
+      window.location.href = '/pricing/';
+    } else {
+      alert('Error: ' + (d.error || 'Please try again.'));
+    }
+  } catch (e) {
+    hideLoading(id);
+    alert('Network error. Check your connection and try again.');
+  }
+}
+
+function renderResult(engine, r, input) {
+  if (engine === 'A') {
+    const hn = input.home?.name || 'Home';
+    const an = input.away?.name || 'Away';
+    const el = document.getElementById('a_result');
+    el.classList.add('show');
+    document.getElementById('a_bars').innerHTML =
+      probBar(hn + ' Win', r.home_win, 'linear-gradient(90deg,#00d4ff,#0099cc)') +
+      probBar('Draw', r.draw, 'linear-gradient(90deg,#f59e0b,#d97706)') +
+      probBar(an + ' Win', r.away_win, 'linear-gradient(90deg,#ef4444,#b91c1c)');
+    animBars();
+    const icon = r.verdict === hn ? '🏠' : r.verdict === an ? '✈️' : '🤝';
+    document.getElementById('a_verdict').innerHTML = `<div class="verdict-box"><div style="font-size:28px">${icon}</div><div><div style="font-size:16px;font-weight:700;color:var(--accent)">${r.verdict === 'Draw' ? 'Closely contested — Draw likely' : r.verdict + ' predicted to win'}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Confidence: ${r.confidence}% · Predicted score: ${r.predicted_score}</div></div></div>`;
+    document.getElementById('a_v1').textContent = `Home ${r.v1?.home}%`;
+    document.getElementById('a_v1_detail').textContent = `Draw ${r.v1?.draw}% · Away ${r.v1?.away}%`;
+    document.getElementById('a_ai_res').textContent = r.ai ? `Home ${(r.ai.homeWin*100).toFixed(1)}%` : 'V1 only';
+    document.getElementById('a_ai_detail').textContent = r.ai?.v1_agreement ? `AI ${r.ai.v1_agreement}s V1 · ${r.ai.key_factor||''}` : 'AI unavailable';
+    document.getElementById('a_insight').textContent = r.insight;
+  }
+  else if (engine === 'B') {
+    const colors = {'World Class':'#f59e0b','Elite':'#00d4ff','Quality':'#10b981','Average':'#94a3b8','Below Average':'#ef4444'};
+    const c = colors[r.tier] || '#94a3b8';
+    document.getElementById('b_result').classList.add('show');
+    document.getElementById('b_output').innerHTML = `
+      <div style="background:conic-gradient(${c} ${r.rating*3.6}deg,rgba(255,255,255,0.05) 0deg);border-radius:50%;width:130px;height:130px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <div style="background:var(--card);border-radius:50%;width:100px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:${c}">${r.rating}</div>
+        </div>
+      </div>
+      <div style="font-weight:700;font-size:16px;color:${c};margin-bottom:4px">${r.tier}</div>
+      <div style="font-size:12px;color:var(--muted)">${input.name||'Player'} · ${input.position}</div>`;
+    document.getElementById('b_insight').textContent = r.insight;
+  }
+  else if (engine === 'D') {
+    const hn = input.home?.name || 'Home';
+    const an = input.away?.name || 'Away';
+    const [lsh, lsa] = r.likely_score.split('-');
+    document.getElementById('d_result').classList.add('show');
+    document.getElementById('d_output').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:24px;padding:20px;text-align:center">
+        <div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">${hn}</div><div class="score-big" style="color:var(--orange)">${lsh}</div></div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:var(--muted)">—</div>
+        <div><div style="font-size:12px;color:var(--muted);margin-bottom:8px">${an}</div><div class="score-big">${lsa}</div></div>
+      </div>
+      <div style="margin-bottom:14px">
+        ${probBar(hn+' Win',r.home_win,'linear-gradient(90deg,#fb923c,#d97706)')}
+        ${probBar('Draw',r.draw,'linear-gradient(90deg,#f59e0b,#d97706)')}
+        ${probBar(an+' Win',r.away_win,'linear-gradient(90deg,#ef4444,#b91c1c)')}
+      </div>`;
+    animBars();
+    document.getElementById('d_insight').textContent = r.insight;
+  }
+  else if (engine === 'NL') {
+    document.getElementById('nl_result').classList.add('show');
+    const conf_color = r.confidence >= 70 ? 'var(--green)' : r.confidence >= 50 ? 'var(--gold)' : 'var(--red)';
+    document.getElementById('nl_output').innerHTML = `
+      <div style="font-size:15px;line-height:1.9;color:var(--text2);margin-bottom:16px">${r.answer}</div>
+      ${r.prediction ? `<div class="verdict-box"><div style="font-size:24px">🎯</div><div><div style="font-size:15px;font-weight:700;color:var(--accent)">${r.prediction}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Confidence: <span style="color:${conf_color}">${r.confidence}%</span></div></div></div>` : ''}
+      ${r.key_factors?.length ? `<div style="margin-top:12px"><div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Key Factors</div>${r.key_factors.map(f => `<div style="padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:13px;margin-bottom:4px">→ ${f}</div>`).join('')}</div>` : ''}`;
+  }
+}
+
+async function addTeam() {
+  const data = { name: g('c_name'), wins: g('c_w'), draws: g('c_d'), losses: g('c_l'), goals_for: g('c_gf'), goals_against: g('c_ga'), opp_strength: g('c_opp'), base_elo: g('c_elo') || 1000 };
+  if (!data.name) return alert('Please enter a team name');
+  try {
+    const resp = await fetch('/dashboard/ranking/add/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify(data) });
+    const d = await resp.json();
+    if (d.success) renderRankings(d.rankings);
+  } catch(e) { alert('Error adding team'); }
+}
+
+function renderRankings(rankings) {
+  if (!rankings.length) return;
+  const rows = rankings.map((t,i) => {
+    const gd = t.goals_for - t.goals_against;
+    return `<tr style="border-top:1px solid rgba(255,255,255,0.04)">
+      <td style="padding:10px;font-family:'Orbitron',sans-serif;font-weight:700;color:var(--muted)">${i+1}</td>
+      <td style="padding:10px;font-weight:600">${t.name}</td>
+      <td style="padding:10px;font-family:'Orbitron',sans-serif;color:var(--accent)">${t.power_elo}</td>
+      <td style="padding:10px;color:var(--green)">${t.wins}</td>
+      <td style="padding:10px;color:var(--gold)">${t.draws}</td>
+      <td style="padding:10px;color:var(--red)">${t.losses}</td>
+      <td style="padding:10px;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>0?'+':''}${gd}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('c_table').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px">
+      <th style="text-align:left;padding:8px 10px">#</th><th style="text-align:left;padding:8px 10px">Team</th>
+      <th style="text-align:left;padding:8px 10px">ELO</th><th style="padding:8px 10px">W</th><th style="padding:8px 10px">D</th><th style="padding:8px 10px">L</th><th style="padding:8px 10px">GD</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// Pre-fill from live scores click
+const preHome = sessionStorage.getItem('predict_home');
+const preAway = sessionStorage.getItem('predict_away');
+if (preHome) { document.getElementById('a_hn').value = preHome; sessionStorage.removeItem('predict_home'); }
+if (preAway) { document.getElementById('a_an').value = preAway; sessionStorage.removeItem('predict_away'); }
+</script>
+{% endblock %}

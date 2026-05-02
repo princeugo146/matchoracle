@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Limit Reached{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:500px;margin:80px auto;text-align:center">
+  <div style="font-size:64px;margin-bottom:20px">⚠️</div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:12px">Prediction Limit Reached</div>
+  <div style="color:var(--text2);margin-bottom:32px;font-size:15px;line-height:1.7">You've used all your free predictions. Upgrade to continue using MatchOracle with up to 500 predictions per day.</div>
+  <a href="/pricing/" class="btn btn-primary" style="padding:14px 32px;font-size:15px">View Plans ⚡</a>
+</div>
+{% endblock %}

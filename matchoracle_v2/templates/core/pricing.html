@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Pricing{% endblock %}
+{% block content %}
+<div class="wrap" style="padding:70px 0">
+  <div style="text-align:center;margin-bottom:50px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:clamp(24px,4vw,36px);font-weight:700;margin-bottom:12px">Simple Pricing</div>
+    <div style="color:var(--text2);font-size:16px">Start free. Upgrade when ready. Cancel anytime.</div>
+  </div>
+  <div class="grid3">
+    {% for key,plan in PLANS.items %}
+    <div class="card" style="text-align:center;padding:36px 24px;{% if key == 'pro' %}border-color:rgba(0,212,255,0.3);background:linear-gradient(135deg,rgba(0,212,255,0.04),rgba(124,58,237,0.04));{% endif %}position:relative">
+      {% if key == 'pro' %}<div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#030508;font-size:10px;font-weight:800;letter-spacing:2px;padding:4px 16px;border-radius:20px;white-space:nowrap">BEST VALUE</div>{% endif %}
+      <div style="font-size:36px;margin-bottom:12px">{% if key == 'free' %}🆓{% elif key == 'basic' %}⚡{% else %}🏆{% endif %}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;margin-top:{% if key == 'pro' %}10px{% else %}0{% endif %}">{{ plan.name }}</div>
+      <div style="font-size:48px;font-weight:800;line-height:1;margin-bottom:6px">{% if plan.price == 0 %}Free{% else %}{{ CURRENCY_SYMBOL }}{{ plan.price|floatformat:0 }}{% endif %}</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:28px">{% if plan.price == 0 %}6 predictions total{% elif plan.duration_days == 30 %}per month{% else %}per year · Save 38%{% endif %}</div>
+      <div style="font-size:13px;line-height:2.6;text-align:left;margin-bottom:28px;color:var(--text2)">
+        ✅ {{ plan.predictions_per_day }} predictions/day<br>
+        ✅ All 4 Intelligence Engines<br>
+        {% if plan.api_access %}✅ Full API access + key<br>{% else %}❌ No API access<br>{% endif %}
+        ✅ Live scores & forecasts<br>
+        {% if key == 'pro' %}✅ Exclusive Pro tips<br>✅ Priority AI processing<br>✅ Referral bonuses<br>✅ Advanced analytics<br>{% endif %}
+      </div>
+      {% if key == 'free' %}
+        <a href="/accounts/register/" class="btn btn-secondary btn-full">Get Started Free</a>
+      {% elif key == 'basic' %}
+        <a href="/accounts/subscribe/basic/" class="btn btn-primary btn-full">Subscribe — {{ CURRENCY_SYMBOL }}{{ plan.price|floatformat:0 }}/mo</a>
+      {% else %}
+        <a href="/accounts/subscribe/pro/" class="btn btn-full" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white">Subscribe — {{ CURRENCY_SYMBOL }}{{ plan.price|floatformat:0 }}/yr</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div style="text-align:center;margin-top:40px;font-size:13px;color:var(--muted)">
+    🔒 Payments secured by Paystack · Nigerian cards, bank transfer & USSD supported
+  </div>
+</div>
+{% endblock %}
