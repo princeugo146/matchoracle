@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up Free{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:480px;margin:70px auto">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:40px;margin-bottom:12px">🚀</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Create Account</div>
+    <div style="color:var(--text2);font-size:14px">6 free predictions — no credit card needed</div>
+  </div>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="field"><label>Email Address</label><input type="email" name="email" placeholder="you@email.com" required autofocus></div>
+      <div class="field"><label>First Name (optional)</label><input type="text" name="first_name" placeholder="Your name"></div>
+      <div class="field"><label>Password</label><input type="password" name="password1" placeholder="Min 8 characters" required></div>
+      <div class="field"><label>Confirm Password</label><input type="password" name="password2" placeholder="Repeat password" required></div>
+      <div class="field"><label>Referral Code (optional)</label><input type="text" name="ref_code" placeholder="Enter referral code for bonus"></div>
+      {% if form.errors %}<div class="alert alert-error">{{ form.errors }}</div>{% endif %}
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;padding:13px">⚡ Create Free Account</button>
+    </form>
+    <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text2)">
+      Already have an account? <a href="/accounts/login/" style="color:var(--accent);font-weight:600">Login</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

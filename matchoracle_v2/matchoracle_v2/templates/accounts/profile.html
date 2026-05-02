@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:28px">My Profile</div>
+  <div class="grid2" style="margin-bottom:24px">
+    <div class="card">
+      <div class="card-title">Account Info</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:28px">{{ user.avatar }}</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">{{ user.first_name|default:user.username }}</div>
+          <div style="color:var(--muted);font-size:13px">{{ user.email }}</div>
+          <div style="margin-top:4px"><span class="plan-badge plan-{{ user.plan }}">{{ user.plan|upper }}</span></div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:2.4">
+        <div>📅 Member since: {{ user.created_at|date:"d M Y" }}</div>
+        <div>⚡ Predictions made: {{ user.total_predictions }}</div>
+        <div>🎯 Accuracy rate: {{ user.accuracy_rate }}%</div>
+        <div>📆 Days remaining: {{ user.days_remaining }}</div>
+        <div>👥 Referrals: {{ user.referral_count }}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">API Key</div>
+      <div style="font-family:monospace;font-size:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:8px;padding:12px;word-break:break-all;color:var(--accent);margin-bottom:12px" id="apiKeyDisplay">{{ user.api_key|slice:":24" }}••••••••••••••••</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="toggleKey()" class="btn btn-secondary" style="flex:1;padding:8px;font-size:12px">Show/Hide</button>
+        <button onclick="copyKey()" class="btn btn-primary" style="flex:1;padding:8px;font-size:12px">Copy Key</button>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:rgba(0,212,255,0.05);border-radius:8px;font-size:12px;color:var(--text2)">
+        🔗 <strong>Referral Code:</strong> <span style="color:var(--accent);font-weight:700">{{ user.referral_code }}</span><br>
+        Share this code and earn 7 bonus days per referral!
+      </div>
+    </div>
+  </div>
+  {% if not user.plan == 'free' %}
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+    <a href="/accounts/subscribe/basic/" class="btn btn-primary">Upgrade to Basic</a>
+    <a href="/accounts/subscribe/pro/" class="btn" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white">Upgrade to Pro</a>
+  </div>
+  {% endif %}
+</div>
+<script>
+const FULL_KEY = '{{ user.api_key }}';
+let shown = false;
+function toggleKey(){
+  shown = !shown;
+  document.getElementById('apiKeyDisplay').textContent = shown ? FULL_KEY : FULL_KEY.slice(0,24)+'••••••••••••••••';
+}
+function copyKey(){
+  navigator.clipboard.writeText(FULL_KEY).then(()=>alert('API Key copied!'));
+}
+</script>
+{% endblock %}
