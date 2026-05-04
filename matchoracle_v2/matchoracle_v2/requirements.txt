@@ -6,3 +6,13 @@ whitenoise>=6.6
 requests>=2.31
 Pillow>=10.0
 gunicorn>=21.2
+# AI predictions
+anthropic>=0.7.0
+# Async task queue
+celery>=5.3.0
+# Celery broker / cache backend
+redis>=5.0.0
+# Environment variable management
+python-dotenv>=1.0.0
+# PostgreSQL driver
+psycopg2-binary>=2.9.0

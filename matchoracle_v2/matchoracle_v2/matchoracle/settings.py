@@ -2,10 +2,22 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+# Load .env for local development (no-op when the file is absent)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-matchoracle-v2')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['*']
+
+# Always include localhost for local dev; add Railway domain when present.
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.railway.app']
+_RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+if _RAILWAY_PUBLIC_DOMAIN and _RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_RAILWAY_PUBLIC_DOMAIN)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -51,14 +63,35 @@ TEMPLATES = [{
 }]
 
 WSGI_APPLICATION = 'matchoracle.wsgi.application'
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {'timeout': 20},
-        'CONN_MAX_AGE': 60,
+
+# ── DATABASE ──
+# Use DATABASE_URL (PostgreSQL on Railway) when set; fall back to SQLite for
+# local development.  psycopg2-binary is required for PostgreSQL.
+_DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if _DATABASE_URL:
+    import urllib.parse as _urlparse
+    _u = _urlparse.urlparse(_DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _u.path.lstrip('/'),
+            'USER': _u.username,
+            'PASSWORD': _u.password,
+            'HOST': _u.hostname,
+            'PORT': _u.port or 5432,
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {'sslmode': 'require'},
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {'timeout': 20},
+            'CONN_MAX_AGE': 60,
+        }
+    }
 
 AUTH_USER_MODEL = 'accounts.User'
 LANGUAGE_CODE = 'en-us'
@@ -76,14 +109,28 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Remove STATICFILES_DIRS to avoid the /app/static warning
 # Static files are served from STATIC_ROOT only
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'matchoracle-cache',
-        'TIMEOUT': 300,
-        'OPTIONS': {'MAX_ENTRIES': 1000}
+# ── CACHE ──
+# Use Redis when REDIS_URL is set (Railway Redis add-on); fall back to the
+# in-process LocMemCache so the app still works without Redis.
+_REDIS_URL = os.environ.get('REDIS_URL', '')
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _REDIS_URL,
+            'TIMEOUT': 300,
+            'OPTIONS': {'MAX_ENTRIES': 5000},
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'matchoracle-cache',
+            'TIMEOUT': 300,
+            'OPTIONS': {'MAX_ENTRIES': 1000},
+        }
+    }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400 * 30
@@ -107,7 +154,19 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+# ── CORS ──
+# Allow all origins in DEBUG mode; restrict to known domains in production.
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        'https://matchoracle-production.up.railway.app',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
+    if _RAILWAY_PUBLIC_DOMAIN:
+        CORS_ALLOWED_ORIGINS.append(f'https://{_RAILWAY_PUBLIC_DOMAIN}')
 
 # ── CSRF & SECURITY ──
 CSRF_TRUSTED_ORIGINS = [
@@ -117,9 +176,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
-# Get the Railway URL from environment if available
 RAILWAY_STATIC_URL = os.environ.get('RAILWAY_STATIC_URL', '')
-RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+RAILWAY_PUBLIC_DOMAIN = _RAILWAY_PUBLIC_DOMAIN
 if RAILWAY_PUBLIC_DOMAIN:
     CSRF_TRUSTED_ORIGINS.append(f'https://{RAILWAY_PUBLIC_DOMAIN}')
 
@@ -158,3 +216,83 @@ MATCHORACLE = {
     'PAYSTACK_PUBLIC_KEY': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
     'VERSION': '2.0.0',
 }
+
+# ── CELERY ──
+# Gracefully degrade when Redis is unavailable: tasks will be executed
+# synchronously via the 'always_eager' setting so the app keeps working.
+CELERY_BROKER_URL = _REDIS_URL or 'memory://'
+CELERY_RESULT_BACKEND = _REDIS_URL or 'cache+memory://'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = not bool(_REDIS_URL)   # run inline when no broker
+CELERY_TASK_EAGER_PROPAGATES = False               # don't raise in-process
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BEAT_SCHEDULE = {
+    # Refresh live scores every 60 seconds when Celery Beat is running.
+    'fetch-live-scores': {
+        'task': 'core.tasks.fetch_live_scores',
+        'schedule': 60.0,
+    },
+}
+
+# ── LOGGING ──
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accounts': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'predictions': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
