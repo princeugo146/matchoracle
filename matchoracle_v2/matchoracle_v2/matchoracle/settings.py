@@ -51,14 +51,6 @@ TEMPLATES = [{
 }]
 
 WSGI_APPLICATION = 'matchoracle.wsgi.application'
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {'timeout': 20},
-        'CONN_MAX_AGE': 60,
-    }
-}
 
 AUTH_USER_MODEL = 'accounts.User'
 LANGUAGE_CODE = 'en-us'
@@ -73,17 +65,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Remove STATICFILES_DIRS to avoid the /app/static warning
 # Static files are served from STATIC_ROOT only
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'matchoracle-cache',
-        'TIMEOUT': 300,
-        'OPTIONS': {'MAX_ENTRIES': 1000}
-    }
-}
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400 * 30
@@ -157,4 +139,98 @@ MATCHORACLE = {
     'PAYSTACK_SECRET_KEY': os.environ.get('PAYSTACK_SECRET_KEY', ''),
     'PAYSTACK_PUBLIC_KEY': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
     'VERSION': '2.0.0',
+}
+
+# ── DATABASE ──
+import urllib.parse as _urlparse
+_DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if _DATABASE_URL:
+    _u = _urlparse.urlparse(_DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _u.path.lstrip('/'),
+            'USER': _u.username,
+            'PASSWORD': _u.password,
+            'HOST': _u.hostname,
+            'PORT': _u.port or 5432,
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {'sslmode': 'require'},
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {'timeout': 20},
+            'CONN_MAX_AGE': 60,
+        }
+    }
+
+# ── CACHE ──
+_REDIS_URL = os.environ.get('REDIS_URL', '')
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _REDIS_URL,
+            'TIMEOUT': 300,
+            'OPTIONS': {'MAX_ENTRIES': 5000},
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'matchoracle-cache',
+            'TIMEOUT': 300,
+            'OPTIONS': {'MAX_ENTRIES': 1000},
+        }
+    }
+
+# ── CELERY ──
+CELERY_BROKER_URL = _REDIS_URL or 'memory://'
+CELERY_RESULT_BACKEND = _REDIS_URL or 'cache+memory://'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = not bool(_REDIS_URL)
+CELERY_TASK_EAGER_PROPAGATES = False
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BEAT_SCHEDULE = {
+    'fetch-live-scores': {
+        'task': 'core.tasks.fetch_live_scores',
+        'schedule': 60.0,
+    },
+}
+
+# ── LOGGING ──
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'core': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'accounts': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'celery': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
 }

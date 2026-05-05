@@ -133,7 +133,14 @@ def verify_payment(request):
     except Exception as e:
         logger.error(f"Payment verification error: {e}")
 
-    messages.error(request, 'Payment verification failed. Contact support.')
+    # Synchronous verification failed — queue an async retry via Celery
+    try:
+        from core.tasks import verify_payment_task
+        verify_payment_task.delay(reference=reference, user_id=request.user.pk)
+        messages.info(request, 'Payment is being verified. Your plan will be activated within a minute.')
+    except Exception as e:
+        logger.error(f"Payment verification error: {e}")
+        messages.error(request, 'Payment verification failed. Contact support.')
     return redirect('dashboard')
 
 
@@ -159,30 +166,23 @@ def regenerate_api_key(request):
 
 def _send_welcome_email(user):
     try:
-        send_mail(
+        from core.tasks import send_email_task
+        send_email_task.delay(
             subject='Welcome to MatchOracle ⚽ — Your AI Football Engine',
             message=f'''Hi {user.first_name or user.username},
 
 Welcome to MatchOracle — Your Football Intelligence Engine!
 
-You have 6 FREE predictions to try:
-• Engine A: Match Prediction
-• Engine B: Player Rating
-• Engine C: Team Ranking
-• Engine D: Match Simulation
+You have 6 FREE predictions to try.
 
 Your API Key: {user.api_key}
 Your Referral Code: {user.referral_code}
-
-Share your referral code and earn 7 bonus days for every person who subscribes!
 
 Login: https://matchoracle-production.up.railway.app/accounts/login/
 
 The MatchOracle Team
 ''',
-            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
-            fail_silently=True,
         )
     except Exception as e:
         logger.error(f"Welcome email error: {e}")
