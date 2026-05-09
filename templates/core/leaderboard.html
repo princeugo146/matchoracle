@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:40px">
+  <div style="text-align:center;margin-bottom:40px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;margin-bottom:8px">Leaderboard</div>
+    <div style="color:var(--text2)">Top predictors on MatchOracle</div>
+  </div>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:12px 16px">#</th>
+        <th style="text-align:left;padding:12px 16px">User</th>
+        <th style="text-align:left;padding:12px 16px">Plan</th>
+        <th style="text-align:left;padding:12px 16px">Predictions</th>
+      </tr></thead>
+      <tbody>
+        {% for u in top_users %}
+        <tr style="border-top:1px solid rgba(255,255,255,.04)">
+          <td style="padding:14px 16px;font-family:'Orbitron',sans-serif;font-weight:700;color:{% if forloop.counter == 1 %}var(--gold){% elif forloop.counter == 2 %}#94a3b8{% elif forloop.counter == 3 %}var(--orange){% else %}var(--muted){% endif %}">{{ forloop.counter }}</td>
+          <td style="padding:14px 16px"><div style="font-weight:600">{{ u.first_name|default:u.username }}</div><div style="color:var(--muted);font-size:11px">{{ u.email|slice:":25" }}</div></td>
+          <td style="padding:14px 16px"><span class="plan-{{ u.plan }}">{{ u.plan|upper }}</span></td>
+          <td style="padding:14px 16px;font-family:'Orbitron',sans-serif;font-weight:700;color:var(--accent)">{{ u.pred_count }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted)">No predictions yet. Be the first!</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

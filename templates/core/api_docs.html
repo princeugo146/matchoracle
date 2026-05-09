@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}API Documentation{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:40px;max-width:800px">
+  <div style="margin-bottom:40px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;margin-bottom:8px">API Documentation</div>
+    <div style="color:var(--text2)">Integrate MatchOracle into your own apps</div>
+  </div>
+  <div class="card" style="margin-bottom:16px;border-color:rgba(0,212,255,.2)">
+    <div class="card-title">Authentication</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:10px">Include your API key in every request:</div>
+    <div style="font-family:monospace;font-size:13px;background:rgba(0,0,0,.3);border-radius:8px;padding:14px;color:var(--accent)">X-API-Key: mo_your_api_key_here</div>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted)">Get your API key from your <a href="/accounts/profile/" style="color:var(--accent)">Profile</a>. Requires Basic or Pro plan.</div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="background:rgba(124,58,237,.2);color:#a78bfa;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">POST</span><code style="font-family:monospace;font-size:14px;color:var(--accent)">/api/v1/predict/match/</code></div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Engine A - Predict match result with win/draw/loss probabilities</div>
+    <div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,.3);border-radius:8px;padding:12px;color:var(--text2)">{"home":{"name":"Arsenal","goals_scored":2.1,"form":"W W D W W"},"away":{"name":"Chelsea"}}</div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="background:rgba(124,58,237,.2);color:#a78bfa;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">POST</span><code style="font-family:monospace;font-size:14px;color:var(--accent)">/api/v1/predict/player/</code></div>
+    <div style="font-size:13px;color:var(--text2)">Engine B - Calculate FIFA-style player rating</div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="background:rgba(124,58,237,.2);color:#a78bfa;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">POST</span><code style="font-family:monospace;font-size:14px;color:var(--accent)">/api/v1/predict/simulate/</code></div>
+    <div style="font-size:13px;color:var(--text2)">Engine D - Run Monte Carlo match simulation</div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="background:rgba(16,185,129,.2);color:var(--green);border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">GET</span><code style="font-family:monospace;font-size:14px;color:var(--accent)">/api/v1/me/</code></div>
+    <div style="font-size:13px;color:var(--text2)">Get your account info, plan and usage stats</div>
+  </div>
+</div>
+{% endblock %}
