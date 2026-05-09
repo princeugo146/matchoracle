@@ -4,10 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
+from django.db.models import Count, Avg
 from .models import Prediction, TeamRanking, WeeklyTip
-from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language
-import logging
-logger = logging.getLogger(__name__)
+from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language_predict
+
 
 @login_required
 def dashboard(request):
@@ -16,41 +16,55 @@ def dashboard(request):
     user = request.user
     recent = Prediction.objects.filter(user=user)[:8]
     rankings = TeamRanking.objects.filter(user=user)[:10]
-    tips = WeeklyTip.objects.filter(is_pro_only=False)[:3]
+    tips = WeeklyTip.objects.filter(is_pro_only=False).order_by('-created_at')[:3]
+    pro_tips = WeeklyTip.objects.filter(is_pro_only=True).order_by('-created_at')[:3]
     forecasts = WeeklyForecast.objects.filter(is_published=True)[:4]
     live_scores = get_live_scores()[:4]
+
     stats = {
         'total': Prediction.objects.filter(user=user).count(),
+        'engine_a': Prediction.objects.filter(user=user, engine='A').count(),
+        'engine_b': Prediction.objects.filter(user=user, engine='B').count(),
+        'engine_d': Prediction.objects.filter(user=user, engine='D').count(),
         'accuracy': user.accuracy_rate,
-        'left_today': user.predictions_left_today,
     }
-    plan_info = settings.MATCHORACLE['PLANS'].get(user.plan, {})
+
+    # Prediction history for chart
+    from django.db.models.functions import TruncDate
+    history = (
+        Prediction.objects.filter(user=user)
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(count=Count('id'))
+        .order_by('date')
+    )[:30]
+
     return render(request, 'predictions/dashboard.html', {
         'recent': recent, 'rankings': rankings, 'stats': stats,
-        'tips': tips, 'forecasts': forecasts, 'live_scores': live_scores,
-        'plan_info': plan_info,
+        'tips': tips, 'pro_tips': pro_tips, 'forecasts': forecasts,
+        'live_scores': live_scores, 'history': list(history),
     })
+
 
 @login_required
 def run_engine(request, engine):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST only'}, status=405)
     user = request.user
+    if not user.is_subscription_active:
+        return JsonResponse({'error': 'subscription_expired'}, status=403)
     if not user.can_predict:
-        plan_info = settings.MATCHORACLE['PLANS'].get(user.plan, {})
-        limit = plan_info.get('predictions_per_day', 3)
-        return JsonResponse({
-            'error': 'daily_limit_reached',
-            'message': f'Daily limit of {limit} predictions reached. Upgrade for more.',
-            'plan': user.plan
-        }, status=429)
-    try:
-        input_data = json.loads(request.body)
-    except Exception:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    try:
+        return JsonResponse({'error': 'daily_limit_reached'}, status=429)
+
+    if request.method == 'POST':
+        try:
+            input_data = json.loads(request.body)
+        except Exception:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
         result = None
-        home_team = ''; away_team = ''; predicted_result = ''
+        home_team = ''
+        away_team = ''
+        predicted_result = ''
+
         if engine == 'A':
             result = engine_a(input_data)
             home_team = input_data.get('home', {}).get('name', '')
@@ -58,17 +72,17 @@ def run_engine(request, engine):
             predicted_result = result.get('verdict', '')
         elif engine == 'B':
             result = engine_b(input_data)
-            predicted_result = f"{result.get('tier','')} ({result.get('rating',0)})"
         elif engine == 'D':
             result = engine_d(input_data)
             home_team = input_data.get('home', {}).get('name', '')
             away_team = input_data.get('away', {}).get('name', '')
             predicted_result = result.get('likely_score', '')
         elif engine == 'NL':
-            result = natural_language(input_data.get('question', ''))
-            predicted_result = result.get('prediction', '')
+            question = input_data.get('question', '')
+            result = natural_language_predict(question)
         else:
             return JsonResponse({'error': 'Invalid engine'}, status=400)
+
         if result:
             Prediction.objects.create(
                 user=user, engine=engine, input_data=input_data,
@@ -76,63 +90,81 @@ def run_engine(request, engine):
                 home_team=home_team, away_team=away_team,
                 predicted_result=predicted_result,
             )
+            # Update usage
             today = timezone.now().date()
             if user.predictions_date != today:
                 user.predictions_today = 1
                 user.predictions_date = today
             else:
                 user.predictions_today += 1
+            if user.plan == 'free':
+                user.trial_count += 1
             user.total_predictions += 1
-            user.save(update_fields=['predictions_today', 'predictions_date', 'total_predictions'])
-            return JsonResponse({
-                'success': True,
-                'result': result,
-                'predictions_left': user.predictions_left_today
-            })
-    except Exception as e:
-        logger.error(f"Engine {engine} error: {e}", exc_info=True)
-        return JsonResponse({'error': str(e)}, status=500)
+            user.save()
+
+            return JsonResponse({'success': True, 'result': result})
+
+    return JsonResponse({'error': 'POST only'}, status=405)
+
 
 @login_required
 def add_ranking(request):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST only'}, status=405)
-    try:
-        data = json.loads(request.body)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except Exception:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
         name = data.get('name', '').strip()
         if not name:
-            return JsonResponse({'error': 'Name required'}, status=400)
-        wins = int(data.get('wins', 0)); draws = int(data.get('draws', 0))
-        losses = int(data.get('losses', 0)); gf = int(data.get('goals_for', 0))
-        ga = int(data.get('goals_against', 0)); opp = float(data.get('opp_strength', 5))
+            return JsonResponse({'error': 'Team name required'}, status=400)
+
+        wins = int(data.get('wins', 0))
+        draws = int(data.get('draws', 0))
+        losses = int(data.get('losses', 0))
+        gf = int(data.get('goals_for', 0))
+        ga = int(data.get('goals_against', 0))
+        opp = float(data.get('opp_strength', 5))
         base = int(data.get('base_elo', 1000))
         elo = compute_elo(wins, draws, losses, gf, ga, opp, base)
-        TeamRanking.objects.update_or_create(
+
+        team, _ = TeamRanking.objects.update_or_create(
             user=request.user, name=name,
-            defaults={'power_elo': elo, 'wins': wins, 'draws': draws,
-                      'losses': losses, 'goals_for': gf, 'goals_against': ga}
+            defaults={
+                'power_elo': elo, 'wins': wins, 'draws': draws,
+                'losses': losses, 'goals_for': gf, 'goals_against': ga
+            }
         )
         rankings = list(TeamRanking.objects.filter(user=request.user).values(
             'name', 'power_elo', 'wins', 'draws', 'losses', 'goals_for', 'goals_against'
         ))
         return JsonResponse({'success': True, 'rankings': rankings})
-    except Exception as e:
-        logger.error(f"Ranking error: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'POST only'}, status=405)
+
 
 @login_required
-def history(request):
-    predictions = Prediction.objects.filter(user=request.user)[:50]
+def prediction_history(request):
+    predictions = Prediction.objects.filter(user=request.user).order_by('-created_at')
+    engine_filter = request.GET.get('engine', '')
+    if engine_filter:
+        predictions = predictions.filter(engine=engine_filter)
     return render(request, 'predictions/history.html', {
-        'predictions': predictions,
-        'stats': {'total': predictions.count(), 'accuracy': request.user.accuracy_rate}
+        'predictions': predictions[:50],
+        'engine_filter': engine_filter,
+        'stats': {
+            'total': predictions.count(),
+            'accuracy': request.user.accuracy_rate,
+        }
     })
 
+
 @login_required
-def tips(request):
-    free_tips = WeeklyTip.objects.filter(is_pro_only=False)[:10]
-    pro_tips = WeeklyTip.objects.filter(is_pro_only=True)[:10] if request.user.plan == 'pro' else []
+def weekly_tips(request):
+    user = request.user
+    free_tips = WeeklyTip.objects.filter(is_pro_only=False).order_by('-created_at')[:10]
+    pro_tips = WeeklyTip.objects.filter(is_pro_only=True).order_by('-created_at')[:10] if user.plan == 'pro' else []
     return render(request, 'predictions/tips.html', {
         'free_tips': free_tips, 'pro_tips': pro_tips,
-        'is_pro': request.user.plan == 'pro',
+        'is_pro': user.plan == 'pro',
     })
