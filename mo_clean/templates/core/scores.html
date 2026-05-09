@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Live Scores{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px">Live Scores</div>
+      <div style="color:var(--text2);font-size:13px">All major leagues - Auto-updates every 60s</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      {% if live_count > 0 %}<div style="display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--red);font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1s infinite"></span>{{ live_count }} LIVE</div>{% endif %}
+      <button onclick="location.reload()" class="btn btn-secondary" style="padding:8px 14px;font-size:12px">Refresh</button>
+    </div>
+  </div>
+  {% regroup live|dictsort:"league" by league as live_leagues %}
+  {% if live %}
+    {% for lg in live_leagues %}
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:700;padding:8px 14px;background:rgba(255,255,255,.02);border-radius:8px;margin-bottom:6px">{{ lg.grouper }}</div>
+      {% for m in lg.list %}
+      <div onclick="predict('{{ m.home }}','{{ m.away }}')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;cursor:pointer;transition:all .2s;{% if m.minute %}border-left:3px solid var(--red);{% endif %}" onmouseover="this.style.borderColor='rgba(0,212,255,.3)'" onmouseout="this.style.borderColor='{% if m.minute %}var(--red){% else %}var(--border){% endif %}'">
+        <div style="font-weight:600;font-size:14px">{{ m.home }}</div>
+        <div style="text-align:center;min-width:80px">
+          {% if m.home_score is not None %}
+          <div style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;{% if m.minute %}color:var(--red){% else %}color:var(--muted){% endif %}">{{ m.home_score }}-{{ m.away_score }}</div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;{% if m.minute %}color:var(--red){% else %}color:var(--muted){% endif %}">{% if m.minute %}{{ m.minute }}'{% else %}FT{% endif %}</div>
+          {% else %}
+          <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:var(--muted)">{{ m.date|slice:":5"|default:"TBD" }}</div>
+          <div style="font-size:10px;color:var(--accent)">UPCOMING</div>
+          {% endif %}
+          <div style="margin-top:6px"><span style="font-size:10px;color:var(--accent);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:5px;padding:2px 8px">Predict</span></div>
+        </div>
+        <div style="font-weight:600;font-size:14px;text-align:right">{{ m.away }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% if today %}
+  <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);margin:24px 0 12px;text-transform:uppercase">Today's Fixtures</div>
+  {% regroup today|dictsort:"league" by league as today_leagues %}
+  {% for lg in today_leagues %}
+  <div style="margin-bottom:20px">
+    <div style="font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:700;padding:8px 14px;background:rgba(255,255,255,.02);border-radius:8px;margin-bottom:6px">{{ lg.grouper }}</div>
+    {% for m in lg.list %}
+    <div onclick="predict('{{ m.home }}','{{ m.away }}')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,212,255,.3)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-weight:600;font-size:14px">{{ m.home }}</div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:18px;color:var(--muted)">{{ m.date|slice:":5"|default:"TBD" }}</div>
+        <div style="font-size:10px;color:var(--accent)">UPCOMING</div>
+        <div style="margin-top:6px"><span style="font-size:10px;color:var(--accent);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:5px;padding:2px 8px">Predict</span></div>
+      </div>
+      <div style="font-weight:600;font-size:14px;text-align:right">{{ m.away }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+  {% if not live and not today %}
+  <div style="text-align:center;padding:80px 20px;color:var(--text2)">
+    <div style="font-size:60px;margin-bottom:20px">&#x26BD;</div>
+    <div style="font-size:18px;font-weight:600">No live matches right now</div>
+  </div>
+  {% endif %}
+</div>
+<script>
+function predict(h,a){sessionStorage.setItem('ph',h);sessionStorage.setItem('pa',a);window.location.href='/dashboard/';}
+let cd=60;setInterval(()=>{cd--;const e=document.getElementById('cd');if(e)e.textContent=cd;if(cd<=0)location.reload();},1000);
+</script>
+{% endblock %}
