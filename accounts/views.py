@@ -36,10 +36,7 @@ def register(request):
                 except User.DoesNotExist:
                     pass
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            try:
-                _send_welcome_email(user)
-            except Exception as e:
-                logger.error(f"Failed to send welcome email to {user.email}: {e}")
+            _send_welcome_email(user)
             messages.success(request, f'Welcome to MatchOracle! You have 6 free predictions to start.')
             return redirect('dashboard')
     else:
@@ -130,10 +127,7 @@ def verify_payment(request):
                 request.user.subscription_start = timezone.now()
                 request.user.subscription_end = timezone.now() + timedelta(days=plan_days)
                 request.user.save()
-                try:
-                    _send_subscription_email(request.user, payment.plan)
-                except Exception as e:
-                    logger.error(f"Failed to send subscription email to {request.user.email}: {e}")
+                _send_subscription_email(request.user, payment.plan)
                 messages.success(request, f'🎉 Payment successful! Your {payment.plan.title()} plan is now active.')
                 return redirect('dashboard')
     except Exception as e:
@@ -191,8 +185,7 @@ The MatchOracle Team
             fail_silently=True,
         )
     except Exception as e:
-        logger.error(f"Welcome email error for {user.email}: {e}")
-        return
+        logger.error(f"Welcome email error: {e}")
 
 
 def _send_subscription_email(user, plan):
@@ -219,5 +212,4 @@ The MatchOracle Team
             fail_silently=True,
         )
     except Exception as e:
-        logger.error(f"Subscription email error for {user.email}: {e}")
-        return
+        logger.error(f"Subscription email error: {e}")
