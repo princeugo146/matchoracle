@@ -51,17 +51,24 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email'].strip().lower()
             password = form.cleaned_data['password']
+            user = None
             try:
                 user_obj = User.objects.get(email=email)
+                logger.info(f"Login attempt for email={email}, username={user_obj.username}, is_active={user_obj.is_active}")
                 user = authenticate(request, username=user_obj.username, password=password)
+                if user is None:
+                    logger.warning(f"authenticate() returned None for email={email} — wrong password or inactive account")
             except User.DoesNotExist:
-                user = None
+                logger.warning(f"Login attempt for non-existent email={email}")
             if user is not None:
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                logger.info(f"Login successful for email={email}")
                 next_url = request.GET.get('next', 'dashboard')
                 return redirect(next_url)
             else:
                 messages.error(request, 'Incorrect email or password. Please try again.')
+        else:
+            logger.warning(f"Login form invalid: {form.errors}")
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})

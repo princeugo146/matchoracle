@@ -17,11 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 def register(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             try:
-                user = form.save()
+                user = form.save(commit=True)
+                logger.info(f"New user registered: email={user.email}, pk={user.pk}, is_active={user.is_active}")
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 try:
                     _send_welcome_email(user)
@@ -30,8 +33,12 @@ def register(request):
                 messages.success(request, 'Welcome to MatchOracle! You have 6 free predictions.')
                 return redirect('dashboard')
             except Exception as e:
-                logger.error(f"Registration error: {e}")
+                logger.error(f"Registration error: {e}", exc_info=True)
                 messages.error(request, 'Registration failed. Please try again.')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -45,16 +52,23 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email'].strip().lower()
             password = form.cleaned_data['password']
+            user = None
             try:
                 user_obj = User.objects.get(email=email)
+                logger.info(f"Login attempt for email={email}, username={user_obj.username}, is_active={user_obj.is_active}")
                 user = authenticate(request, username=user_obj.username, password=password)
+                if user is None:
+                    logger.warning(f"authenticate() returned None for email={email} — wrong password or inactive account")
             except User.DoesNotExist:
-                user = None
+                logger.warning(f"Login attempt for non-existent email={email}")
             if user is not None:
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                logger.info(f"Login successful for email={email}")
                 return redirect(request.GET.get('next', 'dashboard'))
             else:
                 messages.error(request, 'Incorrect email or password. Please try again.')
+        else:
+            logger.warning(f"Login form invalid: {form.errors}")
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
