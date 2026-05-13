@@ -51,16 +51,12 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email'].strip().lower()
             password = form.cleaned_data['password']
-            # Try authenticating with email as username
-            user = authenticate(request, username=email, password=password)
-            if not user:
-                # Also try finding user by email then authenticating
-                try:
-                    u = User.objects.get(email=email)
-                    user = authenticate(request, username=u.username, password=password)
-                except User.DoesNotExist:
-                    pass
-            if user:
+            try:
+                user_obj = User.objects.get(email=email)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
+            if user is not None:
                 login(request, user)
                 next_url = request.GET.get('next', 'dashboard')
                 return redirect(next_url)
