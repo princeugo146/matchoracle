@@ -1,8 +1,6 @@
 .env
-.env.example
 db.sqlite3
 __pycache__/
 *.pyc
-staticfiles/
-media/
 .DS_Store
+media/

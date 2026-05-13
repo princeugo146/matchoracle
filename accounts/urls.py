@@ -7,6 +7,4 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('subscribe/<str:plan>/', views.subscribe, name='subscribe'),
     path('verify-payment/', views.verify_payment, name='verify_payment'),
-    path('favourites/', views.update_favourites, name='update_favourites'),
-    path('regenerate-key/', views.regenerate_api_key, name='regenerate_api_key'),
 ]
