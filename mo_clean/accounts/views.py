@@ -43,17 +43,18 @@ def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
+            email = form.cleaned_data['email'].strip().lower()
             password = form.cleaned_data['password']
             try:
-                user = authenticate(request, username=email, password=password)
-                if user:
-                    login(request, user)
-                    return redirect(request.GET.get('next', 'dashboard'))
-                messages.error(request, 'Invalid email or password.')
-            except Exception as e:
-                logger.error(f"Login error: {e}")
-                messages.error(request, 'Login failed. Please try again.')
+                user_obj = User.objects.get(email=email)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
+            if user is not None:
+                login(request, user)
+                return redirect(request.GET.get('next', 'dashboard'))
+            else:
+                messages.error(request, 'Incorrect email or password. Please try again.')
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
