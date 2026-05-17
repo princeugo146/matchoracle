@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}API Documentation{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:40px;max-width:800px">
+  <div style="margin-bottom:36px"><div style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;margin-bottom:8px">API Documentation</div><div style="color:var(--text2)">Integrate MatchOracle into your own apps</div></div>
+  <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.2)">
+    <div class="ct">Authentication</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:10px">Include your API key in every request:</div>
+    <div style="font-family:monospace;font-size:13px;background:rgba(0,0,0,.3);border-radius:8px;padding:14px;color:var(--accent)">X-API-Key: mo_your_api_key_here</div>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted)">Get your key from <a href="/accounts/profile/" style="color:var(--accent)">Profile</a>. Requires Basic or Pro plan.</div>
+  </div>
+  {% for ep in endpoints %}
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:rgba(124,58,237,.2);color:#a78bfa;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">{{ ep.method }}</span>
+      <code style="font-family:monospace;font-size:13px;color:var(--accent)">{{ ep.path }}</code>
+    </div>
+    <div style="font-size:13px;color:var(--text2)">{{ ep.desc }}</div>
+    {% if ep.example %}<div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,.3);border-radius:8px;padding:10px;color:var(--text2);margin-top:8px">{{ ep.example }}</div>{% endif %}
+  </div>{% endfor %}
+</div>
+{% endblock %}

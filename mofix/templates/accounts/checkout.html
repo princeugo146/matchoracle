@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Subscribe - {{ plan_info.name }}{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:500px;margin:70px auto">
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">{{ plan_info.name }} Plan</div>
+    <div style="font-size:44px;font-weight:800;color:var(--accent)">{{ CURRENCY_SYMBOL }}{{ plan_info.price|floatformat:0 }}</div>
+    <div style="color:var(--muted);font-size:13px">{% if plan_info.duration_days == 30 %}per month{% else %}per year{% endif %}</div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:13px;line-height:2.4;color:var(--text2)">
+      &#10003; {{ plan_info.predictions_per_day }} predictions per day<br>
+      &#10003; All 4 Intelligence Engines + AI<br>
+      &#10003; API access with personal key<br>
+      &#10003; Live scores and weekly tips<br>
+    </div>
+  </div>
+  <button id="payBtn" class="btn btn-p btn-full" style="padding:16px;font-size:16px">Pay {{ CURRENCY_SYMBOL }}{{ plan_info.price|floatformat:0 }} with Paystack</button>
+  <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted)">Secured by Paystack - SSL encrypted</div>
+</div>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script>
+document.getElementById('payBtn').addEventListener('click',function(){
+  PaystackPop.setup({key:'{{ PAYSTACK_PUBLIC_KEY }}',email:'{{ user.email }}',amount:{{ amount }},currency:'NGN',ref:'{{ reference }}',
+    callback:function(r){window.location.href='/accounts/verify-payment/?reference='+r.reference;},
+    onClose:function(){}}).openIframe();
+});
+</script>
+{% endblock %}

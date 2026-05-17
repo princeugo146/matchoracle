@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:36px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:24px">My Profile</div>
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="ct">Account Info</div>
+      <div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:16px;margin-bottom:4px">{{ user.first_name|default:user.email }}</div>
+        <div style="color:var(--muted);font-size:13px">{{ user.email }}</div>
+        <div style="margin-top:8px"><span class="p{{ user.plan|slice:':1' }}{% if user.plan == 'free' %}f{% elif user.plan == 'basic' %}b{% else %}p{% endif %}">{{ user.plan|upper }}</span></div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:2.4">
+        <div>Member since: {{ user.created_at|date:"d M Y" }}</div>
+        <div>Total predictions: {{ user.total_predictions }}</div>
+        <div>Accuracy: {{ user.accuracy_rate }}%</div>
+        <div>Predictions left today: {{ user.predictions_left_today }}</div>
+        <div>Referral code: <strong style="color:var(--accent)">{{ user.referral_code }}</strong></div>
+      </div>
+      {% if user.plan == 'free' %}
+      <div style="margin-top:16px"><a href="/pricing/" class="btn btn-p btn-full" style="padding:11px">Upgrade Plan</a></div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="ct">API Key</div>
+      <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:12px;word-break:break-all;margin-bottom:12px" id="apiK">{{ user.api_key|slice:":24" }}...</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="toggleK()" class="btn btn-s" style="flex:1;padding:8px;font-size:12px">Show</button>
+        <button onclick="copyK()" class="btn btn-p" style="flex:1;padding:8px;font-size:12px">Copy</button>
+      </div>
+      <div style="margin-top:14px;font-size:13px;color:var(--text2)">
+        <div style="margin-bottom:6px;font-weight:600">Your Plan:</div>
+        <div style="color:var(--accent)">{{ plan_info.name }} - {{ plan_info.predictions_per_day }} predictions/day</div>
+        {% if user.plan != 'free' %}<div style="color:var(--muted);font-size:12px;margin-top:4px">Expires: {{ user.days_remaining }} days</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const K='{{ user.api_key }}';let sh=false;
+function toggleK(){sh=!sh;document.getElementById('apiK').textContent=sh?K:K.slice(0,24)+'...';}
+function copyK(){navigator.clipboard.writeText(K).then(()=>{event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy',2000);});}
+</script>
+{% endblock %}

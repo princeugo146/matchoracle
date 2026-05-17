@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.et{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 8px;cursor:pointer;transition:all .25s;text-align:center;width:100%;}
+.et:hover{transform:translateY(-2px);}
+.et.a-on{border-color:var(--accent);background:rgba(0,212,255,.06);}
+.et.b-on{border-color:#a78bfa;background:rgba(167,139,250,.06);}
+.et.c-on{border-color:var(--green);background:rgba(16,185,129,.06);}
+.et.d-on{border-color:var(--orange);background:rgba(251,146,60,.06);}
+.et.nl-on{border-color:#f472b6;background:rgba(244,114,182,.06);}
+.panel{display:none;animation:fu .35s ease;}
+.panel.show{display:block;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.ld{display:none;text-align:center;padding:28px;}
+.ld.show{display:block;}
+.res{display:none;margin-top:16px;animation:fu .4s ease;}
+.res.show{display:block;}
+.ai-box{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:12px;padding:14px;margin-top:14px;}
+.ai-lbl{font-size:10px;letter-spacing:2.5px;color:var(--accent);font-weight:700;text-transform:uppercase;margin-bottom:8px;}
+.li{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;font-size:13px;}
+.sb{text-align:center;}
+.sb .n{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:700;}
+.sb .l{font-size:11px;color:var(--muted);margin-top:3px;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+  <div><div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Dashboard</div><div style="color:var(--muted);font-size:13px;margin-top:3px">Welcome back, {{ user.first_name|default:user.email }}</div></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span class="p{% if user.plan == 'free' %}f{% elif user.plan == 'basic' %}b{% else %}p{% endif %}">{{ user.plan|upper }}</span>
+    {% if user.plan == 'free' %}<a href="/pricing/" class="btn btn-p" style="padding:7px 14px;font-size:12px">Upgrade</a>{% endif %}
+    <a href="/dashboard/history/" class="btn btn-s" style="padding:7px 12px;font-size:12px">History</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+  <div class="card sb"><div class="n" style="color:var(--accent)">{{ stats.total }}</div><div class="l">Total</div></div>
+  <div class="card sb"><div class="n" style="color:var(--green)">{{ stats.left_today }}</div><div class="l">Left Today</div></div>
+  <div class="card sb"><div class="n" style="color:var(--gold)">{{ stats.limit }}</div><div class="l">Daily Limit</div></div>
+  <div class="card sb"><div class="n" style="color:var(--accent2)">{{ stats.accuracy }}%</div><div class="l">Accuracy</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 290px;gap:18px;align-items:start">
+<div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px">
+  <button class="et a-on" onclick="sw('a',this,'a-on')"><div style="font-size:18px;margin-bottom:3px">&#127919;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--accent)">ENG A</div><div style="font-size:11px;font-weight:600;margin-top:2px">Predict</div></button>
+  <button class="et" onclick="sw('b',this,'b-on')"><div style="font-size:18px;margin-bottom:3px">&#11088;</div><div style="font-size:8px;letter-spacing:1.5px;color:#a78bfa">ENG B</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rate</div></button>
+  <button class="et" onclick="sw('c',this,'c-on')"><div style="font-size:18px;margin-bottom:3px">&#127942;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--green)">ENG C</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rank</div></button>
+  <button class="et" onclick="sw('d',this,'d-on')"><div style="font-size:18px;margin-bottom:3px">&#127918;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--orange)">ENG D</div><div style="font-size:11px;font-weight:600;margin-top:2px">Simulate</div></button>
+  <button class="et" onclick="sw('nl',this,'nl-on')"><div style="font-size:18px;margin-bottom:3px">&#128172;</div><div style="font-size:8px;letter-spacing:1.5px;color:#f472b6">AI ASK</div><div style="font-size:11px;font-weight:600;margin-top:2px">Ask AI</div></button>
+</div>
+
+<!-- ENGINE A -->
+<div class="panel show" id="pa">
+  <div class="g2" style="margin-bottom:12px">
+    <div class="card"><div class="ct">Home Team</div>
+      <div class="field"><label>Team Name</label><input id="ahn" placeholder="e.g. Arsenal"></div>
+      <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="ahgs" placeholder="2.1" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="ahgc" placeholder="0.9" step="0.1"></div></div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="ahf" placeholder="W W D W W"></div>
+      <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="ahwr" placeholder="68"></div><div class="field"><label>Key Injuries</label><input type="number" id="ahi" placeholder="0" min="0" max="5"></div></div>
+      <div class="field"><label>League Position</label><input type="number" id="ahp" placeholder="2"></div>
+    </div>
+    <div class="card"><div class="ct">Away Team</div>
+      <div class="field"><label>Team Name</label><input id="aan" placeholder="e.g. Real Madrid"></div>
+      <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="aags" placeholder="2.4" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="aagc" placeholder="0.8" step="0.1"></div></div>
+      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="aaf" placeholder="W W W D W"></div>
+      <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="aawr" placeholder="55"></div><div class="field"><label>Key Injuries</label><input type="number" id="aai" placeholder="1" min="0" max="5"></div></div>
+      <div class="field"><label>League Position</label><input type="number" id="aap" placeholder="1"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:12px"><div class="ct">Head to Head (last 10)</div>
+    <div class="f3"><div class="field"><label>Home Wins</label><input type="number" id="ah2hh" placeholder="4"></div><div class="field"><label>Draws</label><input type="number" id="ah2hd" placeholder="3"></div><div class="field"><label>Away Wins</label><input type="number" id="ah2ha" placeholder="3"></div></div>
+  </div>
+  <button class="btn btn-p btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px" onclick="run('A')">RUN PREDICTION ENGINE</button>
+  <div class="ld" id="la"><div class="spin"></div><div style="color:var(--text2)">V1 + AI Hybrid Analysis...</div></div>
+  <div class="res card" id="ra" style="border-top:3px solid var(--accent)"><div class="ct">PREDICTION RESULT</div><div id="abars"></div><div id="averdict" style="margin-top:14px;padding:14px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:12px"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="ainsight"></div></div></div>
+</div>
+
+<!-- ENGINE B -->
+<div class="panel" id="pb">
+  <div class="g2" style="margin-bottom:12px">
+    <div class="card"><div class="ct">Player Info</div>
+      <div class="field"><label>Player Name</label><input id="bname" placeholder="e.g. Haaland"></div>
+      <div class="field"><label>Position</label><select id="bpos"><option value="ST">Striker (ST)</option><option value="LW">Left Wing</option><option value="RW">Right Wing</option><option value="CAM">Attacking Mid</option><option value="CM">Central Mid</option><option value="CDM">Defensive Mid</option><option value="CB">Centre-Back</option><option value="LB">Left-Back</option><option value="RB">Right-Back</option><option value="GK">Goalkeeper</option></select></div>
+      <div class="f2"><div class="field"><label>Goals</label><input type="number" id="bgoals" placeholder="22"></div><div class="field"><label>Assists</label><input type="number" id="bassists" placeholder="8"></div></div>
+      <div class="field"><label>Games Played</label><input type="number" id="bgames" placeholder="28"></div>
+      <div class="field"><label>Injury Status</label><select id="binj"><option value="fit">Fully Fit</option><option value="doubt">Doubt</option><option value="minor">Minor Injury</option><option value="major">Major Injury</option></select></div>
+    </div>
+    <div class="card"><div class="ct">Performance Stats</div>
+      <div class="field"><label>Pass Accuracy %</label><input type="number" id="bpass" placeholder="84"></div>
+      <div class="field"><label>Shots on Target %</label><input type="number" id="bshot" placeholder="61"></div>
+      <div class="field"><label>Dribble Success %</label><input type="number" id="bdrib" placeholder="55"></div>
+      <div class="field"><label>Tackle Success %</label><input type="number" id="btackle" placeholder="50"></div>
+      <div class="field"><label>Aerial Duels Won %</label><input type="number" id="baerial" placeholder="60"></div>
+      <div class="field"><label>Distance Covered (km/g)</label><input type="number" id="bdist" placeholder="10.8" step="0.1"></div>
+    </div>
+  </div>
+  <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white" onclick="run('B')">CALCULATE PLAYER RATING</button>
+  <div class="ld" id="lb"><div class="spin" style="border-top-color:#a78bfa"></div><div style="color:var(--text2)">Calculating...</div></div>
+  <div class="res card" id="rb" style="border-top:3px solid #a78bfa"><div class="ct">PLAYER RATING</div><div id="boutput" style="text-align:center;padding:20px 0"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="binsight"></div></div></div>
+</div>
+
+<!-- ENGINE C -->
+<div class="panel" id="pc">
+  <div class="card" style="margin-bottom:12px"><div class="ct">Add Team to ELO Ranking</div>
+    <div class="f2"><div class="field"><label>Team Name</label><input id="cname" placeholder="e.g. Man City"></div><div class="field"><label>Base ELO</label><input type="number" id="celo" placeholder="1000"></div></div>
+    <div class="f3"><div class="field"><label>Wins</label><input type="number" id="cw" placeholder="18"></div><div class="field"><label>Draws</label><input type="number" id="cd_" placeholder="6"></div><div class="field"><label>Losses</label><input type="number" id="cl" placeholder="4"></div></div>
+    <div class="f3"><div class="field"><label>Goals For</label><input type="number" id="cgf" placeholder="62"></div><div class="field"><label>Goals Against</label><input type="number" id="cga" placeholder="28"></div><div class="field"><label>Opp. Strength (1-10)</label><input type="number" id="copp" placeholder="6.5" step="0.5"></div></div>
+    <button class="btn btn-full" style="padding:12px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#34d399,#059669);color:#030508" onclick="addTeam()">ADD AND RANK TEAM</button>
+  </div>
+  <div class="card"><div class="ct">POWER RANKINGS (ELO)</div><div id="ctable"><div style="color:var(--muted);text-align:center;padding:28px;font-size:13px">Add teams above to build your rankings</div></div></div>
+</div>
+
+<!-- ENGINE D -->
+<div class="panel" id="pd">
+  <div class="g2" style="margin-bottom:12px">
+    <div class="card"><div class="ct">Home Team</div>
+      <div class="field"><label>Team Name</label><input id="dhn" placeholder="e.g. Liverpool"></div>
+      <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="dhatk" placeholder="85"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dhdef" placeholder="78"></div></div>
+      <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="dhelo" placeholder="1350"></div><div class="field"><label>Key Injuries</label><select id="dhinj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
+    </div>
+    <div class="card"><div class="ct">Away Team</div>
+      <div class="field"><label>Team Name</label><input id="dan" placeholder="e.g. Bayern Munich"></div>
+      <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="daatk" placeholder="88"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dadef" placeholder="80"></div></div>
+      <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="daelo" placeholder="1380"></div><div class="field"><label>Key Injuries</label><select id="dainj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:12px"><div class="ct">Settings</div>
+    <div class="f3">
+      <div class="field"><label>Competition</label><select id="dcomp"><option value="league">League</option><option value="champions">Champions League</option><option value="cup">Cup</option><option value="friendly">Friendly</option></select></div>
+      <div class="field"><label>Simulations</label><select id="dsims"><option value="1000">1,000</option><option value="10000" selected>10,000</option><option value="50000">50,000</option></select></div>
+      <div class="field"><label>Weather</label><select id="dwx"><option value="normal">Normal</option><option value="rain">Rain</option><option value="wind">Wind</option><option value="heat">Heat</option></select></div>
+    </div>
+  </div>
+  <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#fb923c,#d97706);color:#030508" onclick="run('D')">RUN FULL SIMULATION</button>
+  <div class="ld" id="ld"><div class="spin" style="border-top-color:var(--orange)"></div><div style="color:var(--text2)">Running Monte Carlo Simulation...</div></div>
+  <div class="res card" id="rd" style="border-top:3px solid var(--orange)"><div class="ct">SIMULATION RESULT</div><div id="doutput"></div><div class="ai-box"><div class="ai-lbl">AI MATCH ANALYSIS</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="dinsight"></div></div></div>
+</div>
+
+<!-- ENGINE NL -->
+<div class="panel" id="pnl">
+  <div class="card" style="margin-bottom:12px"><div class="ct">Ask the AI Anything About Football</div>
+    <div class="field"><label>Your Question</label><textarea id="nlq" placeholder="e.g. Who will win Arsenal vs Chelsea this weekend? Salah is injured..." style="height:90px;resize:vertical"></textarea></div>
+    <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#f472b6,#db2777);color:white" onclick="run('NL')">ASK AI ENGINE</button>
+  </div>
+  <div class="ld" id="lnl"><div class="spin" style="border-top-color:#f472b6"></div><div style="color:var(--text2)">AI is thinking...</div></div>
+  <div class="res card" id="rnl" style="border-top:3px solid #f472b6"><div class="ct">AI RESPONSE</div><div id="nloutput"></div></div>
+</div>
+
+{% if recent %}
+<div style="margin-top:24px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700">Recent Predictions</div>
+    <a href="/dashboard/history/" style="color:var(--accent);font-size:12px;text-decoration:none">View All</a>
+  </div>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:8px 10px">Eng</th><th style="text-align:left;padding:8px 10px">Match</th><th style="text-align:left;padding:8px 10px">Prediction</th><th style="text-align:left;padding:8px 10px">Date</th>
+      </tr></thead>
+      <tbody>{% for p in recent %}
+        <tr style="border-top:1px solid rgba(255,255,255,.04)">
+          <td style="padding:9px 10px"><span class="badge bb">{{ p.engine }}</span></td>
+          <td style="padding:9px 10px;color:var(--text2)">{% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}{{ p.input_data.name|default:"—" }}{% endif %}</td>
+          <td style="padding:9px 10px;font-weight:600;color:var(--accent)">{{ p.predicted_result|default:"—" }}</td>
+          <td style="padding:9px 10px;color:var(--muted)">{{ p.created_at|date:"d M" }}</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>{% endif %}
+</div>
+
+<!-- SIDEBAR -->
+<div>
+  <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.15)">
+    <div class="ct">Your API Key</div>
+    <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:10px;word-break:break-all;margin-bottom:10px" id="apiK">{{ user.api_key|slice:":20" }}...</div>
+    <div style="display:flex;gap:6px"><button onclick="toggleK()" class="btn btn-s" style="flex:1;padding:7px;font-size:11px">Show</button><button onclick="copyK()" class="btn btn-p" style="flex:1;padding:7px;font-size:11px">Copy</button></div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Ref code: <strong style="color:var(--accent)">{{ user.referral_code }}</strong></div>
+  </div>
+  {% if live_scores %}
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Live Now</div><a href="/scores/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
+    {% for s in live_scores %}<div class="li"><div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.home }}</div><div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;{% if s.minute %}color:var(--red){% else %}color:var(--muted){% endif %};padding:0 6px">{% if s.home_score is not None %}{{ s.home_score }}-{{ s.away_score }}{% else %}vs{% endif %}</div><div style="flex:1;font-size:12px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.away }}</div></div>{% endfor %}
+  </div>{% endif %}
+  {% if tips %}
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Weekly Tips</div><a href="/dashboard/tips/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
+    {% for t in tips %}<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">{{ t.home_team }} vs {{ t.away_team }}</div><div style="font-size:13px;font-weight:600">{{ t.tip }}</div><div style="font-size:11px;color:var(--green);margin-top:4px">{{ t.confidence }}% conf</div></div>{% endfor %}
+  </div>{% endif %}
+  {% if rankings %}
+  <div class="card">
+    <div class="ct">My Rankings</div>
+    {% for r in rankings %}<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px"><div style="font-family:'Orbitron',sans-serif;font-weight:700;width:22px;color:var(--muted)">{{ forloop.counter }}</div><div style="flex:1;font-weight:600">{{ r.name }}</div><div style="font-family:'Orbitron',sans-serif;color:var(--accent)">{{ r.power_elo }}</div></div>{% endfor %}
+  </div>{% endif %}
+</div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';const AK='{{ user.api_key }}';let shown=false;
+function toggleK(){shown=!shown;document.getElementById('apiK').textContent=shown?AK:AK.slice(0,20)+'...';}
+function copyK(){navigator.clipboard.writeText(AK).then(()=>{event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy',2000);});}
+function sw(id,btn,cls){document.querySelectorAll('.et').forEach(b=>b.classList.remove('a-on','b-on','c-on','d-on','nl-on'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));btn.classList.add(cls);document.getElementById('p'+id).classList.add('show');}
+function g(id){const e=document.getElementById(id);return e?e.value:'';}
+function pbar(label,pct,color){return`<div class="pr"><div class="pl">${label}</div><div class="pw"><div class="pf2" style="width:0%;background:${color}" data-t="${pct}"></div></div><div class="pp2">${pct}%</div></div>`;}
+function animBars(){setTimeout(()=>document.querySelectorAll('[data-t]').forEach(e=>e.style.width=e.dataset.t+'%'),80);}
+async function run(eng){
+  const id=eng.toLowerCase();
+  document.getElementById('l'+id).classList.add('show');
+  document.getElementById('r'+id).classList.remove('show');
+  let data={};
+  if(eng==='A')data={home:{name:g('ahn'),goals_scored:g('ahgs'),goals_conceded:g('ahgc'),form:g('ahf'),win_rate:g('ahwr'),injuries:g('ahi'),position:g('ahp')},away:{name:g('aan'),goals_scored:g('aags'),goals_conceded:g('aagc'),form:g('aaf'),win_rate:g('aawr'),injuries:g('aai'),position:g('aap')},h2h:{home_wins:g('ah2hh'),draws:g('ah2hd'),away_wins:g('ah2ha')}};
+  else if(eng==='B')data={name:g('bname'),position:g('bpos'),goals:g('bgoals'),assists:g('bassists'),games:g('bgames'),pass_accuracy:g('bpass'),shots_on_target:g('bshot'),dribble_success:g('bdrib'),tackle_success:g('btackle'),aerial_duels:g('baerial'),distance_covered:g('bdist'),injury_status:g('binj')};
+  else if(eng==='D')data={home:{name:g('dhn'),attack:g('dhatk'),defence:g('dhdef'),elo:g('dhelo'),injuries:g('dhinj')},away:{name:g('dan'),attack:g('daatk'),defence:g('dadef'),elo:g('daelo'),injuries:g('dainj')},simulations:g('dsims'),competition:g('dcomp'),weather:g('dwx')};
+  else if(eng==='NL')data={question:g('nlq')};
+  try{
+    const resp=await fetch(`/dashboard/engine/${eng}/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(data)});
+    const d=await resp.json();
+    document.getElementById('l'+id).classList.remove('show');
+    if(d.success){
+      document.getElementById('r'+id).classList.add('show');
+      renderResult(eng,d.result,data);
+      if(d.predictions_left===0){const b=document.querySelector(`button[onclick="run('${eng}')"]`);if(b)b.textContent='Daily limit reached - Upgrade for more';}
+    }else if(d.error==='daily_limit_reached'){
+      alert(d.message||'Daily limit reached. Upgrade for more predictions!');
+      window.location.href='/pricing/';
+    }else{alert('Error: '+(d.error||'Please try again.'));}
+  }catch(e){document.getElementById('l'+id).classList.remove('show');alert('Network error. Please try again.');}
+}
+function renderResult(eng,r,input){
+  if(eng==='A'){
+    const hn=input.home?.name||'Home',an=input.away?.name||'Away';
+    document.getElementById('abars').innerHTML=pbar(hn+' Win',r.home_win,'linear-gradient(90deg,#00d4ff,#0099cc)')+pbar('Draw',r.draw,'linear-gradient(90deg,#f59e0b,#d97706)')+pbar(an+' Win',r.away_win,'linear-gradient(90deg,#ef4444,#b91c1c)');
+    animBars();
+    document.getElementById('averdict').innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--accent)">${r.verdict==='Draw'?'Draw predicted':r.verdict+' predicted to win'}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Confidence: ${r.confidence}% | Score: ${r.predicted_score}</div>`;
+    document.getElementById('ainsight').textContent=r.insight;
+  }else if(eng==='B'){
+    const cols={'World Class':'#f59e0b','Elite':'#00d4ff','Quality':'#10b981','Average':'#94a3b8','Below Average':'#ef4444'};
+    const c=cols[r.tier]||'#94a3b8';
+    document.getElementById('boutput').innerHTML=`<div style="width:110px;height:110px;border-radius:50%;background:conic-gradient(${c} ${r.rating*3.6}deg,rgba(255,255,255,.05) 0deg);display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><div style="width:82px;height:82px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;color:${c}">${r.rating}</div></div></div><div style="font-weight:700;font-size:15px;color:${c};margin-bottom:4px">${r.tier}</div><div style="font-size:12px;color:var(--muted)">${input.name||'Player'} - ${input.position}</div>`;
+    document.getElementById('binsight').textContent=r.insight;
+  }else if(eng==='D'){
+    const hn=input.home?.name||'Home',an=input.away?.name||'Away',sc=r.likely_score.split('-');
+    document.getElementById('doutput').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:16px;text-align:center"><div><div style="font-size:11px;color:var(--muted);margin-bottom:6px">${hn}</div><div style="font-family:'Orbitron',sans-serif;font-size:52px;font-weight:900;color:var(--orange)">${sc[0]||0}</div></div><div style="font-family:'Orbitron',sans-serif;font-size:18px;color:var(--muted)">-</div><div><div style="font-size:11px;color:var(--muted);margin-bottom:6px">${an}</div><div style="font-family:'Orbitron',sans-serif;font-size:52px;font-weight:900">${sc[1]||0}</div></div></div><div style="margin-bottom:12px">${pbar(hn+' Win',r.home_win,'linear-gradient(90deg,#fb923c,#d97706)')+pbar('Draw',r.draw,'linear-gradient(90deg,#f59e0b,#d97706)')+pbar(an+' Win',r.away_win,'linear-gradient(90deg,#ef4444,#b91c1c)')}</div>`;
+    animBars();document.getElementById('dinsight').textContent=r.insight;
+  }else if(eng==='NL'){
+    const cc=r.confidence>=70?'var(--green)':r.confidence>=50?'var(--gold)':'var(--red)';
+    document.getElementById('nloutput').innerHTML=`<div style="font-size:14px;line-height:1.9;color:var(--text2);margin-bottom:14px">${r.answer}</div>${r.prediction&&r.prediction!=='Unknown'?`<div style="padding:12px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:10px"><div style="font-size:14px;font-weight:700;color:var(--accent)">${r.prediction}</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Confidence: <span style="color:${cc}">${r.confidence}%</span></div></div>`:''} ${r.key_factors?.length?`<div style="margin-top:10px">${r.key_factors.map(f=>`<div style="padding:5px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-size:12px;margin-bottom:4px">- ${f}</div>`).join('')}</div>`:''}`;}
+}
+async function addTeam(){
+  const data={name:g('cname'),wins:g('cw'),draws:g('cd_'),losses:g('cl'),goals_for:g('cgf'),goals_against:g('cga'),opp_strength:g('copp'),base_elo:g('celo')||1000};
+  if(!data.name)return alert('Enter a team name');
+  try{const resp=await fetch('/dashboard/ranking/add/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(data)});const d=await resp.json();if(d.success)renderRankings(d.rankings);}catch(e){alert('Error');}
+}
+function renderRankings(r){
+  const rows=r.map((t,i)=>{const gd=t.goals_for-t.goals_against;return`<tr style="border-top:1px solid rgba(255,255,255,.04)"><td style="padding:9px;font-family:'Orbitron',sans-serif;font-weight:700;color:var(--muted)">${i+1}</td><td style="padding:9px;font-weight:600">${t.name}</td><td style="padding:9px;font-family:'Orbitron',sans-serif;color:var(--accent)">${t.power_elo}</td><td style="padding:9px;color:var(--green)">${t.wins}</td><td style="padding:9px;color:var(--gold)">${t.draws}</td><td style="padding:9px;color:var(--red)">${t.losses}</td><td style="padding:9px;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>0?'+':''}${gd}</td></tr>`;}).join('');
+  document.getElementById('ctable').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1.5px"><th style="text-align:left;padding:8px">#</th><th style="text-align:left;padding:8px">Team</th><th style="text-align:left;padding:8px">ELO</th><th style="padding:8px">W</th><th style="padding:8px">D</th><th style="padding:8px">L</th><th style="padding:8px">GD</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+const ph=sessionStorage.getItem('ph'),pa=sessionStorage.getItem('pa');
+if(ph){const e=document.getElementById('ahn');if(e)e.value=ph;sessionStorage.removeItem('ph');}
+if(pa){const e=document.getElementById('aan');if(e)e.value=pa;sessionStorage.removeItem('pa');}
+</script>
+{% endblock %}
