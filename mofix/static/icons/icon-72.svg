@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#050d1a"/>
+    </linearGradient>
+    <linearGradient id="mg" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00d4ff"/>
+      <stop offset="100%" stop-color="#0055cc"/>
+    </linearGradient>
+    <linearGradient id="sg" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0077cc"/>
+      <stop offset="100%" stop-color="#002299"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="72" height="72" rx="9" fill="url(#bg)"/>
+  <!-- Shield -->
+  <path d="M36 3 L61 12 L61 39 C61 54 36 64 36 66 C36 64 10 54 10 39 L10 12 Z" fill="url(#sg)" stroke="#00d4ff" stroke-width="1" opacity="0.9"/>
+  <!-- M letter -->
+  <path d="M14 54 L14 18 L36 36 L57 18 L57 54 L51 54 L51 44 L36 43 L20 44 L20 54 Z" fill="url(#mg)"/>
+</svg>
