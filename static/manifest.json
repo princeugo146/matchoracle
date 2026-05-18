@@ -12,52 +12,76 @@
   "categories": ["sports", "productivity"],
   "icons": [
     {
-      "src": "/static/icons/icon-72.png",
+      "src": "/static/icons/icon-72.svg",
       "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/static/icons/icon-96.png",
+      "src": "/static/icons/icon-96.svg",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/static/icons/icon-128.png",
+      "src": "/static/icons/icon-128.svg",
       "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/static/icons/icon-144.png",
+      "src": "/static/icons/icon-144.svg",
       "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/static/icons/icon-152.png",
+      "src": "/static/icons/icon-152.svg",
       "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-384.svg",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/static/icons/icon-384.png",
-      "sizes": "384x384",
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "/static/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -66,14 +90,14 @@
       "short_name": "Predict",
       "description": "Go to prediction dashboard",
       "url": "/dashboard/",
-      "icons": [{"src": "/static/icons/icon-96.png", "sizes": "96x96"}]
+      "icons": [{"src": "/static/icons/icon-96.svg", "sizes": "96x96", "type": "image/svg+xml"}]
     },
     {
       "name": "Live Scores",
       "short_name": "Live",
       "description": "See live football scores",
       "url": "/scores/",
-      "icons": [{"src": "/static/icons/icon-96.png", "sizes": "96x96"}]
+      "icons": [{"src": "/static/icons/icon-96.svg", "sizes": "96x96", "type": "image/svg+xml"}]
     }
   ],
   "screenshots": [
