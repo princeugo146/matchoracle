@@ -4,6 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}MatchOracle{% endblock %} - Football Intelligence Engine</title>
+<!-- PWA -->
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#00d4ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MatchOracle">
+<link rel="apple-touch-icon" href="/static/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="MatchOracle">
+<meta name="msapplication-TileColor" content="#030508">
+<meta name="msapplication-TileImage" content="/static/icons/icon-144.png">
+<!-- SEO -->
+<meta name="description" content="AI-powered football predictions, player ratings, team rankings and match simulations. Powered by Hybrid V1 + Claude AI.">
+<meta property="og:title" content="MatchOracle - Football Intelligence Engine">
+<meta property="og:description" content="Predict match results, rate players, rank teams and simulate full matches using AI.">
+<meta property="og:type" content="website">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#030508;--card:#0d1117;--card2:#111827;--border:#1a2332;--border2:#243044;--accent:#00d4ff;--accent2:#7c3aed;--green:#10b981;--red:#ef4444;--gold:#f59e0b;--orange:#fb923c;--text:#f0f6ff;--text2:#94a3b8;--muted:#4a6080;}
@@ -130,6 +147,17 @@ footer a{color:var(--accent);text-decoration:none;}
     </div>
   </div>
 </nav>
+<!-- PWA Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#0a1628,#0d1f3c);border-top:1px solid rgba(0,212,255,.3);padding:14px 20px;align-items:center;gap:12px;box-shadow:0 -4px 24px rgba(0,0,0,.5)">
+  <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><path d="M20 2 L36 8 L36 22 C36 30 28 37 20 39 C12 37 4 30 4 22 L4 8 Z" fill="#0055cc" stroke="rgba(0,212,255,0.4)" stroke-width="0.8"/><path d="M9 28 L9 13 L14 13 L20 21 L26 13 L31 13 L31 28 L27 28 L27 19 L20 27 L13 19 L13 28 Z" fill="#00d4ff"/></svg>
+  <div style="flex:1">
+    <div style="font-weight:700;font-size:14px;color:white">Install MatchOracle</div>
+    <div style="font-size:12px;color:var(--text2)">Add to home screen for the best experience</div>
+  </div>
+  <button onclick="installApp()" style="background:linear-gradient(135deg,var(--accent),#0077ff);color:#030508;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">Install</button>
+  <button onclick="dismissInstall()" style="background:rgba(255,255,255,.08);color:var(--text2);border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer">Later</button>
+</div>
+
 {% if messages %}
 <div class="wrap" style="margin-top:16px">
   {% for message in messages %}
@@ -158,13 +186,49 @@ function toggleNav(){
   links.classList.toggle('open');
   btn.classList.toggle('open');
 }
-// Close nav when link clicked on mobile
 document.querySelectorAll('.nl,.btn-n').forEach(el=>{
   el.addEventListener('click',()=>{
     document.getElementById('navLinks').classList.remove('open');
     document.getElementById('hamBtn').classList.remove('open');
   });
 });
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if(installBanner) installBanner.style.display = 'flex';
+});
+
+function installApp(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
+    if(installBanner) installBanner.style.display = 'none';
+  });
+}
+
+function dismissInstall(){
+  if(installBanner) installBanner.style.display = 'none';
+  localStorage.setItem('installDismissed', '1');
+}
+
+// Don't show if already dismissed
+if(localStorage.getItem('installDismissed') && installBanner){
+  installBanner.style.display = 'none';
+}
 </script>
 </body>
 </html>
