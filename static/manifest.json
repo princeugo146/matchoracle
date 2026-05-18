@@ -1,15 +1,15 @@
 {
-  "name": "MatchOracle - Football Intelligence Engine",
+  "name": "MatchOracle",
   "short_name": "MatchOracle",
-  "description": "AI-powered football predictions, player ratings, team rankings and match simulations.",
+  "description": "Football Intelligence Engine - AI-powered match predictions",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#030508",
-  "theme_color": "#00d4ff",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["sports", "entertainment"],
+  "categories": ["sports", "productivity"],
   "icons": [
     {
       "src": "/static/icons/icon-72.png",
