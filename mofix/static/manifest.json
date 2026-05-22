@@ -1,7 +1,7 @@
 {
-  "name": "MatchOracle - Football Intelligence Engine",
+  "name": "MatchOracle",
   "short_name": "MatchOracle",
-  "description": "AI-powered football predictions, player ratings, team rankings and match simulations.",
+  "description": "AI-powered football predictions, player ratings and match simulations.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#030508",
@@ -9,47 +9,10 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["sports", "entertainment"],
   "icons": [
-    {
-      "src": "/static/icons/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
     {
       "src": "/static/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-384.png",
-      "sizes": "384x384",
       "type": "image/png",
       "purpose": "any maskable"
     },
@@ -58,31 +21,24 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
       "name": "Dashboard",
-      "short_name": "Predict",
-      "description": "Go to prediction dashboard",
       "url": "/dashboard/",
       "icons": [{"src": "/static/icons/icon-96.png", "sizes": "96x96"}]
     },
     {
       "name": "Live Scores",
-      "short_name": "Live",
-      "description": "See live football scores",
       "url": "/scores/",
       "icons": [{"src": "/static/icons/icon-96.png", "sizes": "96x96"}]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/static/screenshots/home.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "MatchOracle Home Screen"
     }
   ]
 }

@@ -142,3 +142,62 @@ def tips(request):
         'free_tips': free_tips, 'pro_tips': pro_tips,
         'is_pro': request.user.plan == 'pro',
     })
+
+@login_required
+def smart_ai(request):
+    """Handle smart AI natural language predictions"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+
+    user = request.user
+
+    # Reset counter if new day
+    today = timezone.now().date()
+    if user.predictions_date != today:
+        user.predictions_today = 0
+        user.predictions_date = today
+        user.save(update_fields=['predictions_today', 'predictions_date'])
+
+    if not user.can_predict:
+        plan_info = settings.MATCHORACLE['PLANS'].get(user.plan, {})
+        limit = plan_info.get('predictions_per_day', 3)
+        return JsonResponse({
+            'error': 'daily_limit_reached',
+            'message': f'You have used all {limit} predictions for today. Upgrade for more!',
+        }, status=429)
+
+    try:
+        data = json.loads(request.body)
+        question = data.get('question', '').strip()
+        if not question:
+            return JsonResponse({'error': 'Please ask a question'}, status=400)
+
+        from .smart_ai import smart_predict
+        result = smart_predict(question)
+
+        # Save as prediction
+        Prediction.objects.create(
+            user=user,
+            engine='NL',
+            input_data={'question': question},
+            output_data=result,
+            confidence=result.get('confidence', 0),
+            home_team=result.get('home_team', '') or '',
+            away_team=result.get('away_team', '') or '',
+            predicted_result=result.get('verdict', '') or result.get('answer', '')[:50],
+        )
+
+        # Update counter
+        user.predictions_today += 1
+        user.total_predictions += 1
+        user.save(update_fields=['predictions_today', 'total_predictions'])
+
+        return JsonResponse({
+            'success': True,
+            'result': result,
+            'predictions_left': user.predictions_left_today,
+        })
+
+    except Exception as e:
+        logger.error(f"Smart AI error: {e}", exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)

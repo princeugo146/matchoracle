@@ -113,3 +113,8 @@ MATCHORACLE = {
     'PAYSTACK_PUBLIC_KEY': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
     'VERSION': '2.0.0',
 }
+
+# Static files directories (where Django looks for static files before collecting)
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
