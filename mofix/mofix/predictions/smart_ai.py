@@ -1,5 +1,11 @@
 import json, requests, re, logging
 from django.conf import settings
+from .engine import (
+    search_web, extract_match_data, extract_player_data,
+    extract_upcoming_matches, detect_intent,
+    _build_match_engine_input, _build_sim_engine_input,
+    engine_a, engine_b, engine_d,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -102,109 +108,103 @@ def get_todays_match(home_team, away_team):
 
 def smart_predict(question):
     """
-    Main function: takes a natural language question and returns
-    a full prediction by auto-detecting teams and running engines.
+    Main function: takes a natural language question and returns a full
+    prediction by detecting intent, searching the web for real data,
+    trying Sportmonks if available, and routing to the right engine.
+
+    Intent routing:
+      match_prediction  → Engine A + Engine D (simulation)
+      player_comparison → Engine B (per player) + comparison narrative
+      simulation        → Engine D
+      general           → Claude AI only
     """
     if not question or len(question.strip()) < 5:
         return {
             'success': False,
             'answer': 'Please ask a football question, e.g. "Who will win Arsenal vs Chelsea today?"',
-            'prediction': None
+            'prediction': None,
+            'data_sources': [],
         }
 
-    # Step 1: Extract teams from question
-    extraction = extract_teams_from_question(question)
+    # ── 1. Detect intent ────────────────────────────────────────────────────
+    intent_info = detect_intent(question)
+    intent = intent_info['intent']
+    teams = intent_info.get('teams', [])
+    players = intent_info.get('players', [])
+    data_sources = []
 
-    home_team = ''
-    away_team = ''
-    competition = 'Unknown League'
-    extra_context = ''
+    # ── 2. If intent unclear, try AI extraction as fallback ─────────────────
+    if intent in ('general', 'match_prediction') and not teams:
+        extraction = extract_teams_from_question(question)
+        if extraction:
+            ht = extraction.get('home_team', '').strip()
+            at = extraction.get('away_team', '').strip()
+            if ht and at:
+                teams = [ht, at]
+                intent = 'match_prediction'
 
-    if extraction:
-        home_team = extraction.get('home_team', '').strip()
-        away_team = extraction.get('away_team', '').strip()
-        competition = extraction.get('competition', 'Unknown League')
-        extra_context = extraction.get('extra_context', '')
+    # ── 3. Match prediction ─────────────────────────────────────────────────
+    if intent == 'match_prediction' and len(teams) >= 2:
+        home_team, away_team = teams[0], teams[1]
 
-    # Step 2: If we have both teams, run full engine prediction
-    if home_team and away_team:
-        # Check if they play today
         todays_match = get_todays_match(home_team, away_team)
+        competition = 'League'
 
-        # Build engine A data with smart defaults
-        engine_data = {
-            'home': {
-                'name': home_team,
-                'goals_scored': 1.6,
-                'goals_conceded': 1.1,
-                'form': 'W D W W D',
-                'win_rate': 50,
-                'injuries': 0,
-                'position': 8,
-            },
-            'away': {
-                'name': away_team,
-                'goals_scored': 1.5,
-                'goals_conceded': 1.2,
-                'form': 'W W D L W',
-                'win_rate': 48,
-                'injuries': 0,
-                'position': 9,
-            },
-            'h2h': {
-                'home_wins': 4,
-                'draws': 3,
-                'away_wins': 3,
+        search_q = f"{home_team} vs {away_team} prediction form injuries stats 2024"
+        web_results = search_web(search_q)
+        if web_results:
+            data_sources.append('web_search')
+        if todays_match:
+            data_sources.append('sportmonks')
+
+        web_data = extract_match_data(web_results, home_team, away_team)
+
+        upcoming = extract_upcoming_matches(web_results, home_team)
+        if upcoming:
+            competition = upcoming.get('competition', 'League').title()
+
+        engine_data = _build_match_engine_input(home_team, away_team, web_data)
+        sim_data = _build_sim_engine_input(home_team, away_team, web_data)
+
+        try:
+            match_result = engine_a(engine_data)
+        except Exception as e:
+            logger.error(f"Engine A error in smart_predict: {e}")
+            match_result = None
+
+        try:
+            sim_result = engine_d(sim_data)
+        except Exception as e:
+            logger.error(f"Engine D error in smart_predict: {e}")
+            sim_result = None
+
+        if not match_result:
+            return {
+                'success': False,
+                'answer': f'Unable to generate prediction for {home_team} vs {away_team}.',
+                'home_team': home_team,
+                'away_team': away_team,
+                'data_sources': data_sources,
             }
-        }
 
-        # Run Engine A
-        from predictions.engine import engine_a, engine_d
-        match_result = engine_a(engine_data)
-
-        # Run Engine D simulation
-        sim_data = {
-            'home': {
-                'name': home_team,
-                'attack': 72,
-                'defence': 68,
-                'elo': 1050,
-                'injuries': 0,
-            },
-            'away': {
-                'name': away_team,
-                'attack': 70,
-                'defence': 66,
-                'elo': 1030,
-                'injuries': 0,
-            },
-            'simulations': 10000,
-            'competition': 'league',
-            'weather': 'normal',
-        }
-        sim_result = engine_d(sim_data)
-
-        # Step 3: Build comprehensive AI answer
-        match_info = f"Today's match" if todays_match else f"Upcoming match"
+        match_info = "Today's match" if todays_match else "Upcoming match"
+        snippets_text = ' | '.join(web_data.get('raw_snippets', []))
         ai_answer = call_ai(
             'You are MatchOracle AI, a football intelligence assistant. Give expert predictions. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
             f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Engine A results: Home win {match_result["home_win"]}%, Draw {match_result["draw"]}%, Away win {match_result["away_win"]}%\n'
-            f'Predicted score: {match_result["predicted_score"]}\n'
-            f'Simulation (10,000 runs): Most likely score {sim_result["likely_score"]}\n'
+            f'Web data snippets: {snippets_text[:300]}\n'
+            f'Engine A: Home {match_result["home_win"]}% Draw {match_result["draw"]}% Away {match_result["away_win"]}%\n'
+            f'Predicted score: {match_result.get("predicted_score","1-1")}\n'
+            f'Simulation (10,000 runs): Most likely score {sim_result["likely_score"] if sim_result else "N/A"}\n'
             f'Confidence: {match_result["confidence"]}%\n'
-            f'Extra context: {extra_context}\n'
-            f'Return this JSON: {{"answer":"Your 3-4 sentence expert analysis mentioning the percentages and predicted score",'
+            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
+            f'Return JSON: {{"answer":"3-4 sentence expert analysis mentioning percentages and predicted score",'
             f'"verdict":"{match_result["verdict"]}",'
-            f'"key_factors":["factor 1","factor 2","factor 3"],'
-            f'"betting_insight":"One sentence about the most likely outcome"}}',
-            max_tokens=600
+            f'"key_factors":["factor1","factor2","factor3"],'
+            f'"betting_insight":"one sentence about most likely outcome"}}',
+            max_tokens=600,
         )
-
-        final_answer = ''
-        key_factors = []
-        betting_insight = ''
 
         if ai_answer:
             final_answer = ai_answer.get('answer', '')
@@ -212,14 +212,18 @@ def smart_predict(question):
             betting_insight = ai_answer.get('betting_insight', '')
         else:
             final_answer = (
-                f"Based on our V1 analysis, {match_result['verdict']} is predicted to win "
-                f"with {max(match_result['home_win'], match_result['away_win'])}% probability. "
-                f"The draw probability is {match_result['draw']}%. "
-                f"Our simulation of 10,000 matches suggests the most likely score is {sim_result['likely_score']}."
+                f"Based on web data and V1 analysis, {match_result['verdict']} is predicted to win "
+                f"({match_result['home_win']}% home / {match_result['draw']}% draw / "
+                f"{match_result['away_win']}% away). "
+                f"Predicted score: {match_result.get('predicted_score','1-1')}. "
+                f"Simulation most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}."
             )
+            key_factors = []
+            betting_insight = ''
 
         return {
             'success': True,
+            'intent': intent,
             'home_team': home_team,
             'away_team': away_team,
             'competition': competition,
@@ -228,32 +232,141 @@ def smart_predict(question):
             'simulation': sim_result,
             'answer': final_answer,
             'verdict': match_result['verdict'],
-            'predicted_score': match_result['predicted_score'],
-            'likely_score': sim_result['likely_score'],
+            'predicted_score': match_result.get('predicted_score', '1-1'),
+            'likely_score': sim_result['likely_score'] if sim_result else 'N/A',
             'confidence': match_result['confidence'],
             'key_factors': key_factors,
             'betting_insight': betting_insight,
             'home_win': match_result['home_win'],
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
+            'data_sources': data_sources,
         }
 
-    else:
-        # No teams found — answer as general football AI
-        ai = call_ai(
-            'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
-            f'Football question: "{question}"\n'
-            f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-            max_tokens=500
-        )
-        return {
-            'success': True,
-            'home_team': None,
-            'away_team': None,
-            'answer': ai.get('answer', 'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"') if ai else 'Please mention two team names for a full prediction.',
-            'verdict': ai.get('verdict', '') if ai else '',
-            'key_factors': ai.get('key_factors', []) if ai else [],
-            'match_prediction': None,
-            'simulation': None,
-            'confidence': 0,
-        }
+    # ── 4. Player comparison ────────────────────────────────────────────────
+    if intent == 'player_comparison' and players:
+        ratings = []
+        for player in players:
+            search_q = f"{player} football stats goals assists 2024 season"
+            results = search_web(search_q)
+            if results:
+                data_sources.append('web_search')
+            pdata = extract_player_data(results, player)
+            try:
+                rating = engine_b(pdata)
+                ratings.append({'player': player, 'result': rating})
+            except Exception as e:
+                logger.error(f"Engine B error for {player} in smart_predict: {e}")
+
+        if ratings:
+            comparison_text = '\n'.join(
+                f"{r['player']}: rating={r['result']['rating']}/100 tier={r['result']['tier']} "
+                f"insight={r['result'].get('insight','')}"
+                for r in ratings
+            )
+            ai_answer = call_ai(
+                'You are MatchOracle AI. Compare football players expertly. Return ONLY valid JSON.',
+                f'User asked: "{question}"\n'
+                f'Engine B player ratings:\n{comparison_text}\n'
+                f'Data sources: {", ".join(data_sources) or "defaults"}\n'
+                f'Return JSON: {{"answer":"3-4 sentence comparison with ratings",'
+                f'"verdict":"name of better player",'
+                f'"key_factors":["factor1","factor2","factor3"],'
+                f'"confidence":75}}',
+                max_tokens=600,
+            )
+            best = max(ratings, key=lambda x: x['result']['rating'])
+            return {
+                'success': True,
+                'intent': intent,
+                'answer': (ai_answer or {}).get('answer',
+                    f"Engine B comparison: {comparison_text}"),
+                'verdict': (ai_answer or {}).get('verdict', best['player']),
+                'key_factors': (ai_answer or {}).get('key_factors', []),
+                'confidence': (ai_answer or {}).get('confidence', 70),
+                'player_ratings': ratings,
+                'home_team': None,
+                'away_team': None,
+                'match_prediction': None,
+                'simulation': None,
+                'data_sources': data_sources,
+            }
+
+    # ── 5. Simulation ───────────────────────────────────────────────────────
+    if intent == 'simulation':
+        if len(teams) >= 2:
+            home_team, away_team = teams[0], teams[1]
+            search_q = f"{home_team} vs {away_team} stats attack defence 2024"
+            results = search_web(search_q)
+            if results:
+                data_sources.append('web_search')
+            web_data = extract_match_data(results, home_team, away_team)
+            sim_data = _build_sim_engine_input(home_team, away_team, web_data)
+        else:
+            home_team = teams[0] if teams else 'Home Team'
+            away_team = 'Away Team'
+            sim_data = {
+                'home': {'name': home_team, 'attack': 75, 'defence': 70, 'elo': 1050, 'injuries': 0,
+                         'tactical_style': 'balanced', 'tournament_experience': 5, 'knockout_mentality': 5},
+                'away': {'name': away_team, 'attack': 72, 'defence': 68, 'elo': 1020, 'injuries': 0,
+                         'tactical_style': 'balanced', 'tournament_experience': 5, 'knockout_mentality': 5},
+                'simulations': 10000, 'competition': 'league', 'weather': 'normal', 'match_type': 'league',
+            }
+
+        try:
+            sim_result = engine_d(sim_data)
+        except Exception as e:
+            logger.error(f"Engine D error in smart_predict simulation: {e}")
+            sim_result = None
+
+        if sim_result:
+            ai_answer = call_ai(
+                'You are MatchOracle AI. Explain simulation results. Return ONLY valid JSON.',
+                f'User asked: "{question}"\n'
+                f'Simulation ({sim_result["simulations"]} runs): '
+                f'Home {sim_result["home_win"]}% Draw {sim_result["draw"]}% Away {sim_result["away_win"]}%\n'
+                f'Most likely score: {sim_result["likely_score"]}\n'
+                f'Return JSON: {{"answer":"3-4 sentence simulation analysis",'
+                f'"verdict":"most likely outcome",'
+                f'"key_factors":["f1","f2","f3"],"confidence":75}}',
+                max_tokens=500,
+            )
+            return {
+                'success': True,
+                'intent': intent,
+                'answer': (ai_answer or {}).get('answer',
+                    f"Simulation complete ({sim_result['simulations']} runs). "
+                    f"Most likely score: {sim_result['likely_score']}. "
+                    f"Home win {sim_result['home_win']}%, Draw {sim_result['draw']}%, "
+                    f"Away win {sim_result['away_win']}%."),
+                'verdict': (ai_answer or {}).get('verdict', sim_result['likely_score']),
+                'key_factors': (ai_answer or {}).get('key_factors', []),
+                'confidence': (ai_answer or {}).get('confidence', 70),
+                'home_team': home_team,
+                'away_team': away_team,
+                'match_prediction': None,
+                'simulation': sim_result,
+                'data_sources': data_sources,
+            }
+
+    # ── 6. General football question (Claude only) ──────────────────────────
+    ai = call_ai(
+        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
+        f'Football question: "{question}"\n'
+        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
+        max_tokens=500,
+    )
+    return {
+        'success': True,
+        'intent': intent,
+        'home_team': None,
+        'away_team': None,
+        'answer': (ai or {}).get('answer',
+            'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"'),
+        'verdict': (ai or {}).get('verdict', ''),
+        'key_factors': (ai or {}).get('key_factors', []),
+        'match_prediction': None,
+        'simulation': None,
+        'confidence': 0,
+        'data_sources': data_sources,
+    }
