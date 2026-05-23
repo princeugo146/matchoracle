@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Daily Limit Reached{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:500px;margin:80px auto;text-align:center">
+  <div style="font-size:56px;margin-bottom:20px">&#9203;</div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:12px">Daily Limit Reached</div>
+  <div style="color:var(--text2);margin-bottom:10px;font-size:15px;line-height:1.7">You've used all your predictions for today.</div>
+  <div style="color:var(--muted);font-size:13px;margin-bottom:32px">Your limit resets at midnight (Lagos time).<br>Upgrade for more predictions per day.</div>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="/pricing/" class="btn btn-p" style="padding:13px 28px">Upgrade Plan</a>
+    <a href="/dashboard/" class="btn btn-s" style="padding:13px 28px">Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

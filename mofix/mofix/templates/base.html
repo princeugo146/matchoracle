@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}MatchOracle{% endblock %} - Football Intelligence Engine</title>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#00d4ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MatchOracle">
+<link rel="apple-touch-icon" href="/static/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="MatchOracle">
+<meta name="msapplication-TileColor" content="#030508">
+<meta name="msapplication-TileImage" content="/static/icons/icon-144.png">
+<!-- SEO -->
+<meta name="description" content="AI-powered football predictions, player ratings, team rankings and match simulations. Powered by Hybrid V1 + Claude AI.">
+<meta property="og:title" content="MatchOracle - Football Intelligence Engine">
+<meta property="og:description" content="Predict match results, rate players, rank teams and simulate full matches using AI.">
+<meta property="og:type" content="website">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#030508;--card:#0d1117;--card2:#111827;--border:#1a2332;--border2:#243044;--accent:#00d4ff;--accent2:#7c3aed;--green:#10b981;--red:#ef4444;--gold:#f59e0b;--orange:#fb923c;--text:#f0f6ff;--text2:#94a3b8;--muted:#4a6080;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 100% 60% at 10% 10%,rgba(0,212,255,.05) 0%,transparent 55%),radial-gradient(ellipse 80% 50% at 90% 90%,rgba(124,58,237,.06) 0%,transparent 55%);pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px;}
+nav{position:sticky;top:0;z-index:200;background:rgba(3,5,8,.95);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1200px;margin:0 auto;gap:12px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;color:white;letter-spacing:1px;}
+.logo-icon{width:40px;height:40px;flex-shrink:0;}
+.logo-text{display:flex;flex-direction:column;line-height:1;}
+.logo-match{font-size:13px;font-weight:900;background:linear-gradient(90deg,#fff,#c0e8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-oracle{font-size:13px;font-weight:900;background:linear-gradient(90deg,var(--accent),#0077ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+/* Mobile hamburger */
+.ham{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:6px;background:none;border:none;}
+.ham span{width:22px;height:2px;background:var(--text2);border-radius:2px;transition:all .3s;}
+@media(max-width:640px){
+  .ham{display:flex;}
+  .nav-links{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(3,5,8,.98);border-bottom:1px solid var(--border);padding:12px 16px;flex-direction:column;align-items:stretch;gap:4px;z-index:300;}
+  .nav-links.open{display:flex;}
+  .nl{padding:10px 14px;font-size:14px;border-radius:8px;}
+  .btn-n{padding:10px 14px;text-align:center;}
+}
+.nl{padding:7px 11px;border-radius:8px;color:var(--text2);text-decoration:none;font-size:13px;font-weight:500;transition:all .2s;}
+.nl:hover{color:var(--text);background:rgba(255,255,255,.06);}
+.nl.live{color:var(--red);padding-left:18px;position:relative;}
+.nl.live::before{content:'';position:absolute;left:7px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--red);animation:lp 1.2s infinite;}
+@keyframes lp{0%,100%{opacity:1;}50%{opacity:.3;}}
+.btn-n{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer;display:inline-block;}
+.btn-ac{background:linear-gradient(135deg,var(--accent),#0099cc);color:#030508;}
+.btn-ac:hover{transform:translateY(-1px);}
+.btn-gh{background:transparent;color:var(--accent);border:1px solid rgba(0,212,255,.3);}
+.btn-gh:hover{background:rgba(0,212,255,.08);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.ct{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-weight:600;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+label{font-size:12px;color:var(--text2);font-weight:500;}
+input,select,textarea{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:9px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:all .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(0,212,255,.03);}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+select option{background:var(--card2);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 24px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .25s;text-decoration:none;}
+.btn-p{background:linear-gradient(135deg,var(--accent),#0099cc);color:#030508;}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.3);}
+.btn-s{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border2);}
+.btn-full{width:100%;}
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;}
+.al-s{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7;}
+.al-e{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;}
+.al-i{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:#7dd3fc;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.bb{background:rgba(0,212,255,.12);color:var(--accent);}
+.bg{background:rgba(16,185,129,.12);color:var(--green);}
+.br{background:rgba(239,68,68,.12);color:var(--red);}
+.pf{background:rgba(100,116,139,.15);color:var(--text2);border:1px solid var(--border2);padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block;}
+.pb{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block;}
+.pp{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block;}
+.pr{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.pl{width:130px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pw{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;}
+.pf2{height:100%;border-radius:10px;transition:width 1.3s cubic-bezier(.4,0,.2,1);}
+.pp2{width:44px;text-align:right;font-size:13px;font-weight:700;}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.1);border-top-color:var(--accent);animation:rot .8s linear infinite;margin:0 auto 14px;}
+@keyframes rot{to{transform:rotate(360deg);}}
+@keyframes fu{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+footer{border-top:1px solid var(--border);margin-top:80px;padding:36px 0;text-align:center;color:var(--muted);font-size:12px;}
+footer a{color:var(--accent);text-decoration:none;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--card);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px;}
+@media(max-width:768px){.g2,.g3,.g4{grid-template-columns:1fr;}.wrap{padding:0 12px;}.nl{padding:5px 8px;font-size:12px;}}
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00d4ff"/>
+            <stop offset="100%" stop-color="#0055cc"/>
+          </linearGradient>
+          <linearGradient id="lg2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#0099ff"/>
+            <stop offset="100%" stop-color="#003399"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer shield shape -->
+        <path d="M20 2 L36 8 L36 22 C36 30 28 37 20 39 C12 37 4 30 4 22 L4 8 Z" fill="url(#lg2)" stroke="rgba(0,212,255,0.4)" stroke-width="0.8"/>
+        <!-- M letter -->
+        <path d="M9 28 L9 13 L14 13 L20 21 L26 13 L31 13 L31 28 L27 28 L27 19 L20 27 L13 19 L13 28 Z" fill="url(#lg1)"/>
+        <!-- Top accent lines -->
+        <path d="M15 10 L20 4 L25 10" stroke="#00d4ff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-match">MATCH</span>
+        <span class="logo-oracle">ORACLE</span>
+      </div>
+    </a>
+    <button class="ham" onclick="toggleNav()" id="hamBtn"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a href="/" class="nl">Home</a>
+      <a href="/scores/" class="nl live">{% if live_count > 0 %}{{ live_count }} Live{% else %}Live{% endif %}</a>
+      <a href="/leaderboard/" class="nl">Rankings</a>
+      <a href="/pricing/" class="nl">Pricing</a>
+      <a href="/api-docs/" class="nl">API</a>
+      {% if user.is_authenticated %}
+        <a href="/dashboard/" class="nl">Dashboard</a>
+        <a href="/dashboard/tips/" class="nl">Tips</a>
+        <a href="/accounts/profile/" class="nl">Profile</a>
+        <a href="/accounts/logout/" class="btn-n btn-gh">Logout</a>
+      {% else %}
+        <a href="/accounts/login/" class="btn-n btn-gh">Login</a>
+        <a href="/accounts/register/" class="btn-n btn-ac">Start Free</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<!-- PWA Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#0a1628,#0d1f3c);border-top:1px solid rgba(0,212,255,.3);padding:14px 20px;align-items:center;gap:12px;box-shadow:0 -4px 24px rgba(0,0,0,.5)">
+  <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><path d="M20 2 L36 8 L36 22 C36 30 28 37 20 39 C12 37 4 30 4 22 L4 8 Z" fill="#0055cc" stroke="rgba(0,212,255,0.4)" stroke-width="0.8"/><path d="M9 28 L9 13 L14 13 L20 21 L26 13 L31 13 L31 28 L27 28 L27 19 L20 27 L13 19 L13 28 Z" fill="#00d4ff"/></svg>
+  <div style="flex:1">
+    <div style="font-weight:700;font-size:14px;color:white">Install MatchOracle</div>
+    <div style="font-size:12px;color:var(--text2)">Add to home screen for the best experience</div>
+  </div>
+  <button onclick="installApp()" style="background:linear-gradient(135deg,var(--accent),#0077ff);color:#030508;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">Install</button>
+  <button onclick="dismissInstall()" style="background:rgba(255,255,255,.08);color:var(--text2);border:none;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer">Later</button>
+</div>
+
+{% if messages %}
+<div class="wrap" style="margin-top:16px">
+  {% for message in messages %}
+  <div class="alert {% if message.tags == 'success' %}al-s{% elif message.tags == 'error' %}al-e{% else %}al-i{% endif %}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+{% block content %}{% endblock %}
+<footer>
+  <div class="wrap">
+    <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;margin-bottom:10px">
+      <span style="color:#c0e8ff">MATCH</span><span style="background:linear-gradient(90deg,var(--accent),#0077ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">ORACLE</span>
+    </div>
+    <div style="color:var(--text2);font-size:13px;margin-bottom:14px">Football Intelligence Engine - Hybrid V1 Algorithm + Claude AI</div>
+    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
+      <a href="/">Home</a><a href="/scores/">Live Scores</a><a href="/pricing/">Pricing</a><a href="/api-docs/">API</a><a href="/leaderboard/">Leaderboard</a><a href="/dashboard/tips/">Tips</a>
+    </div>
+    <div>&#169; 2026 MatchOracle - All rights reserved</div>
+  </div>
+</footer>
+{% block extra_js %}{% endblock %}
+<script>
+function toggleNav(){
+  const links=document.getElementById('navLinks');
+  const btn=document.getElementById('hamBtn');
+  links.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+document.querySelectorAll('.nl,.btn-n').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('hamBtn').classList.remove('open');
+  });
+});
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if(installBanner) installBanner.style.display = 'flex';
+});
+
+function installApp(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
+    if(installBanner) installBanner.style.display = 'none';
+  });
+}
+
+function dismissInstall(){
+  if(installBanner) installBanner.style.display = 'none';
+  localStorage.setItem('installDismissed', '1');
+}
+
+// Don't show if already dismissed
+if(localStorage.getItem('installDismissed') && installBanner){
+  installBanner.style.display = 'none';
+}
+</script>
+</body>
+</html>
