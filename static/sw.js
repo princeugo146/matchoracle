@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matchoracle-v2.0';
+const CACHE_NAME = 'matchoracle-v2.1';
 const STATIC_ASSETS = [
   '/',
   '/scores/',
@@ -8,7 +8,8 @@ const STATIC_ASSETS = [
   '/static/manifest.json',
 ];
 
-// Install - cache static assets
+// Install - cache static assets, but do NOT skipWaiting so the page can
+// detect the waiting worker and prompt the user before activating.
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
@@ -17,19 +18,27 @@ self.addEventListener('install', event => {
       });
     })
   );
-  self.skipWaiting();
+  // Do not call self.skipWaiting() here — the page will send a SKIP_WAITING
+  // message after the user confirms the update.
 });
 
-// Activate - clean old caches
+// Activate - clean old caches and immediately claim all open clients so
+// the updated worker takes effect without a second reload.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// Message - allow the page to trigger skipWaiting on demand.
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Fetch - network first, cache fallback
