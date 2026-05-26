@@ -23,8 +23,5 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy project source
 COPY . .
 
-# Collect static files (best-effort; won't fail if env vars are missing)
-RUN python manage.py collectstatic --noinput || true
-
 # Default command — Railway overrides this per service
 CMD ["gunicorn", "matchoracle.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120"]
