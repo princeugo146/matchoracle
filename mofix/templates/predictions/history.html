@@ -9,17 +9,18 @@
   <div class="card">
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
-        <th style="text-align:left;padding:10px 14px">Engine</th><th style="text-align:left;padding:10px 14px">Match</th><th style="text-align:left;padding:10px 14px">Prediction</th><th style="text-align:left;padding:10px 14px">Result</th><th style="text-align:left;padding:10px 14px">Date</th>
+        <th style="text-align:left;padding:10px 14px">Engine</th><th style="text-align:left;padding:10px 14px">Match</th><th style="text-align:left;padding:10px 14px">Prediction</th><th style="text-align:left;padding:10px 14px">Confidence</th><th style="text-align:left;padding:10px 14px">Result</th><th style="text-align:left;padding:10px 14px">Date</th>
       </tr></thead>
       <tbody>{% for p in predictions %}
         <tr style="border-top:1px solid rgba(255,255,255,.04)">
           <td style="padding:12px 14px"><span class="badge bb">{{ p.engine }}</span></td>
           <td style="padding:12px 14px;color:var(--text2)">{% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}{{ p.input_data.name|default:"—" }}{% endif %}</td>
           <td style="padding:12px 14px;font-weight:600;color:var(--accent)">{{ p.predicted_result|default:"—" }}</td>
+          <td style="padding:12px 14px">{% if p.confidence > 0 %}{% if p.confidence >= 80 %}<span class="confidence-badge badge-high" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟢</span>High</span>{% elif p.confidence >= 60 %}<span class="confidence-badge badge-watch" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟡</span>Watch</span>{% else %}<span class="confidence-badge badge-risk" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🔴</span>Risk</span>{% endif %}{% else %}<span style="color:var(--muted);font-size:12px">—</span>{% endif %}</td>
           <td style="padding:12px 14px">{% if p.was_correct == True %}<span class="badge bg">Correct</span>{% elif p.was_correct == False %}<span class="badge br">Wrong</span>{% else %}<span style="color:var(--muted);font-size:12px">Pending</span>{% endif %}</td>
           <td style="padding:12px 14px;color:var(--muted)">{{ p.created_at|date:"d M Y" }}</td>
         </tr>{% empty %}
-        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No predictions yet. Go to the dashboard!</td></tr>
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No predictions yet. Go to the dashboard!</td></tr>
         {% endfor %}
       </tbody>
     </table>

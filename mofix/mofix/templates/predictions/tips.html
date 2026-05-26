@@ -10,7 +10,7 @@
       <div class="card" style="margin-bottom:12px;padding:16px">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-weight:600;font-size:14px">{{ t.home_team }} vs {{ t.away_team }}</div><span style="font-size:11px;color:var(--muted)">{{ t.match_date|date:"d M" }}</span></div>
         <div style="background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:8px;padding:10px 14px;font-weight:600;font-size:14px;margin-bottom:8px">{{ t.tip }}</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">{{ t.competition }}</span><span style="color:var(--green)">{{ t.confidence }}% confidence</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--muted)">{{ t.competition }}</span>{% if t.confidence >= 80 %}<span class="confidence-badge badge-high" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟢</span>High Confidence</span>{% elif t.confidence >= 60 %}<span class="confidence-badge badge-watch" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟡</span>Watch List</span>{% else %}<span class="confidence-badge badge-risk" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🔴</span>Risk Alert</span>{% endif %}</div>
       </div>{% empty %}
       <div class="card" style="text-align:center;padding:40px;color:var(--muted)">New tips coming soon!</div>{% endfor %}
     </div>
@@ -20,7 +20,7 @@
       <div class="card" style="margin-bottom:12px;padding:16px;border-color:rgba(124,58,237,.2)">
         <div style="font-weight:600;font-size:14px;margin-bottom:8px">{{ t.home_team }} vs {{ t.away_team }}</div>
         <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:8px;padding:10px 14px;font-weight:600;font-size:14px">{{ t.tip }}</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px"><span style="color:var(--muted)">{{ t.competition }}</span><span style="color:var(--green)">{{ t.confidence }}%</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-top:8px"><span style="color:var(--muted)">{{ t.competition }}</span>{% if t.confidence >= 80 %}<span class="confidence-badge badge-high" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟢</span>High Confidence</span>{% elif t.confidence >= 60 %}<span class="confidence-badge badge-watch" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟡</span>Watch List</span>{% else %}<span class="confidence-badge badge-risk" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🔴</span>Risk Alert</span>{% endif %}</div>
       </div>{% empty %}<div class="card" style="text-align:center;padding:40px;color:var(--muted)">Pro tips coming soon!</div>{% endfor %}
       {% else %}
       <div class="card" style="text-align:center;padding:48px 24px;border-color:rgba(124,58,237,.2)">

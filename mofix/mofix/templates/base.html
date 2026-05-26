@@ -98,6 +98,12 @@ footer a{color:var(--accent);text-decoration:none;}
 ::-webkit-scrollbar-track{background:var(--card);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:6px;}
 @media(max-width:768px){.g2,.g3,.g4{grid-template-columns:1fr;}.wrap{padding:0 12px;}.nl{padding:5px 8px;font-size:12px;}}
+/* Confidence Badge System */
+.confidence-badge{display:inline-block;padding:8px 16px;border-radius:20px;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+.badge-high{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid #10b981;}
+.badge-watch{background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid #fb923c;}
+.badge-risk{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444;}
+.badge-emoji{font-size:16px;margin-right:6px;}
 </style>
 {% block extra_css %}{% endblock %}
 </head>
