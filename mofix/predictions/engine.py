@@ -326,6 +326,48 @@ def _extract_player_names(text):
     found = [p for p in known_players if p.lower() in text.lower()]
     return found[:2]
 
+def get_confidence_badge(confidence_pct):
+    """
+    Convert a raw confidence percentage into a tiered badge dict.
+    Returns: {badge_type, label, color, emoji, message}
+    Falls back gracefully on any error.
+    """
+    try:
+        pct = int(confidence_pct)
+        if pct >= 80:
+            return {
+                'badge_type': 'high',
+                'label': 'High Confidence',
+                'color': '#10b981',
+                'emoji': '🟢',
+                'message': 'Our engines strongly agree',
+            }
+        elif pct >= 60:
+            return {
+                'badge_type': 'watch',
+                'label': 'Watch List',
+                'color': '#fb923c',
+                'emoji': '🟡',
+                'message': 'Monitor team news before committing',
+            }
+        else:
+            return {
+                'badge_type': 'risk',
+                'label': 'Risk Alert',
+                'color': '#ef4444',
+                'emoji': '🔴',
+                'message': 'Proceed with caution',
+            }
+    except Exception:
+        return {
+            'badge_type': 'watch',
+            'label': 'Watch List',
+            'color': '#fb923c',
+            'emoji': '🟡',
+            'message': 'Monitor team news before committing',
+        }
+
+
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
@@ -486,6 +528,7 @@ def engine_a(data):
     verdict=hn if fh>fa and fh>fd else (an if fa>fh and fa>fd else 'Draw')
     return {
         'home_win':fh,'draw':fd,'away_win':fa,'confidence':confidence,'verdict':verdict,
+        'confidence_badge':get_confidence_badge(confidence),
         'predicted_score':predicted_score,
         'top_scores':[{'score':s,'prob':round(p,1)} for s,p in top_scores],
         'expected_goals':{'home':round(h_xg,2),'away':round(a_xg,2)},

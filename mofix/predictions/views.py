@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
 from .models import Prediction, TeamRanking, WeeklyTip
-from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language
+from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language, get_confidence_badge
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,8 @@ def run_engine(request, engine):
         elif engine == 'NL':
             result = natural_language(input_data.get('question', ''))
             predicted_result = result.get('prediction', '')
+            if result and 'confidence' in result and 'confidence_badge' not in result:
+                result['confidence_badge'] = get_confidence_badge(result['confidence'])
         else:
             return JsonResponse({'error': 'Invalid engine'}, status=400)
 
@@ -174,6 +176,10 @@ def smart_ai(request):
 
         from .smart_ai import smart_predict
         result = smart_predict(question)
+
+        # Attach confidence badge if not already present
+        if result and 'confidence' in result and 'confidence_badge' not in result:
+            result['confidence_badge'] = get_confidence_badge(result['confidence'])
 
         # Save as prediction
         Prediction.objects.create(

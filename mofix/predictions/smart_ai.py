@@ -4,7 +4,7 @@ from .engine import (
     search_web, extract_match_data, extract_player_data,
     extract_upcoming_matches, detect_intent,
     _build_match_engine_input, _build_sim_engine_input,
-    engine_a, engine_b, engine_d,
+    engine_a, engine_b, engine_d, get_confidence_badge,
 )
 
 logger = logging.getLogger(__name__)
@@ -243,6 +243,7 @@ def smart_predict(question):
             'predicted_score': match_result.get('predicted_score', '1-1'),
             'likely_score': sim_result['likely_score'] if sim_result else 'N/A',
             'confidence': match_result['confidence'],
+            'confidence_badge': get_confidence_badge(match_result['confidence']),
             'key_factors': key_factors,
             'betting_insight': betting_insight,
             'home_win': match_result['home_win'],
