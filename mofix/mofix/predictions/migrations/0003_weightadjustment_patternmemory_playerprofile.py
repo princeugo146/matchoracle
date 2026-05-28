@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='weightadjustment',
-            index=models.Index(fields=['engine', 'parameter'], name='predictions_wa_engine_param_idx'),
+            index=models.Index(fields=['engine', 'parameter'], name='pred_wa_eng_param_idx'),
         ),
 
         # ── PatternMemory ─────────────────────────────────────────────────────
