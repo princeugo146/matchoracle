@@ -1,0 +1,132 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_engine %}active{% endblock %}
+
+{% block topbar_actions %}
+  <a href="/admin/predictions/engineaccuracy/" class="btn btn-ghost" style="font-size:11px;">Django Admin →</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Live accuracy KPIs ── -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+  {% for engine, stats in live_stats.items %}
+  <div class="kpi {% if stats.accuracy >= 70 %}kpi-green{% elif stats.accuracy >= 55 %}kpi-gold{% else %}kpi-red{% endif %}">
+    <div class="kpi-label">Engine {{ engine }} — {{ stats.label }}</div>
+    <div class="kpi-value" style="color:{% if stats.accuracy >= 70 %}var(--green){% elif stats.accuracy >= 55 %}var(--gold){% else %}var(--red){% endif %}">
+      {{ stats.accuracy }}%
+    </div>
+    <div class="kpi-sub">{{ stats.correct }} correct / {{ stats.total }} verified</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Accuracy by match type ── -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Accuracy by Engine × Match Type</div>
+  {% if engine_accuracy %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th>
+          <th>Match Type</th>
+          <th>Accuracy</th>
+          <th>Home</th>
+          <th>Away</th>
+          <th>Draw</th>
+          <th>Weight</th>
+          <th>Samples</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ea in engine_accuracy %}
+        <tr>
+          <td>
+            <span class="badge
+              {% if ea.engine == 'A' %}badge-blue
+              {% elif ea.engine == 'B' %}badge-green
+              {% elif ea.engine == 'D' %}badge-gold
+              {% else %}badge-purple{% endif %}">
+              {{ ea.engine }}
+            </span>
+          </td>
+          <td style="font-size:12px;">{{ ea.get_match_type_display }}</td>
+          <td>
+            <div class="acc-bar">
+              <div class="acc-track">
+                <div class="acc-fill {% if ea.accuracy_pct >= 70 %}acc-fill-green{% elif ea.accuracy_pct >= 55 %}acc-fill-gold{% else %}acc-fill-red{% endif %}"
+                     style="width:{{ ea.accuracy_pct }}%"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;
+                color:{% if ea.accuracy_pct >= 70 %}var(--green){% elif ea.accuracy_pct >= 55 %}var(--gold){% else %}var(--red){% endif %}">
+                {{ ea.accuracy_pct|floatformat:1 }}%
+              </span>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--accent);">{{ ea.home_accuracy|floatformat:1 }}%</td>
+          <td style="font-size:12px;color:var(--purple);">{{ ea.away_accuracy|floatformat:1 }}%</td>
+          <td style="font-size:12px;color:var(--text2);">{{ ea.draw_accuracy|floatformat:1 }}%</td>
+          <td style="font-size:12px;
+            color:{% if ea.weight_adjustment > 1 %}var(--green){% elif ea.weight_adjustment < 1 %}var(--red){% else %}var(--text2){% endif %}">
+            {{ ea.weight_adjustment|floatformat:3 }}
+          </td>
+          <td style="font-size:12px;color:var(--text2);">{{ ea.sample_size }}</td>
+          <td style="font-size:11px;color:var(--muted);">{{ ea.updated_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No engine accuracy records yet. They are created automatically once predictions are verified.</p>
+  {% endif %}
+</div>
+
+<!-- ── Recent weight adjustments ── -->
+<div class="card">
+  <div class="card-title">Weight Adjustment History (last 30)</div>
+  {% if adjustments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th>
+          <th>Parameter</th>
+          <th>Old</th>
+          <th>New</th>
+          <th>Δ</th>
+          <th>Match Type</th>
+          <th>Reason</th>
+          <th>Applied</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adj in adjustments %}
+        {% with delta=adj.new_weight|add:"-"|add:adj.old_weight %}
+        <tr>
+          <td><span class="badge badge-blue">{{ adj.engine }}</span></td>
+          <td style="font-size:12px;font-weight:600;">{{ adj.parameter }}</td>
+          <td style="font-size:12px;color:var(--text2);">{{ adj.old_weight|floatformat:4 }}</td>
+          <td style="font-size:12px;color:var(--text);">{{ adj.new_weight|floatformat:4 }}</td>
+          <td style="font-size:12px;font-weight:700;color:var(--text2);">—</td>
+          <td style="font-size:11px;color:var(--text2);">{{ adj.match_type }}</td>
+          <td style="font-size:11px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ adj.reason|default:"—"|truncatechars:60 }}
+          </td>
+          <td style="font-size:11px;color:var(--muted);">{{ adj.applied_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No weight adjustments recorded yet.</p>
+  {% endif %}
+  <div style="margin-top:14px;">
+    <a href="/admin/predictions/weightadjustment/" class="btn btn-ghost" style="font-size:11px;">View all in Django Admin →</a>
+  </div>
+</div>
+
+{% endblock %}

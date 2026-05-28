@@ -1,0 +1,174 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+
+<!-- ── KPI Row ── -->
+<div class="kpi-grid">
+  <div class="kpi kpi-accent">
+    <div class="kpi-label">Total Predictions</div>
+    <div class="kpi-value" style="color:var(--accent)">{{ total_predictions|default:0 }}</div>
+    <div class="kpi-sub">{{ verified_count|default:0 }} verified</div>
+  </div>
+  <div class="kpi kpi-green">
+    <div class="kpi-label">Overall Accuracy</div>
+    <div class="kpi-value" style="color:var(--green)">{{ overall_accuracy|default:0 }}%</div>
+    <div class="kpi-sub">all-time verified</div>
+  </div>
+  <div class="kpi kpi-gold">
+    <div class="kpi-label">This Week</div>
+    <div class="kpi-value" style="color:var(--gold)">{{ week_accuracy|default:0 }}%</div>
+    <div class="kpi-sub">{{ week_predictions|default:0 }} predictions</div>
+  </div>
+  <div class="kpi kpi-purple">
+    <div class="kpi-label">Active Users</div>
+    <div class="kpi-value" style="color:var(--purple)">{{ active_users|default:0 }}</div>
+    <div class="kpi-sub">of {{ total_users|default:0 }} total</div>
+  </div>
+  <div class="kpi kpi-green">
+    <div class="kpi-label">Revenue (All-time)</div>
+    <div class="kpi-value" style="color:var(--green);font-size:22px;">NGN {{ total_revenue|default:0 }}</div>
+    <div class="kpi-sub">verified payments</div>
+  </div>
+  <div class="kpi kpi-accent">
+    <div class="kpi-label">Patterns</div>
+    <div class="kpi-value" style="color:var(--accent)">{{ total_patterns|default:0 }}</div>
+    <div class="kpi-sub">{{ reliable_patterns|default:0 }} reliable</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Team Profiles</div>
+    <div class="kpi-value">{{ total_teams|default:0 }}</div>
+    <div class="kpi-sub">{{ total_players|default:0 }} players tracked</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">30-day Accuracy</div>
+    <div class="kpi-value">{{ month_accuracy|default:0 }}%</div>
+    <div class="kpi-sub">last 30 days</div>
+  </div>
+</div>
+
+<!-- ── Engine Breakdown + Recent Adjustments ── -->
+<div class="g2" style="margin-bottom:24px;">
+
+  <!-- Engine accuracy -->
+  <div class="card">
+    <div class="card-title">Engine Accuracy (All-time)</div>
+    {% if engine_stats %}
+      {% for engine, stats in engine_stats.items %}
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:600;">
+            Engine {{ engine }}
+            <span style="color:var(--text2);font-weight:400;font-size:11px;">— {{ stats.label }}</span>
+          </span>
+          <span style="font-size:13px;font-weight:700;
+            color:{% if stats.accuracy >= 70 %}var(--green){% elif stats.accuracy >= 55 %}var(--gold){% else %}var(--red){% endif %}">
+            {{ stats.accuracy }}%
+          </span>
+        </div>
+        <div class="acc-bar">
+          <div class="acc-track">
+            <div class="acc-fill {% if stats.accuracy >= 70 %}acc-fill-green{% elif stats.accuracy >= 55 %}acc-fill-gold{% else %}acc-fill-red{% endif %}"
+                 style="width:{{ stats.accuracy }}%"></div>
+          </div>
+          <span style="font-size:11px;color:var(--text2);white-space:nowrap;">{{ stats.correct }}/{{ stats.total }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--muted);font-size:13px;">No verified predictions yet.</p>
+    {% endif %}
+    <div style="margin-top:14px;">
+      <a href="{% url 'matchoracle_admin:engine_performance' %}" class="btn btn-ghost" style="font-size:11px;">View full breakdown →</a>
+    </div>
+  </div>
+
+  <!-- Recent weight adjustments -->
+  <div class="card">
+    <div class="card-title">Recent Weight Adjustments</div>
+    {% if recent_adjustments %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Engine</th>
+            <th>Parameter</th>
+            <th>Δ</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adj in recent_adjustments %}
+          <tr>
+            <td><span class="badge badge-blue">{{ adj.engine }}</span></td>
+            <td style="font-size:12px;color:var(--text2);">{{ adj.parameter }}</td>
+            <td style="font-weight:700;
+              color:{% if adj.delta >= 0 %}var(--green){% else %}var(--red){% endif %}">
+              {% if adj.delta >= 0 %}+{% endif %}{{ adj.delta }}
+            </td>
+            <td style="font-size:11px;color:var(--muted);">{{ adj.applied_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p style="color:var(--muted);font-size:13px;">No weight adjustments recorded yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Plan Breakdown ── -->
+{% if plan_breakdown %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Users by Plan</div>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;">
+    {% for row in plan_breakdown %}
+    <div style="text-align:center;min-width:80px;">
+      <div style="font-size:24px;font-weight:800;
+        color:{% if row.plan == 'pro' %}var(--gold){% elif row.plan == 'basic' %}var(--accent){% else %}var(--text2){% endif %}">
+        {{ row.count }}
+      </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px;">{{ row.plan }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Quick links ── -->
+<div class="g3">
+  <a href="{% url 'matchoracle_admin:engine_performance' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">⚙️</div>
+    <div style="font-weight:700;margin-bottom:4px;">Engine Performance</div>
+    <div style="font-size:12px;color:var(--text2);">Accuracy by engine and match type</div>
+  </a>
+  <a href="{% url 'matchoracle_admin:patterns' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">🧠</div>
+    <div style="font-weight:700;margin-bottom:4px;">Pattern Analysis</div>
+    <div style="font-size:12px;color:var(--text2);">{{ total_patterns }} patterns, {{ reliable_patterns }} reliable</div>
+  </a>
+  <a href="{% url 'matchoracle_admin:team_profiles' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">🏟️</div>
+    <div style="font-weight:700;margin-bottom:4px;">Team Profiles</div>
+    <div style="font-size:12px;color:var(--text2);">{{ total_teams }} teams tracked</div>
+  </a>
+  <a href="{% url 'matchoracle_admin:user_analytics' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">👥</div>
+    <div style="font-weight:700;margin-bottom:4px;">User Analytics</div>
+    <div style="font-size:12px;color:var(--text2);">{{ total_users }} users, {{ active_users }} active this week</div>
+  </a>
+  <a href="{% url 'matchoracle_admin:payments' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">💳</div>
+    <div style="font-weight:700;margin-bottom:4px;">Payments</div>
+    <div style="font-size:12px;color:var(--text2);">NGN {{ total_revenue }} all-time revenue</div>
+  </a>
+  <a href="{% url 'matchoracle_admin:health' %}" class="card" style="text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:22px;margin-bottom:8px;">🩺</div>
+    <div style="font-weight:700;margin-bottom:4px;">System Health</div>
+    <div style="font-size:12px;color:var(--text2);">Database, Celery, Redis status</div>
+  </a>
+</div>
+
+{% endblock %}

@@ -43,6 +43,7 @@ def serve_manifest(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin/matchoracle/', include('predictions.admin_urls')),
     path('health/', health),
     path('sw.js', serve_sw),
     path('manifest.json', serve_manifest),

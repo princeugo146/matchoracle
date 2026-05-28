@@ -1,0 +1,87 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_teams %}active{% endblock %}
+
+{% block topbar_actions %}
+  <a href="/admin/predictions/teamprofile/" class="btn btn-ghost" style="font-size:11px;">Django Admin →</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── KPIs ── -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+  <div class="kpi kpi-accent">
+    <div class="kpi-label">Total Teams</div>
+    <div class="kpi-value" style="color:var(--accent)">{{ total }}</div>
+  </div>
+</div>
+
+<!-- ── Filters ── -->
+<form method="get" class="filter-bar">
+  <input type="text" name="q" value="{{ search }}" placeholder="Search team name…" style="min-width:200px;">
+  <select name="style">
+    <option value="">All styles</option>
+    {% for s in styles %}
+    <option value="{{ s }}" {% if s == style %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if search or style %}
+    <a href="{% url 'matchoracle_admin:team_profiles' %}" class="btn btn-ghost">Clear</a>
+  {% endif %}
+</form>
+
+<!-- ── Table ── -->
+<div class="card">
+  <div class="card-title">Team Profiles ({{ page_obj.paginator.count }} results)</div>
+  {% if page_obj %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Team</th>
+          <th>Style</th>
+          <th>Avg Goals Scored</th>
+          <th>Avg Goals Conceded</th>
+          <th>Home Acc.</th>
+          <th>Away Acc.</th>
+          <th>Samples</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for team in page_obj %}
+        <tr>
+          <td style="font-weight:600;">{{ team.team_name }}</td>
+          <td>
+            <span class="badge badge-blue" style="font-size:9px;">{{ team.tactical_style }}</span>
+          </td>
+          <td style="font-size:13px;color:var(--green);">{{ team.avg_goals_scored|floatformat:2 }}</td>
+          <td style="font-size:13px;color:var(--red);">{{ team.avg_goals_conceded|floatformat:2 }}</td>
+          <td style="font-size:13px;font-weight:700;color:var(--accent);">{{ team.home_accuracy|floatformat:1 }}%</td>
+          <td style="font-size:13px;font-weight:700;color:var(--purple);">{{ team.away_accuracy|floatformat:1 }}%</td>
+          <td style="font-size:12px;color:var(--text2);">{{ team.sample_size }}</td>
+          <td style="font-size:11px;color:var(--muted);">{{ team.updated_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ search }}&style={{ style }}">← Prev</a>
+    {% endif %}
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ search }}&style={{ style }}">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No team profiles found. They are created automatically by the background learning tasks.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
