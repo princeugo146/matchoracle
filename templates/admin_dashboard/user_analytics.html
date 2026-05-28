@@ -1,0 +1,150 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}User Analytics{% endblock %}
+{% block page_title %}User Analytics{% endblock %}
+
+{% block content %}
+
+<!-- Export -->
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px">
+  <a href="/admin-dashboard/export/users/" class="btn btn-ghost btn-sm">⬇ Export Users CSV</a>
+</div>
+
+<!-- Stat boxes -->
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--accent)">{{ totals.total }}</div>
+    <div class="stat-lbl">Total Users</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--muted)">{{ totals.free }}</div>
+    <div class="stat-lbl">Free Plan</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--accent)">{{ totals.basic }}</div>
+    <div class="stat-lbl">Basic Plan</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:#a78bfa">{{ totals.pro }}</div>
+    <div class="stat-lbl">Pro Plan</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ totals.active_today }}</div>
+    <div class="stat-lbl">Active Today</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Registrations — Last 30 Days</div>
+    <div class="chart-wrap"><canvas id="regChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Plan Distribution</div>
+    <div class="chart-wrap"><canvas id="planChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Top users by prediction volume -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">Top Users by Prediction Volume</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Email</th><th>Plan</th><th>Total Predictions</th><th>Correct</th><th>Accuracy</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        {% for u in top_users %}
+        <tr>
+          <td style="color:var(--muted)">{{ forloop.counter }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.plan == 'pro' %}<span class="badge badge-purple">{{ u.plan }}</span>
+            {% elif u.plan == 'basic' %}<span class="badge badge-blue">{{ u.plan }}</span>
+            {% else %}<span class="badge badge-gray">{{ u.plan }}</span>{% endif %}
+          </td>
+          <td><strong>{{ u.total_predictions }}</strong></td>
+          <td style="color:var(--green)">{{ u.correct_predictions }}</td>
+          <td>
+            <span style="font-weight:700;color:{% if u.accuracy_rate >= 65 %}var(--green){% elif u.accuracy_rate >= 50 %}var(--gold){% else %}var(--red){% endif %}">
+              {{ u.accuracy_rate }}%
+            </span>
+          </td>
+          <td style="color:var(--muted);font-size:11px">{{ u.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No users with predictions yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Recent signups -->
+<div class="card">
+  <div class="card-title">Recent Signups</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Email</th><th>Plan</th><th>Predictions</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        {% for u in recent_signups %}
+        <tr>
+          <td>{{ u.email }}</td>
+          <td>
+            {% if u.plan == 'pro' %}<span class="badge badge-purple">{{ u.plan }}</span>
+            {% elif u.plan == 'basic' %}<span class="badge badge-blue">{{ u.plan }}</span>
+            {% else %}<span class="badge badge-gray">{{ u.plan }}</span>{% endif %}
+          </td>
+          <td>{{ u.total_predictions }}</td>
+          <td style="color:var(--muted);font-size:11px">{{ u.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">No users yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    <a href="/admin/accounts/user/" class="btn btn-ghost btn-sm">Manage in Django Admin →</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const regLabels = {{ reg_labels_json|safe }};
+const regCounts = {{ reg_counts_json|safe }};
+new Chart(document.getElementById('regChart'), {
+  type: 'bar',
+  data: {
+    labels: regLabels,
+    datasets: [{ data: regCounts, backgroundColor: 'rgba(0,212,255,.5)', borderColor: '#00d4ff', borderWidth: 1, borderRadius: 4 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#4a6080', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(26,35,50,.5)' } },
+      y: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' } }
+    }
+  }
+});
+
+const planLabels = {{ plan_labels_json|safe }};
+const planCounts = {{ plan_counts_json|safe }};
+new Chart(document.getElementById('planChart'), {
+  type: 'doughnut',
+  data: {
+    labels: planLabels,
+    datasets: [{ data: planCounts, backgroundColor: ['rgba(100,116,139,.7)','rgba(0,212,255,.7)','rgba(124,58,237,.7)'], borderColor: '#0d1117', borderWidth: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 14 } } }
+  }
+});
+</script>
+{% endblock %}

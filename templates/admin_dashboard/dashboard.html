@@ -1,0 +1,249 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Overview Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- System status banner -->
+{% if health.status == 'healthy' %}
+<div class="alert alert-ok" style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+  <span class="status-dot dot-green"></span>
+  <strong>System Healthy</strong> — All checks passing
+</div>
+{% elif health.status == 'warning' %}
+<div class="alert alert-warn" style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+  <span class="status-dot dot-yellow"></span>
+  <strong>Warning</strong> — Some checks need attention
+</div>
+{% else %}
+<div class="alert alert-err" style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+  <span class="status-dot dot-red"></span>
+  <strong>Degraded</strong> — Multiple issues detected
+</div>
+{% endif %}
+
+<!-- Top stats -->
+<div class="stat-grid">
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--accent)">{{ health.predictions.total }}</div>
+    <div class="stat-lbl">Total Predictions</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ health.predictions.today }}</div>
+    <div class="stat-lbl">Predictions Today</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--gold)">{{ user_totals.total }}</div>
+    <div class="stat-lbl">Total Users</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:#a78bfa">{{ user_totals.active_today }}</div>
+    <div class="stat-lbl">Active Today</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ payment_totals.total_revenue }}</div>
+    <div class="stat-lbl">Verified Revenue (NGN)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--orange)">{{ payment_totals.verified_payments }}</div>
+    <div class="stat-lbl">Verified Payments</div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">User Registrations — Last 30 Days</div>
+    <div class="chart-wrap"><canvas id="regChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Monthly Revenue (NGN)</div>
+    <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Engine summary + Plan breakdown -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Engine Performance</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Engine</th><th>Total</th><th>Correct</th><th>Accuracy</th><th>Avg Conf</th></tr></thead>
+        <tbody>
+          {% for e in engines %}
+          <tr>
+            <td><strong>{{ e.label }}</strong> <span style="color:var(--muted);font-size:11px">({{ e.engine }})</span></td>
+            <td>{{ e.total }}</td>
+            <td style="color:var(--green)">{{ e.correct }}</td>
+            <td>
+              {% if e.accuracy >= 65 %}<span style="color:var(--green);font-weight:700">
+              {% elif e.accuracy >= 50 %}<span style="color:var(--gold);font-weight:700">
+              {% else %}<span style="color:var(--red);font-weight:700">{% endif %}
+              {{ e.accuracy }}%</span>
+            </td>
+            <td style="color:var(--text2)">{{ e.avg_confidence }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No predictions yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px">
+      <a href="/admin-dashboard/engine/" class="btn btn-ghost btn-sm">View Details →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Plan Breakdown</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="planChart"></canvas></div>
+    <div style="margin-top:12px">
+      {% for p in plan_breakdown %}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:13px;text-transform:capitalize">{{ p.plan }}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="progress" style="width:80px">
+            <div class="progress-fill" style="width:{{ p.pct }}%;background:{% if p.plan == 'pro' %}var(--accent2){% elif p.plan == 'basic' %}var(--accent){% else %}var(--muted){% endif %}"></div>
+          </div>
+          <span style="font-size:12px;color:var(--text2);width:40px;text-align:right">{{ p.count }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:12px">
+      <a href="/admin-dashboard/users/" class="btn btn-ghost btn-sm">View Users →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="g2">
+  <div class="card">
+    <div class="card-title">Recent Payments</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+          <tr>
+            <td style="font-size:12px">{{ p.user__email|truncatechars:24 }}</td>
+            <td><span class="badge badge-blue">{{ p.plan }}</span></td>
+            <td style="color:var(--green)">{{ p.currency }} {{ p.amount }}</td>
+            <td>
+              {% if p.status == 'success' %}<span class="badge badge-green">{{ p.status }}</span>
+              {% elif p.status == 'pending' %}<span class="badge badge-yellow">{{ p.status }}</span>
+              {% else %}<span class="badge badge-red">{{ p.status }}</span>{% endif %}
+            </td>
+            <td style="color:var(--muted);font-size:11px">{{ p.created_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No payments yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px">
+      <a href="/admin-dashboard/payments/" class="btn btn-ghost btn-sm">View All →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent Signups</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Email</th><th>Plan</th><th>Predictions</th><th>Joined</th></tr></thead>
+        <tbody>
+          {% for u in recent_signups %}
+          <tr>
+            <td style="font-size:12px">{{ u.email|truncatechars:24 }}</td>
+            <td>
+              {% if u.plan == 'pro' %}<span class="badge badge-purple">{{ u.plan }}</span>
+              {% elif u.plan == 'basic' %}<span class="badge badge-blue">{{ u.plan }}</span>
+              {% else %}<span class="badge badge-gray">{{ u.plan }}</span>{% endif %}
+            </td>
+            <td>{{ u.total_predictions }}</td>
+            <td style="color:var(--muted);font-size:11px">{{ u.created_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px">No users yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px">
+      <a href="/admin-dashboard/users/" class="btn btn-ghost btn-sm">View All →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Health checks -->
+<div class="card" style="margin-top:20px">
+  <div class="card-title">System Checks</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+    {% for check in health.checks %}
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:8px">
+      {% if check.status == 'ok' %}
+        <span class="status-dot dot-green"></span>
+      {% else %}
+        <span class="status-dot dot-yellow"></span>
+      {% endif %}
+      <div>
+        <div style="font-size:12px;font-weight:600">{{ check.name }}</div>
+        <div style="font-size:11px;color:var(--muted)">{{ check.value }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CHART_DEFAULTS = {
+  color: '#94a3b8',
+  borderColor: '#1a2332',
+  plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' } },
+    y: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' } },
+  },
+};
+
+// Registrations chart
+const regLabels = {{ reg_labels_json|safe }};
+const regCounts = {{ reg_counts_json|safe }};
+new Chart(document.getElementById('regChart'), {
+  type: 'bar',
+  data: {
+    labels: regLabels,
+    datasets: [{ label: 'Signups', data: regCounts, backgroundColor: 'rgba(0,212,255,.5)', borderColor: '#00d4ff', borderWidth: 1, borderRadius: 4 }]
+  },
+  options: { ...CHART_DEFAULTS, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+
+// Revenue chart
+const revLabels = {{ rev_labels_json|safe }};
+const revValues = {{ rev_values_json|safe }};
+new Chart(document.getElementById('revChart'), {
+  type: 'line',
+  data: {
+    labels: revLabels,
+    datasets: [{ label: 'Revenue (NGN)', data: revValues, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)', fill: true, tension: 0.4, pointRadius: 3 }]
+  },
+  options: { ...CHART_DEFAULTS, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+});
+
+// Plan doughnut
+const planLabels = {{ plan_breakdown|length }} > 0 ? [{% for p in plan_breakdown %}'{{ p.plan|title }}'{% if not forloop.last %},{% endif %}{% endfor %}] : [];
+const planCounts = [{% for p in plan_breakdown %}{{ p.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('planChart'), {
+  type: 'doughnut',
+  data: {
+    labels: planLabels,
+    datasets: [{ data: planCounts, backgroundColor: ['rgba(100,116,139,.6)','rgba(0,212,255,.6)','rgba(124,58,237,.6)'], borderColor: '#0d1117', borderWidth: 2 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 12 } } } }
+});
+</script>
+{% endblock %}
