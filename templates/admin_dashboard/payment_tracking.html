@@ -1,0 +1,176 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Payment Tracking{% endblock %}
+{% block page_title %}Payment Tracking{% endblock %}
+
+{% block content %}
+
+<!-- Export -->
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px">
+  <a href="/admin-dashboard/export/payments/" class="btn btn-ghost btn-sm">⬇ Export Payments CSV</a>
+</div>
+
+<!-- Stat boxes -->
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ totals.total_revenue }}</div>
+    <div class="stat-lbl">Verified Revenue (NGN)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--accent)">{{ totals.verified_payments }}</div>
+    <div class="stat-lbl">Verified Payments</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--text2)">{{ totals.total_payments }}</div>
+    <div class="stat-lbl">Total Attempts</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:{% if totals.conversion_rate >= 70 %}var(--green){% elif totals.conversion_rate >= 40 %}var(--gold){% else %}var(--red){% endif %}">
+      {{ totals.conversion_rate }}%
+    </div>
+    <div class="stat-lbl">Conversion Rate</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Monthly Revenue (NGN)</div>
+    <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Revenue by Plan</div>
+    <div class="chart-wrap"><canvas id="planRevChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Status breakdown + by plan -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Payment Status Breakdown</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Status</th><th>Count</th><th>%</th></tr></thead>
+        <tbody>
+          {% for s in status_breakdown %}
+          <tr>
+            <td>
+              {% if s.status == 'success' %}<span class="badge badge-green">{{ s.status }}</span>
+              {% elif s.status == 'pending' %}<span class="badge badge-yellow">{{ s.status }}</span>
+              {% else %}<span class="badge badge-red">{{ s.status }}</span>{% endif %}
+            </td>
+            <td><strong>{{ s.count }}</strong></td>
+            <td style="color:var(--muted)">
+              {% if totals.total_payments %}{{ s.count|floatformat:0 }}{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">No payments yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Revenue by Plan</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Plan</th><th>Payments</th><th>Revenue (NGN)</th></tr></thead>
+        <tbody>
+          {% for p in by_plan %}
+          <tr>
+            <td><span class="badge {% if p.plan == 'pro' %}badge-purple{% else %}badge-blue{% endif %}">{{ p.plan }}</span></td>
+            <td>{{ p.count }}</td>
+            <td style="color:var(--green);font-weight:700">{{ p.revenue }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">No verified payments</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent payments table -->
+<div class="card">
+  <div class="card-title">Recent Payments (Last 25)</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>User</th><th>Plan</th><th>Amount</th><th>Currency</th>
+          <th>Status</th><th>Reference</th><th>Created</th><th>Verified</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in recent_payments %}
+        <tr>
+          <td style="color:var(--muted)">{{ p.id }}</td>
+          <td style="font-size:12px">{{ p.user__email|truncatechars:28 }}</td>
+          <td><span class="badge {% if p.plan == 'pro' %}badge-purple{% else %}badge-blue{% endif %}">{{ p.plan }}</span></td>
+          <td style="color:var(--green);font-weight:700">{{ p.amount }}</td>
+          <td style="color:var(--muted)">{{ p.currency }}</td>
+          <td>
+            {% if p.status == 'success' %}<span class="badge badge-green">{{ p.status }}</span>
+            {% elif p.status == 'pending' %}<span class="badge badge-yellow">{{ p.status }}</span>
+            {% else %}<span class="badge badge-red">{{ p.status }}</span>{% endif %}
+          </td>
+          <td style="font-size:11px;color:var(--muted);font-family:monospace">{{ p.reference|truncatechars:20 }}</td>
+          <td style="font-size:11px;color:var(--muted)">{{ p.created_at|date:"M d, H:i" }}</td>
+          <td style="font-size:11px;color:var(--muted)">{% if p.verified_at %}{{ p.verified_at|date:"M d, H:i" }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:20px">No payments yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    <a href="/admin/accounts/payment/" class="btn btn-ghost btn-sm">Manage in Django Admin →</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const revLabels = {{ rev_labels_json|safe }};
+const revValues = {{ rev_values_json|safe }};
+const revCounts = {{ rev_counts_json|safe }};
+
+new Chart(document.getElementById('revChart'), {
+  type: 'bar',
+  data: {
+    labels: revLabels,
+    datasets: [
+      { label: 'Revenue (NGN)', data: revValues, backgroundColor: 'rgba(16,185,129,.5)', borderColor: '#10b981', borderWidth: 1, borderRadius: 4, yAxisID: 'y' },
+      { label: 'Count', data: revCounts, type: 'line', borderColor: '#00d4ff', backgroundColor: 'transparent', pointRadius: 3, yAxisID: 'y1' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' } },
+      y: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' }, position: 'left' },
+      y1: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { display: false }, position: 'right' }
+    }
+  }
+});
+
+const planLabels = {{ plan_labels_json|safe }};
+const planRevenue = {{ plan_revenue_json|safe }};
+new Chart(document.getElementById('planRevChart'), {
+  type: 'doughnut',
+  data: {
+    labels: planLabels,
+    datasets: [{ data: planRevenue, backgroundColor: ['rgba(0,212,255,.7)','rgba(124,58,237,.7)','rgba(16,185,129,.7)'], borderColor: '#0d1117', borderWidth: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 14 } } }
+  }
+});
+</script>
+{% endblock %}

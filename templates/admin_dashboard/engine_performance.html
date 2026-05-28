@@ -1,0 +1,192 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Engine Performance{% endblock %}
+{% block page_title %}Engine Performance{% endblock %}
+
+{% block content %}
+
+<!-- Export -->
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px">
+  <a href="/admin-dashboard/export/engine_accuracy/" class="btn btn-ghost btn-sm">⬇ Export Accuracy CSV</a>
+  <a href="/admin-dashboard/export/predictions/" class="btn btn-ghost btn-sm">⬇ Export Predictions CSV</a>
+</div>
+
+<!-- Engine stat boxes -->
+<div class="stat-grid" style="margin-bottom:20px">
+  {% for e in engines %}
+  <div class="stat-box">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Engine {{ e.engine }} — {{ e.label }}</div>
+    <div class="stat-val" style="color:{% if e.accuracy >= 65 %}var(--green){% elif e.accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ e.accuracy }}%</div>
+    <div class="stat-lbl">{{ e.total }} predictions · {{ e.correct }} correct</div>
+    <div style="margin-top:8px">
+      <div class="progress">
+        <div class="progress-fill" style="width:{{ e.accuracy }}%;background:{% if e.accuracy >= 65 %}var(--green){% elif e.accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}"></div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Charts -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Accuracy by Engine</div>
+    <div class="chart-wrap"><canvas id="accChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Prediction Volume by Engine</div>
+    <div class="chart-wrap"><canvas id="volChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Correct / Wrong / Pending breakdown -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">Prediction Outcome Breakdown</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th><th>Label</th><th>Total</th>
+          <th>✓ Correct</th><th>✗ Wrong</th><th>— Pending</th>
+          <th>Accuracy</th><th>Avg Confidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in engines %}
+        <tr>
+          <td><strong>{{ e.engine }}</strong></td>
+          <td>{{ e.label }}</td>
+          <td>{{ e.total }}</td>
+          <td style="color:var(--green)">{{ e.correct }}</td>
+          <td style="color:var(--red)">{{ e.wrong }}</td>
+          <td style="color:var(--muted)">{{ e.pending }}</td>
+          <td>
+            <span style="font-weight:700;color:{% if e.accuracy >= 65 %}var(--green){% elif e.accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">
+              {{ e.accuracy }}%
+            </span>
+          </td>
+          <td>{{ e.avg_confidence }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="color:var(--muted);text-align:center;padding:20px">No data yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EngineAccuracy records -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">Engine Accuracy Records (by Match Type)</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th><th>Match Type</th><th>Accuracy</th>
+          <th>Home Acc</th><th>Away Acc</th><th>Draw Acc</th>
+          <th>Weight</th><th>Sample</th><th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ea_records %}
+        <tr>
+          <td><strong>{{ r.engine }}</strong></td>
+          <td>{{ r.match_type }}</td>
+          <td>
+            <span style="font-weight:700;color:{% if r.accuracy_pct >= 65 %}var(--green){% elif r.accuracy_pct >= 50 %}var(--gold){% else %}var(--red){% endif %}">
+              {{ r.accuracy_pct|floatformat:1 }}%
+            </span>
+          </td>
+          <td>{{ r.home_accuracy|floatformat:1 }}%</td>
+          <td>{{ r.away_accuracy|floatformat:1 }}%</td>
+          <td>{{ r.draw_accuracy|floatformat:1 }}%</td>
+          <td style="color:{% if r.weight_adjustment > 1 %}var(--green){% elif r.weight_adjustment < 1 %}var(--red){% else %}var(--text2){% endif %}">
+            {{ r.weight_adjustment|floatformat:3 }}
+          </td>
+          <td>{{ r.sample_size }}</td>
+          <td style="color:var(--muted);font-size:11px">{{ r.updated_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:20px">No accuracy records yet — predictions need to be verified first</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Weight adjustment log -->
+<div class="card">
+  <div class="card-title">Weight Adjustment Log (Last 20)</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th><th>Parameter</th><th>Match Type</th>
+          <th>Old Weight</th><th>New Weight</th><th>Δ</th>
+          <th>Acc Before</th><th>Acc After</th><th>Applied</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in weight_log %}
+        <tr>
+          <td><strong>{{ w.engine }}</strong></td>
+          <td style="font-size:12px;color:var(--text2)">{{ w.parameter }}</td>
+          <td>{{ w.match_type }}</td>
+          <td>{{ w.old_weight|floatformat:4 }}</td>
+          <td>{{ w.new_weight|floatformat:4 }}</td>
+          <td>
+            {% with delta=w.new_weight|add:"-"|add:w.old_weight %}
+            <span style="color:{% if w.new_weight > w.old_weight %}var(--green){% elif w.new_weight < w.old_weight %}var(--red){% else %}var(--muted){% endif %};font-weight:700">
+              {{ w.new_weight|floatformat:4 }}
+            </span>
+            {% endwith %}
+          </td>
+          <td style="color:var(--text2)">{% if w.accuracy_before %}{{ w.accuracy_before|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td style="color:var(--text2)">{% if w.accuracy_after %}{{ w.accuracy_after|floatformat:1 }}%{% else %}—{% endif %}</td>
+          <td style="color:var(--muted);font-size:11px">{{ w.applied_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="color:var(--muted);text-align:center;padding:20px">No weight adjustments yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const OPTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color: '#4a6080', font: { size: 11 } }, grid: { color: 'rgba(26,35,50,.5)' } },
+    y: { ticks: { color: '#4a6080', font: { size: 11 } }, grid: { color: 'rgba(26,35,50,.5)' }, min: 0, max: 100 },
+  }
+};
+
+const labels = {{ engine_labels_json|safe }};
+const accuracy = {{ engine_accuracy_json|safe }};
+const totals = {{ engine_totals_json|safe }};
+
+const colors = ['rgba(0,212,255,.7)','rgba(167,139,250,.7)','rgba(16,185,129,.7)','rgba(251,146,60,.7)','rgba(244,114,182,.7)'];
+
+new Chart(document.getElementById('accChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{ label: 'Accuracy %', data: accuracy, backgroundColor: colors, borderColor: colors.map(c=>c.replace('.7','.9')), borderWidth: 1, borderRadius: 6 }]
+  },
+  options: OPTS
+});
+
+new Chart(document.getElementById('volChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{ label: 'Predictions', data: totals, backgroundColor: colors, borderColor: colors.map(c=>c.replace('.7','.9')), borderWidth: 1, borderRadius: 6 }]
+  },
+  options: { ...OPTS, scales: { ...OPTS.scales, y: { ...OPTS.scales.y, min: 0, max: undefined } } }
+});
+</script>
+{% endblock %}

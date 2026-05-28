@@ -20,4 +20,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('predictions.urls')),
     path('api/v1/', include('api.urls')),
+    path('admin-dashboard/', include('predictions.admin_urls')),
 ]

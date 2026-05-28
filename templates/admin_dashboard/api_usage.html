@@ -1,0 +1,176 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}API Usage{% endblock %}
+{% block page_title %}API Usage Monitoring{% endblock %}
+
+{% block content %}
+
+<!-- Stat boxes -->
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--accent)">{{ totals.total_api_calls }}</div>
+    <div class="stat-lbl">Total API Calls</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:var(--green)">{{ totals.api_users }}</div>
+    <div class="stat-lbl">API-Enabled Users</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:#a78bfa">{{ totals.active_api_keys }}</div>
+    <div class="stat-lbl">Active API Keys</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">Daily API Calls — Last 30 Days</div>
+    <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Calls by Engine</div>
+    <div class="chart-wrap"><canvas id="engineChart"></canvas></div>
+  </div>
+</div>
+
+<!-- By engine breakdown -->
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">API Calls by Engine</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Engine</th><th>Calls</th><th>Share</th></tr></thead>
+        <tbody>
+          {% for e in by_engine %}
+          <tr>
+            <td><strong>{{ e.engine }}</strong></td>
+            <td>{{ e.count }}</td>
+            <td>
+              {% if totals.total_api_calls %}
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="progress" style="width:80px">
+                  <div class="progress-fill" style="width:{% widthratio e.count totals.total_api_calls 100 %}%;background:var(--accent)"></div>
+                </div>
+                <span style="font-size:11px;color:var(--muted)">{% widthratio e.count totals.total_api_calls 100 %}%</span>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">No API calls yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">API Endpoints</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <code style="color:var(--accent)">POST /api/v1/predict/match/</code><br>
+        <span style="color:var(--muted)">Engine A — Match prediction</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <code style="color:#a78bfa">POST /api/v1/predict/player/</code><br>
+        <span style="color:var(--muted)">Engine B — Player rating</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <code style="color:var(--orange)">POST /api/v1/predict/simulate/</code><br>
+        <span style="color:var(--muted)">Engine D — Match simulation</span>
+      </div>
+      <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <code style="color:var(--green)">GET /api/v1/forecasts/</code><br>
+        <span style="color:var(--muted)">Weekly forecasts (no auth)</span>
+      </div>
+      <div style="padding:8px 0">
+        <code style="color:var(--text2)">GET /api/v1/me/</code><br>
+        <span style="color:var(--muted)">Account info</span>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <a href="/api-docs/" class="btn btn-ghost btn-sm">View API Docs →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Top API users -->
+<div class="card">
+  <div class="card-title">Top API Users</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Email</th><th>Plan</th><th>API Calls</th><th>Share</th></tr>
+      </thead>
+      <tbody>
+        {% for u in top_api_users %}
+        <tr>
+          <td style="color:var(--muted)">{{ forloop.counter }}</td>
+          <td>{{ u.user__email }}</td>
+          <td>
+            {% if u.user__plan == 'pro' %}<span class="badge badge-purple">{{ u.user__plan }}</span>
+            {% else %}<span class="badge badge-blue">{{ u.user__plan }}</span>{% endif %}
+          </td>
+          <td><strong>{{ u.calls }}</strong></td>
+          <td>
+            {% if totals.total_api_calls %}
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress" style="width:100px">
+                <div class="progress-fill" style="width:{% widthratio u.calls totals.total_api_calls 100 %}%;background:var(--accent)"></div>
+              </div>
+              <span style="font-size:11px;color:var(--muted)">{% widthratio u.calls totals.total_api_calls 100 %}%</span>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No API users yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    <a href="/admin/accounts/user/?plan__in=basic,pro" class="btn btn-ghost btn-sm">Manage API Users →</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const dailyLabels = {{ daily_labels_json|safe }};
+const dailyCounts = {{ daily_counts_json|safe }};
+new Chart(document.getElementById('dailyChart'), {
+  type: 'line',
+  data: {
+    labels: dailyLabels,
+    datasets: [{ label: 'API Calls', data: dailyCounts, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,.1)', fill: true, tension: 0.4, pointRadius: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#4a6080', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(26,35,50,.5)' } },
+      y: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(26,35,50,.5)' } }
+    }
+  }
+});
+
+const engineLabels = {{ engine_labels_json|safe }};
+const engineCounts = {{ engine_counts_json|safe }};
+new Chart(document.getElementById('engineChart'), {
+  type: 'bar',
+  data: {
+    labels: engineLabels,
+    datasets: [{ data: engineCounts, backgroundColor: ['rgba(0,212,255,.6)','rgba(167,139,250,.6)','rgba(251,146,60,.6)','rgba(16,185,129,.6)'], borderRadius: 6 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: '#4a6080', font: { size: 11 } }, grid: { color: 'rgba(26,35,50,.5)' } },
+      y: { ticks: { color: '#4a6080', font: { size: 11 } }, grid: { color: 'rgba(26,35,50,.5)' } }
+    }
+  }
+});
+</script>
+{% endblock %}
