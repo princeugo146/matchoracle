@@ -6,3 +6,5 @@ gunicorn>=21.2
 celery>=5.3
 redis>=5.0
 django-celery-beat>=2.6
+dj-database-url>=2.1
+psycopg2-binary>=2.9
