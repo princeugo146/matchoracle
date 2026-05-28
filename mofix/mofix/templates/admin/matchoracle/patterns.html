@@ -1,0 +1,144 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_patterns %}active{% endblock %}
+
+{% block topbar_actions %}
+  <a href="/admin/predictions/patternmemory/" class="btn btn-ghost" style="font-size:11px;">Django Admin →</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── KPIs ── -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+  <div class="kpi kpi-accent">
+    <div class="kpi-label">Total Patterns</div>
+    <div class="kpi-value" style="color:var(--accent)">{{ total }}</div>
+  </div>
+  <div class="kpi kpi-green">
+    <div class="kpi-label">Reliable (≥5 obs.)</div>
+    <div class="kpi-value" style="color:var(--green)">{{ reliable }}</div>
+  </div>
+</div>
+
+<!-- ── Type summary ── -->
+{% if type_stats %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Patterns by Type</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Count</th><th>Reliable</th><th>Avg Accuracy</th></tr>
+      </thead>
+      <tbody>
+        {% for row in type_stats %}
+        <tr>
+          <td style="font-weight:600;">{{ row.pattern_type }}</td>
+          <td style="font-size:13px;">{{ row.count }}</td>
+          <td style="font-size:13px;color:var(--green);">{{ row.reliable }}</td>
+          <td style="font-size:13px;font-weight:700;
+            color:{% if row.avg_accuracy >= 70 %}var(--green){% elif row.avg_accuracy >= 55 %}var(--gold){% else %}var(--red){% endif %}">
+            {{ row.avg_accuracy|floatformat:1 }}%
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Filters ── -->
+<form method="get" class="filter-bar">
+  <input type="text" name="q" value="{{ search }}" placeholder="Search pattern key…" style="min-width:200px;">
+  <select name="type">
+    <option value="">All types</option>
+    {% for value, label in pattern_types %}
+    <option value="{{ value }}" {% if value == ptype %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if search or ptype %}
+    <a href="{% url 'matchoracle_admin:patterns' %}" class="btn btn-ghost">Clear</a>
+  {% endif %}
+</form>
+
+<!-- ── Pattern table ── -->
+<div class="card">
+  <div class="card-title">Patterns ({{ page_obj.paginator.count }} results)</div>
+  {% if page_obj %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Key</th>
+          <th>Accuracy</th>
+          <th>Occurrences</th>
+          <th>Min Sample</th>
+          <th>Status</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+        <tr>
+          <td>
+            <span class="badge
+              {% if p.pattern_type == 'team' %}badge-blue
+              {% elif p.pattern_type == 'player' %}badge-green
+              {% elif p.pattern_type == 'matchup' %}badge-purple
+              {% elif p.pattern_type == 'h2h' %}badge-gold
+              {% else %}badge-gray{% endif %}">
+              {{ p.pattern_type }}
+            </span>
+          </td>
+          <td style="font-size:12px;font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ p.pattern_key }}
+          </td>
+          <td>
+            <div class="acc-bar">
+              <div class="acc-track">
+                <div class="acc-fill {% if p.accuracy >= 70 %}acc-fill-green{% elif p.accuracy >= 55 %}acc-fill-gold{% else %}acc-fill-red{% endif %}"
+                     style="width:{{ p.accuracy }}%"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;
+                color:{% if p.accuracy >= 70 %}var(--green){% elif p.accuracy >= 55 %}var(--gold){% else %}var(--red){% endif %}">
+                {{ p.accuracy|floatformat:1 }}%
+              </span>
+            </div>
+          </td>
+          <td style="font-size:13px;font-weight:600;">{{ p.occurrences }}</td>
+          <td style="font-size:12px;color:var(--text2);">{{ p.min_sample }}</td>
+          <td>
+            {% if p.is_reliable %}
+              <span class="badge badge-green">✓ Reliable</span>
+            {% else %}
+              <span class="badge badge-gold">Building</span>
+            {% endif %}
+          </td>
+          <td style="font-size:11px;color:var(--muted);">
+            {% if p.last_seen_at %}{{ p.last_seen_at|date:"M d, H:i" }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ search }}&type={{ ptype }}">← Prev</a>
+    {% endif %}
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ search }}&type={{ ptype }}">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No patterns found. They are built automatically as predictions are verified.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

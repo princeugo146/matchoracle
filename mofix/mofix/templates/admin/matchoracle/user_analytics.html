@@ -1,0 +1,133 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_users %}active{% endblock %}
+
+{% block topbar_actions %}
+  <a href="/admin/accounts/user/" class="btn btn-ghost" style="font-size:11px;">Django Admin →</a>
+{% endblock %}
+
+{% block content %}
+
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<!-- ── KPIs ── -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+  <div class="kpi kpi-accent">
+    <div class="kpi-label">Total Users</div>
+    <div class="kpi-value" style="color:var(--accent)">{{ total_users|default:0 }}</div>
+  </div>
+  <div class="kpi kpi-green">
+    <div class="kpi-label">Active (7 days)</div>
+    <div class="kpi-value" style="color:var(--green)">{{ active_users|default:0 }}</div>
+  </div>
+  <div class="kpi kpi-gold">
+    <div class="kpi-label">New This Month</div>
+    <div class="kpi-value" style="color:var(--gold)">{{ new_this_month|default:0 }}</div>
+  </div>
+</div>
+
+<!-- ── User table ── -->
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Top Users by Prediction Count</div>
+  {% if page_obj %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Plan</th>
+          <th>Predictions</th>
+          <th>Accuracy</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in page_obj %}
+        <tr>
+          <td style="font-size:13px;">{{ user.email }}</td>
+          <td>
+            <span class="badge
+              {% if user.plan == 'pro' %}badge-gold
+              {% elif user.plan == 'basic' %}badge-blue
+              {% else %}badge-gray{% endif %}">
+              {{ user.plan }}
+            </span>
+          </td>
+          <td style="font-size:13px;font-weight:600;">{{ user.pred_count }}</td>
+          <td style="font-size:13px;
+            color:{% if user.accuracy_rate >= 70 %}var(--green){% elif user.accuracy_rate >= 55 %}var(--gold){% else %}var(--text2){% endif %}">
+            {{ user.accuracy_rate }}%
+          </td>
+          <td style="font-size:11px;color:var(--muted);">{{ user.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">← Prev</a>
+    {% endif %}
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No users found.</p>
+  {% endif %}
+</div>
+
+<!-- ── Signup trend ── -->
+{% if signups_qs %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Signups — Last 30 Days</div>
+  <div style="display:flex;align-items:flex-end;gap:4px;height:80px;overflow-x:auto;padding-bottom:4px;">
+    {% for row in signups_qs %}
+    {% with max_count=10 %}
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:20px;">
+      <div style="background:var(--accent);border-radius:3px 3px 0 0;width:16px;
+           height:{{ row.count|default:1 }}0px;opacity:.8;min-height:4px;"
+           title="{{ row.day }}: {{ row.count }} signups"></div>
+      <span style="font-size:8px;color:var(--muted);transform:rotate(-45deg);white-space:nowrap;">{{ row.day|slice:"5:" }}</span>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Revenue by plan ── -->
+{% if revenue_by_plan %}
+<div class="card">
+  <div class="card-title">Revenue by Plan</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Plan</th><th>Payments</th><th>Total Revenue (NGN)</th></tr>
+      </thead>
+      <tbody>
+        {% for row in revenue_by_plan %}
+        <tr>
+          <td>
+            <span class="badge {% if row.plan == 'pro' %}badge-gold{% elif row.plan == 'basic' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ row.plan }}
+            </span>
+          </td>
+          <td style="font-size:13px;">{{ row.count }}</td>
+          <td style="font-size:13px;font-weight:700;color:var(--green);">{{ row.total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

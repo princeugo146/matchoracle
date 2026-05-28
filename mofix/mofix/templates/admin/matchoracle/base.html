@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ title|default:"Admin" }}{% endblock %} — MatchOracle Admin</title>
+<style>
+:root {
+  --bg:      #030508;
+  --card:    #0d1117;
+  --card2:   #111827;
+  --border:  #1a2332;
+  --border2: #243044;
+  --accent:  #00d4ff;
+  --accent2: #7c3aed;
+  --green:   #10b981;
+  --red:     #ef4444;
+  --gold:    #f59e0b;
+  --orange:  #fb923c;
+  --purple:  #a78bfa;
+  --text:    #f0f6ff;
+  --text2:   #94a3b8;
+  --muted:   #4a6080;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+}
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-decoration: none;
+  display: block;
+}
+.sidebar-logo span { color: var(--text2); font-weight: 400; display: block; font-size: 10px; margin-top: 2px; letter-spacing: 2px; text-transform: uppercase; }
+.sidebar-section { padding: 12px 0 4px; }
+.sidebar-label { padding: 4px 16px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 16px;
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .15s;
+  border-left: 3px solid transparent;
+}
+.sidebar-link:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.sidebar-link.active { color: var(--accent); background: rgba(0,212,255,.06); border-left-color: var(--accent); }
+.sidebar-link svg { flex-shrink: 0; opacity: .7; }
+.sidebar-link.active svg { opacity: 1; }
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
+/* ── Main ── */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  background: rgba(3,5,8,.95);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+}
+.topbar-title { font-size: 16px; font-weight: 700; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.content { padding: 28px; flex: 1; }
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.card-title {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+/* ── KPI grid ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.kpi-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+.kpi-value { font-size: 28px; font-weight: 800; line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.kpi-accent  { border-top: 3px solid var(--accent); }
+.kpi-green   { border-top: 3px solid var(--green); }
+.kpi-gold    { border-top: 3px solid var(--gold); }
+.kpi-purple  { border-top: 3px solid var(--purple); }
+.kpi-red     { border-top: 3px solid var(--red); }
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 11px 14px; border-bottom: 1px solid rgba(26,35,50,.6); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+/* ── Badges ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+}
+.badge-green  { background: rgba(16,185,129,.12); color: var(--green); }
+.badge-red    { background: rgba(239,68,68,.12);  color: var(--red); }
+.badge-gold   { background: rgba(245,158,11,.12); color: var(--gold); }
+.badge-blue   { background: rgba(0,212,255,.12);  color: var(--accent); }
+.badge-purple { background: rgba(167,139,250,.12);color: var(--purple); }
+.badge-gray   { background: rgba(148,163,184,.1); color: var(--text2); }
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; border: none;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  text-decoration: none; transition: all .2s;
+}
+.btn-primary { background: linear-gradient(135deg, var(--accent), #0099cc); color: #030508; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,212,255,.3); }
+.btn-ghost { background: rgba(255,255,255,.06); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); background: rgba(255,255,255,.1); }
+/* ── Alerts ── */
+.alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+.alert-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; }
+.alert-warn  { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); color: #fcd34d; }
+/* ── Accuracy bar ── */
+.acc-bar { display: flex; align-items: center; gap: 10px; }
+.acc-track { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 6px; overflow: hidden; min-width: 80px; }
+.acc-fill  { height: 100%; border-radius: 6px; }
+.acc-fill-green  { background: var(--green); }
+.acc-fill-gold   { background: var(--gold); }
+.acc-fill-red    { background: var(--red); }
+/* ── Status dot ── */
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot-ok   { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-warn { background: var(--gold); }
+.dot-error{ background: var(--red); box-shadow: 0 0 6px var(--red); }
+/* ── Grid helpers ── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* ── Pagination ── */
+.pagination { display: flex; gap: 6px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+.pagination a, .pagination span {
+  padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  text-decoration: none; color: var(--text2); background: var(--card2); border: 1px solid var(--border);
+}
+.pagination a:hover { color: var(--accent); border-color: var(--accent); }
+.pagination .current { background: rgba(0,212,255,.1); color: var(--accent); border-color: rgba(0,212,255,.3); }
+/* ── Search / filter bar ── */
+.filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.filter-bar input, .filter-bar select {
+  background: var(--card2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 8px 12px; color: var(--text); font-size: 13px; outline: none;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--card); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 5px; }
+@media (max-width: 900px) {
+  .sidebar { width: 56px; }
+  .sidebar-logo span, .sidebar-label, .sidebar-link span { display: none; }
+  .main { margin-left: 56px; }
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <a href="{% url 'matchoracle_admin:dashboard' %}" class="sidebar-logo">
+    MatchOracle
+    <span>Admin Panel</span>
+  </a>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a href="{% url 'matchoracle_admin:dashboard' %}"
+       class="sidebar-link {% block nav_dashboard %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="{% url 'matchoracle_admin:health' %}"
+       class="sidebar-link {% block nav_health %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>System Health</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Learning</div>
+    <a href="{% url 'matchoracle_admin:engine_performance' %}"
+       class="sidebar-link {% block nav_engine %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <span>Engine Performance</span>
+    </a>
+    <a href="{% url 'matchoracle_admin:patterns' %}"
+       class="sidebar-link {% block nav_patterns %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <span>Patterns</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Profiles</div>
+    <a href="{% url 'matchoracle_admin:team_profiles' %}"
+       class="sidebar-link {% block nav_teams %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Team Profiles</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Business</div>
+    <a href="{% url 'matchoracle_admin:user_analytics' %}"
+       class="sidebar-link {% block nav_users %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>User Analytics</span>
+    </a>
+    <a href="{% url 'matchoracle_admin:payments' %}"
+       class="sidebar-link {% block nav_payments %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Payments</span>
+    </a>
+    <a href="{% url 'matchoracle_admin:api_usage' %}"
+       class="sidebar-link {% block nav_api %}{% endblock %}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span>API Usage</span>
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="/admin/" style="color:var(--muted);text-decoration:none;font-size:11px;">← Django Admin</a>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">{% block page_title %}{{ title }}{% endblock %}</div>
+    <div class="topbar-actions">
+      {% block topbar_actions %}{% endblock %}
+      <a href="/admin/" class="btn btn-ghost" style="font-size:11px;">Django Admin</a>
+    </div>
+  </div>
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

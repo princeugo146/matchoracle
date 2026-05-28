@@ -1,0 +1,124 @@
+{% extends "admin/matchoracle/base.html" %}
+{% block nav_payments %}active{% endblock %}
+
+{% block topbar_actions %}
+  <a href="/admin/accounts/payment/" class="btn btn-ghost" style="font-size:11px;">Django Admin →</a>
+{% endblock %}
+
+{% block content %}
+
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<!-- ── KPIs ── -->
+<div class="kpi-grid" style="margin-bottom:24px;">
+  <div class="kpi kpi-green">
+    <div class="kpi-label">All-time Revenue</div>
+    <div class="kpi-value" style="color:var(--green);font-size:22px;">NGN {{ total_revenue|default:0 }}</div>
+    <div class="kpi-sub">verified payments only</div>
+  </div>
+  <div class="kpi kpi-gold">
+    <div class="kpi-label">This Month</div>
+    <div class="kpi-value" style="color:var(--gold);font-size:22px;">NGN {{ month_revenue|default:0 }}</div>
+    <div class="kpi-sub">last 30 days</div>
+  </div>
+</div>
+
+<!-- ── Status summary ── -->
+{% if summary %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title">Payment Status Summary</div>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;">
+    {% for row in summary %}
+    <div style="text-align:center;min-width:100px;">
+      <div style="font-size:24px;font-weight:800;
+        color:{% if row.status == 'verified' %}var(--green){% elif row.status == 'pending' %}var(--gold){% else %}var(--red){% endif %}">
+        {{ row.count }}
+      </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:4px;">{{ row.status }}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px;">NGN {{ row.total|default:0 }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Filter ── -->
+<form method="get" class="filter-bar">
+  <select name="status">
+    <option value="">All statuses</option>
+    <option value="pending"  {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+    <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+    <option value="failed"   {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {% if status_filter %}
+    <a href="{% url 'matchoracle_admin:payments' %}" class="btn btn-ghost">Clear</a>
+  {% endif %}
+</form>
+
+<!-- ── Payment table ── -->
+<div class="card">
+  <div class="card-title">Recent Payments ({{ page_obj.paginator.count }} total)</div>
+  {% if page_obj %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Amount (NGN)</th>
+          <th>Status</th>
+          <th>Reference</th>
+          <th>Created</th>
+          <th>Verified</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in page_obj %}
+        <tr>
+          <td style="font-size:13px;">{{ payment.user.email }}</td>
+          <td>
+            <span class="badge {% if payment.plan == 'pro' %}badge-gold{% elif payment.plan == 'basic' %}badge-blue{% else %}badge-gray{% endif %}">
+              {{ payment.plan }}
+            </span>
+          </td>
+          <td style="font-size:13px;font-weight:700;color:var(--green);">{{ payment.amount }}</td>
+          <td>
+            <span class="badge
+              {% if payment.status == 'verified' %}badge-green
+              {% elif payment.status == 'pending' %}badge-gold
+              {% else %}badge-red{% endif %}">
+              {{ payment.status }}
+            </span>
+          </td>
+          <td style="font-size:11px;color:var(--muted);font-family:monospace;">{{ payment.reference|truncatechars:20 }}</td>
+          <td style="font-size:11px;color:var(--muted);">{{ payment.created_at|date:"M d, Y H:i" }}</td>
+          <td style="font-size:11px;color:var(--muted);">
+            {% if payment.verified_at %}{{ payment.verified_at|date:"M d, Y H:i" }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}">← Prev</a>
+    {% endif %}
+    <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+    <p style="color:var(--muted);font-size:13px;">No payments found.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
