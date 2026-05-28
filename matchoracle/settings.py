@@ -113,3 +113,69 @@ MATCHORACLE = {
     'PAYSTACK_PUBLIC_KEY': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
     'VERSION': '2.0.0',
 }
+
+# Static files directories (where Django looks for static files before collecting)
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# ─── Self-Learning System ─────────────────────────────────────────────────────
+# Set LEARNING_ENABLED=True in your Railway environment to activate background
+# learning tasks.  When False (default), all learning code is bypassed and the
+# main app is completely unaffected.
+LEARNING_ENABLED = os.environ.get('LEARNING_ENABLED', 'False') == 'True'
+
+# ─── Celery Configuration ─────────────────────────────────────────────────────
+# Requires a Redis instance.  Set REDIS_URL in your Railway environment.
+# If Redis is not configured, Celery tasks simply won't run — the app still works.
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 300          # 5 minutes max per task
+CELERY_TASK_SOFT_TIME_LIMIT = 240     # soft limit triggers SoftTimeLimitExceeded
+
+# Periodic task schedule (requires celery beat)
+# Wrapped in try/except so the web process starts cleanly even without celery installed.
+try:
+    from celery.schedules import crontab as _crontab
+
+    CELERY_BEAT_SCHEDULE = {
+        # Check match results every 6 hours
+        'check-match-results': {
+            'task': 'predictions.learning_tasks.check_match_results',
+            'schedule': _crontab(minute=0, hour='*/6'),
+            'options': {'expires': 21600},
+        },
+        # Update team profiles daily at 03:00
+        'update-team-profiles': {
+            'task': 'predictions.learning_tasks.update_team_profiles',
+            'schedule': _crontab(minute=0, hour=3),
+            'options': {'expires': 86400},
+        },
+        # Adjust engine weights every Sunday at 04:00
+        'adjust-engine-weights': {
+            'task': 'predictions.learning_tasks.adjust_engine_weights',
+            'schedule': _crontab(minute=0, hour=4, day_of_week='sunday'),
+            'options': {'expires': 604800},
+        },
+        # Build tactical profiles every Sunday at 05:00
+        'build-tactical-profiles': {
+            'task': 'predictions.learning_tasks.build_tactical_profiles',
+            'schedule': _crontab(minute=0, hour=5, day_of_week='sunday'),
+            'options': {'expires': 604800},
+        },
+        # Reset daily prediction counters at midnight
+        'reset-daily-counters': {
+            'task': 'predictions.learning_tasks.reset_daily_counters',
+            'schedule': _crontab(minute=0, hour=0),
+            'options': {'expires': 86400},
+        },
+    }
+except ImportError:
+    CELERY_BEAT_SCHEDULE = {}
