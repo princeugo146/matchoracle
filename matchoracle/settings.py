@@ -119,6 +119,32 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
+# ─── Cache Configuration ─────────────────────────────────────────────────────
+# Analytics results are cached for 1 hour (3600 s).
+# When REDIS_URL is set, Django uses Redis as the cache backend automatically
+# via the Celery broker URL.  If Redis is absent, falls back to LocMemCache.
+_REDIS_URL = os.environ.get('REDIS_URL', '')
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _REDIS_URL,
+            'TIMEOUT': 3600,
+            'OPTIONS': {'MAX_ENTRIES': 1000},
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'matchoracle-analytics',
+            'TIMEOUT': 3600,
+        }
+    }
+
+# Chart.js is loaded from CDN in analytics templates.
+# Pin: https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js
+
 # ─── Self-Learning System ─────────────────────────────────────────────────────
 # Set LEARNING_ENABLED=True in your Railway environment to activate background
 # learning tasks.  When False (default), all learning code is bypassed and the
