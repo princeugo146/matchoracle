@@ -200,6 +200,194 @@ class PredictionResult(models.Model):
         return f"PredictionResult(pred={self.prediction_id}, {status})"
 
 
+class WeightAdjustment(models.Model):
+    """
+    Audit log of every engine weight change made by the learning system.
+    Lets you trace why a weight changed and whether it improved accuracy.
+    Written by WeightAdjuster.apply() and readable via the admin or API.
+    """
+    ENGINE_CHOICES = [('A', 'Match'), ('B', 'Player'), ('D', 'Simulation'), ('NL', 'AI')]
+
+    engine = models.CharField(max_length=2, choices=ENGINE_CHOICES, db_index=True)
+
+    # Which internal parameter was adjusted (e.g. 'home_advantage', 'form_weight')
+    parameter = models.CharField(max_length=100)
+
+    old_weight = models.FloatField()
+    new_weight = models.FloatField()
+
+    # Human-readable explanation of why the change was made
+    reason = models.TextField(blank=True)
+
+    # Accuracy snapshot before and after the adjustment (filled in retrospectively)
+    accuracy_before = models.FloatField(null=True, blank=True)
+    accuracy_after = models.FloatField(null=True, blank=True)
+
+    # Match type this adjustment applies to (mirrors EngineAccuracy.match_type)
+    match_type = models.CharField(max_length=20, default='league')
+
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+        indexes = [
+            models.Index(fields=['engine', 'parameter']),
+        ]
+
+    def __str__(self):
+        delta = self.new_weight - self.old_weight
+        sign = '+' if delta >= 0 else ''
+        return (
+            f"WeightAdjustment({self.engine}/{self.parameter}: "
+            f"{self.old_weight:.3f} → {self.new_weight:.3f} [{sign}{delta:.3f}])"
+        )
+
+    @property
+    def delta(self):
+        return round(self.new_weight - self.old_weight, 6)
+
+    @property
+    def improved(self):
+        """Returns True if accuracy_after > accuracy_before (when both are set)."""
+        if self.accuracy_before is None or self.accuracy_after is None:
+            return None
+        return self.accuracy_after > self.accuracy_before
+
+
+class PatternMemory(models.Model):
+    """
+    Stores recurring patterns extracted from verified predictions.
+    The learning system writes here; the engine reads here to bias future
+    predictions when a known pattern is detected.
+
+    Examples:
+      pattern_type='team',      pattern_key='Arsenal_home',
+          pattern_value={'win_rate': 0.72, 'avg_goals': 2.1}
+      pattern_type='matchup',   pattern_key='high_press_vs_possession',
+          pattern_value={'home_advantage': 1.18, 'sample': 34}
+      pattern_type='condition', pattern_key='rain_away_goals',
+          pattern_value={'goal_reduction': 0.15}
+    """
+    PATTERN_TYPE_CHOICES = [
+        ('team',      'Team Pattern'),
+        ('player',    'Player Pattern'),
+        ('matchup',   'Tactical Matchup'),
+        ('condition', 'Match Condition'),
+        ('h2h',       'Head-to-Head'),
+    ]
+
+    pattern_type = models.CharField(
+        max_length=20, choices=PATTERN_TYPE_CHOICES, db_index=True
+    )
+
+    # Unique identifier for this pattern within its type
+    # e.g. "Arsenal_home", "high_press_vs_possession", "Arsenal_vs_Chelsea"
+    pattern_key = models.CharField(max_length=200, db_index=True)
+
+    # Arbitrary JSON payload — structure depends on pattern_type
+    pattern_value = models.JSONField(default=dict)
+
+    # How accurate predictions were when this pattern was applied (0–100)
+    accuracy = models.FloatField(default=0.0)
+
+    # How many times this pattern has been observed
+    occurrences = models.IntegerField(default=1)
+
+    # Confidence threshold: only apply this pattern when occurrences >= min_sample
+    min_sample = models.IntegerField(default=5)
+
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['pattern_type', 'pattern_key']
+        ordering = ['-occurrences', '-accuracy']
+
+    def __str__(self):
+        return f"PatternMemory({self.pattern_type}/{self.pattern_key}, n={self.occurrences}, acc={self.accuracy:.1f}%)"
+
+    def is_reliable(self):
+        """Returns True when the pattern has enough observations to be trusted."""
+        return self.occurrences >= self.min_sample
+
+    def merge(self, new_accuracy, new_value=None):
+        """
+        Incrementally update this pattern with a new observation.
+        Uses exponential moving average for accuracy (α=0.1).
+        """
+        alpha = 0.1
+        self.accuracy = round(alpha * new_accuracy + (1 - alpha) * self.accuracy, 2)
+        self.occurrences += 1
+        if new_value:
+            self.pattern_value.update(new_value)
+        self.last_seen_at = timezone.now()
+        self.save(update_fields=['accuracy', 'occurrences', 'pattern_value', 'last_seen_at', 'last_updated'])
+
+
+class PlayerProfile(models.Model):
+    """
+    Stores accumulated knowledge about a player that grows over time.
+    Populated by the PatternLearner and updated by the background tasks.
+    """
+    POSITION_CHOICES = [
+        ('GK', 'Goalkeeper'), ('CB', 'Centre-Back'), ('LB', 'Left-Back'),
+        ('RB', 'Right-Back'), ('CDM', 'Defensive Mid'), ('CM', 'Central Mid'),
+        ('CAM', 'Attacking Mid'), ('LW', 'Left Wing'), ('RW', 'Right Wing'),
+        ('ST', 'Striker'),
+    ]
+
+    name = models.CharField(max_length=100, unique=True, db_index=True)
+    team = models.CharField(max_length=100, blank=True)
+    position = models.CharField(max_length=5, choices=POSITION_CHOICES, blank=True)
+
+    # Current season stats
+    goals_this_season = models.IntegerField(default=0)
+    assists_this_season = models.IntegerField(default=0)
+    appearances_this_season = models.IntegerField(default=0)
+
+    # Derived performance metrics (0–100 scale)
+    attack_rating = models.FloatField(default=0.0)
+    defense_rating = models.FloatField(default=0.0)
+    overall_rating = models.FloatField(default=0.0)
+
+    # Injury tracking
+    injury_status = models.CharField(
+        max_length=20,
+        choices=[('fit', 'Fit'), ('doubt', 'Doubt'), ('out', 'Out'), ('unknown', 'Unknown')],
+        default='unknown',
+    )
+    injury_history = models.JSONField(default=list)   # list of {type, date, duration_days}
+
+    # Form — last 5 match ratings (0–10 each)
+    recent_ratings = models.JSONField(default=list)
+
+    # Impact on team prediction accuracy when this player is listed
+    prediction_impact = models.FloatField(default=0.0)  # positive = team wins more with player
+
+    # Raw data from last web search (for debugging)
+    raw_data = models.JSONField(default=dict)
+
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-overall_rating', 'name']
+
+    def __str__(self):
+        return f"PlayerProfile({self.name}, {self.team}, {self.position}, {self.overall_rating:.0f})"
+
+    def needs_update(self):
+        """Returns True if the profile hasn't been refreshed in the last 48 hours."""
+        return (timezone.now() - self.updated_at) > timedelta(hours=48)
+
+    def form_average(self):
+        """Return the mean of recent_ratings, or 0 if empty."""
+        if not self.recent_ratings:
+            return 0.0
+        return round(sum(self.recent_ratings) / len(self.recent_ratings), 2)
+
+
 class ConversationMemory(models.Model):
     """
     Session-scoped memory for the natural language interface.
