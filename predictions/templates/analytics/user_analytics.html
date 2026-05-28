@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}User Analytics{% endblock %}
+{% block extra_css %}
+<style>
+.an-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.an-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.an-nav a:hover,.an-nav a.active{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.chart-wrap{position:relative;height:240px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;margin-bottom:4px;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.user-table{width:100%;border-collapse:collapse;font-size:12px;}
+.user-table th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--border);}
+.user-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">User Analytics</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Engagement, conversion and accuracy metrics</div>
+  </div>
+
+  <div class="an-nav">
+    <a href="{% url 'analytics_dashboard' %}">Overview</a>
+    <a href="{% url 'engine_comparison' %}">Engines</a>
+    <a href="{% url 'user_analytics' %}" class="active">Users</a>
+    <a href="{% url 'team_analytics' %}">Teams</a>
+    <a href="{% url 'revenue_analytics' %}">Revenue</a>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--accent)">{{ summary.total_users|default:0 }}</div>
+      <div class="stat-lbl">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--green)">{{ summary.active_last_7d|default:0 }}</div>
+      <div class="stat-lbl">Active (7d)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--gold)">{{ summary.paid_users|default:0 }}</div>
+      <div class="stat-lbl">Paid Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#a78bfa">{{ summary.conversion_rate|default:0 }}%</div>
+      <div class="stat-lbl">Conversion</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--orange)">{{ summary.avg_predictions_per_user|default:0 }}</div>
+      <div class="stat-lbl">Avg Predictions</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div>
+      <!-- Accuracy distribution chart -->
+      <div class="chart-card">
+        <div class="chart-title">User Accuracy Distribution</div>
+        <div class="chart-wrap"><canvas id="accDistChart"></canvas></div>
+      </div>
+
+      <!-- Top users table -->
+      <div class="chart-card">
+        <div class="chart-title">Top Users by Predictions</div>
+        <table class="user-table">
+          <thead>
+            <tr><th>Email</th><th>Plan</th><th>Predictions</th><th>Correct</th><th>Accuracy</th></tr>
+          </thead>
+          <tbody>
+            {% for u in top_users %}
+            <tr>
+              <td style="color:var(--text2)">{{ u.email }}</td>
+              <td>
+                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
+                  {% if u.plan == 'pro' %}background:rgba(124,58,237,.15);color:#a78bfa{% elif u.plan == 'basic' %}background:rgba(0,212,255,.12);color:var(--accent){% else %}background:rgba(100,116,139,.15);color:var(--text2){% endif %}">
+                  {{ u.plan|upper }}
+                </span>
+              </td>
+              <td style="font-weight:700">{{ u.pred_count }}</td>
+              <td style="color:var(--green)">{{ u.correct_predictions }}</td>
+              <td>
+                {% if u.total_predictions %}
+                  {% widthratio u.correct_predictions u.total_predictions 100 %}%
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No users yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <!-- Plan distribution donut -->
+      <div class="chart-card">
+        <div class="chart-title">Plan Distribution</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="planChart"></canvas></div>
+      </div>
+
+      <!-- API usage -->
+      <div class="chart-card">
+        <div class="chart-title">Top API Users</div>
+        {% for u in api_usage %}
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+          <div style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(0,212,255,.12);color:var(--accent)">{{ u.plan|upper }}</span>
+          <strong>{{ u.pred_count }}</strong>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No API users yet</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const accDist = {{ accuracy_dist_json }};
+if (accDist.length) {
+  new Chart(document.getElementById('accDistChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: accDist.map(d => d.bucket),
+      datasets: [{
+        label: 'Users',
+        data: accDist.map(d => d.count),
+        backgroundColor: ['#ef4444','#f59e0b','#10b981','#00d4ff'],
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#4a6080' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      },
+    },
+  });
+}
+
+// Plan distribution
+const summary = {{ summary_json }};
+const paid = summary.paid_users || 0;
+const free = summary.free_users || 0;
+if (paid + free > 0) {
+  new Chart(document.getElementById('planChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Free', 'Paid'],
+      datasets: [{
+        data: [free, paid],
+        backgroundColor: ['rgba(100,116,139,0.5)', '#00d4ff'],
+        borderWidth: 2,
+        borderColor: '#0d1117',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } },
+      cutout: '65%',
+    },
+  });
+}
+</script>
+{% endblock %}

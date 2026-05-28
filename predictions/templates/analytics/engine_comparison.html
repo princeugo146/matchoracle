@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Engine Comparison{% endblock %}
+{% block extra_css %}
+<style>
+.an-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.an-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.an-nav a:hover,.an-nav a.active{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.chart-wrap{position:relative;height:260px;}
+.eng-table{width:100%;border-collapse:collapse;font-size:13px;}
+.eng-table th{text-align:left;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--border);}
+.eng-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);}
+.cal-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.cal-bucket{width:80px;font-size:12px;color:var(--text2);}
+.cal-bar-wrap{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;}
+.cal-bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#00d4ff,#0099cc);transition:width 1s ease;}
+.cal-pct{width:44px;text-align:right;font-size:12px;font-weight:700;color:var(--accent);}
+.wh-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.delta-pos{color:var(--green);font-weight:700;}
+.delta-neg{color:var(--red);font-weight:700;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Engine Comparison</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Performance breakdown across all prediction engines</div>
+  </div>
+
+  <div class="an-nav">
+    <a href="{% url 'analytics_dashboard' %}">Overview</a>
+    <a href="{% url 'engine_comparison' %}" class="active">Engines</a>
+    <a href="{% url 'user_analytics' %}">Users</a>
+    <a href="{% url 'team_analytics' %}">Teams</a>
+    <a href="{% url 'revenue_analytics' %}">Revenue</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div>
+      <!-- Engine bar chart -->
+      <div class="chart-card">
+        <div class="chart-title">Accuracy by Engine</div>
+        <div class="chart-wrap"><canvas id="engBarChart"></canvas></div>
+      </div>
+
+      <!-- Confidence calibration -->
+      <div class="chart-card">
+        <div class="chart-title">Confidence Calibration</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Are stated confidence levels accurate?</div>
+        {% for row in calibration %}
+        <div class="cal-row">
+          <div class="cal-bucket">{{ row.bucket }}</div>
+          <div style="font-size:11px;color:var(--muted);width:50px">Stated: {{ row.stated_confidence_mid }}%</div>
+          <div class="cal-bar-wrap">
+            <div class="cal-bar" data-w="{{ row.actual_accuracy }}"></div>
+          </div>
+          <div class="cal-pct">{{ row.actual_accuracy }}%</div>
+          <div style="font-size:11px;width:50px;color:{% if row.actual_accuracy >= row.stated_confidence_mid %}var(--green){% else %}var(--red){% endif %}">
+            {% if row.total > 0 %}n={{ row.total }}{% else %}—{% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No data yet</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <!-- Engine comparison table -->
+      <div class="chart-card">
+        <div class="chart-title">Engine Stats Table</div>
+        <table class="eng-table">
+          <thead>
+            <tr>
+              <th>Engine</th><th>Avg Acc</th><th>Home</th><th>Away</th><th>Draw</th><th>Samples</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in comparison %}
+            <tr>
+              <td><span style="font-weight:700;color:var(--accent)">{{ e.engine }}</span></td>
+              <td><strong style="color:{% if e.avg_accuracy >= 70 %}var(--green){% elif e.avg_accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ e.avg_accuracy }}%</strong></td>
+              <td style="color:var(--text2)">{{ e.home_accuracy }}%</td>
+              <td style="color:var(--text2)">{{ e.away_accuracy }}%</td>
+              <td style="color:var(--text2)">{{ e.draw_accuracy }}%</td>
+              <td style="color:var(--muted)">{{ e.sample_size }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No engine data yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Best / Worst -->
+      <div class="chart-card">
+        <div class="chart-title">Best &amp; Worst Combos (min 10 samples)</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Top Performers</div>
+          {% for r in best_worst.best %}
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+            <span>{{ r.engine }} / {{ r.match_type }}</span>
+            <strong style="color:var(--green)">{{ r.accuracy_pct|floatformat:1 }}%</strong>
+          </div>
+          {% empty %}<div style="color:var(--muted);font-size:12px">—</div>{% endfor %}
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Needs Improvement</div>
+          {% for r in best_worst.worst %}
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+            <span>{{ r.engine }} / {{ r.match_type }}</span>
+            <strong style="color:var(--red)">{{ r.accuracy_pct|floatformat:1 }}%</strong>
+          </div>
+          {% empty %}<div style="color:var(--muted);font-size:12px">—</div>{% endfor %}
+        </div>
+      </div>
+
+      <!-- Weight adjustment history -->
+      <div class="chart-card">
+        <div class="chart-title">Recent Weight Adjustments</div>
+        {% for w in weight_history %}
+        <div class="wh-row">
+          <span style="font-weight:700;color:var(--accent);width:20px">{{ w.engine }}</span>
+          <span style="flex:1;color:var(--text2)">{{ w.parameter }}</span>
+          <span style="color:var(--muted)">{{ w.old_weight|floatformat:3 }} →</span>
+          <span style="font-weight:700">{{ w.new_weight|floatformat:3 }}</span>
+          <span style="color:var(--muted);font-size:11px">{{ w.applied_at|date:"d M" }}</span>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No weight adjustments yet</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tactical matchup accuracy -->
+  {% if tactical_matchups %}
+  <div class="chart-card">
+    <div class="chart-title">Tactical Matchup Accuracy (top patterns)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      {% for p in tactical_matchups %}
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text)">{{ p.pattern_key }}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px">
+          <span style="color:var(--muted)">Accuracy</span>
+          <strong style="color:{% if p.accuracy >= 70 %}var(--green){% elif p.accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ p.accuracy|floatformat:1 }}%</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:3px">
+          <span style="color:var(--muted)">Occurrences</span>
+          <span>{{ p.occurrences }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Animate calibration bars
+setTimeout(() => {
+  document.querySelectorAll('.cal-bar[data-w]').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 100);
+
+// Engine bar chart
+const engData = {{ comparison_json }};
+const engColours = { A: '#00d4ff', B: '#a78bfa', C: '#10b981', D: '#fb923c', NL: '#f472b6' };
+if (engData.length) {
+  new Chart(document.getElementById('engBarChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: engData.map(e => 'Engine ' + e.engine),
+      datasets: [
+        {
+          label: 'Overall Accuracy %',
+          data: engData.map(e => e.avg_accuracy),
+          backgroundColor: engData.map(e => engColours[e.engine] || '#94a3b8'),
+          borderRadius: 6,
+        },
+        {
+          label: 'Home %',
+          data: engData.map(e => e.home_accuracy),
+          backgroundColor: 'rgba(0,212,255,0.3)',
+          borderRadius: 4,
+        },
+        {
+          label: 'Away %',
+          data: engData.map(e => e.away_accuracy),
+          backgroundColor: 'rgba(167,139,250,0.3)',
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#4a6080' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' }, min: 0, max: 100 },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}

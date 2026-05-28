@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% block title %}Analytics Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.an-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.an-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.an-nav a:hover,.an-nav a.active{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;margin-bottom:4px;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.chart-wrap{position:relative;height:260px;}
+.eng-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.eng-name{width:60px;font-size:12px;font-weight:700;color:var(--accent);}
+.eng-bar-wrap{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;}
+.eng-bar{height:10px;border-radius:6px;transition:width 1s ease;}
+.eng-pct{width:44px;text-align:right;font-size:12px;font-weight:700;}
+.had-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.had-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.had-val{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;}
+.had-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.export-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.export-bar a{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;text-decoration:none;background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.export-bar a:hover{background:rgba(0,212,255,.08);color:var(--accent);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Analytics Dashboard</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:3px">System-wide performance metrics · Updated hourly</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted)">{{ now|date:"d M Y H:i" }}</div>
+  </div>
+
+  <!-- Sub-nav -->
+  <div class="an-nav">
+    <a href="{% url 'analytics_dashboard' %}" class="active">Overview</a>
+    <a href="{% url 'engine_comparison' %}">Engines</a>
+    <a href="{% url 'user_analytics' %}">Users</a>
+    <a href="{% url 'team_analytics' %}">Teams</a>
+    <a href="{% url 'revenue_analytics' %}">Revenue</a>
+  </div>
+
+  <!-- Export bar -->
+  <div class="export-bar">
+    <span style="font-size:11px;color:var(--muted);align-self:center">Export:</span>
+    <a href="{% url 'export_analytics' %}?dataset=accuracy">Accuracy CSV</a>
+    <a href="{% url 'export_analytics' %}?dataset=engines">Engines CSV</a>
+    <a href="{% url 'export_analytics' %}?dataset=users">Users CSV</a>
+    <a href="{% url 'export_analytics' %}?dataset=revenue">Revenue CSV</a>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--accent)">{{ overall.total }}</div>
+      <div class="stat-lbl">Total Predictions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--green)">{{ overall.accuracy_pct }}%</div>
+      <div class="stat-lbl">Overall Accuracy</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--gold)">{{ overall.correct }}</div>
+      <div class="stat-lbl">Correct Predictions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:#a78bfa">{{ user_summary.total_users|default:0 }}</div>
+      <div class="stat-lbl">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--orange)">{{ user_summary.conversion_rate|default:0 }}%</div>
+      <div class="stat-lbl">Conversion Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--green)">{{ mrr.total_mrr|default:0|floatformat:0 }}</div>
+      <div class="stat-lbl">MRR (NGN)</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start">
+    <div>
+      <!-- 30-day accuracy trend chart -->
+      <div class="chart-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="chart-title" style="margin-bottom:0">Accuracy Trend</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="loadTrend(7)" class="trend-btn" data-d="7" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text2);cursor:pointer">7d</button>
+            <button onclick="loadTrend(30)" class="trend-btn active-btn" data-d="30" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.08);color:var(--accent);cursor:pointer">30d</button>
+            <button onclick="loadTrend(90)" class="trend-btn" data-d="90" style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text2);cursor:pointer">90d</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+
+      <!-- Engine accuracy bars -->
+      <div class="chart-card">
+        <div class="chart-title">Engine Accuracy Breakdown</div>
+        {% for e in by_engine %}
+        {% with pct=e.accuracy_pct %}
+        <div class="eng-row">
+          <div class="eng-name">Eng {{ e.engine }}</div>
+          <div class="eng-bar-wrap">
+            <div class="eng-bar" data-w="{{ pct }}"
+              style="width:0%;background:{% if pct >= 70 %}linear-gradient(90deg,#10b981,#059669){% elif pct >= 50 %}linear-gradient(90deg,#f59e0b,#d97706){% else %}linear-gradient(90deg,#ef4444,#b91c1c){% endif %}">
+            </div>
+          </div>
+          <div class="eng-pct" style="color:{% if pct >= 70 %}var(--green){% elif pct >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ pct }}%</div>
+          <div style="font-size:11px;color:var(--muted);width:60px">{{ e.total }} preds</div>
+        </div>
+        {% endwith %}
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No verified predictions yet</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <!-- Home / Away / Draw -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-title">Home / Away / Draw Accuracy</div>
+        <div class="had-grid">
+          <div class="had-card">
+            <div class="had-val" style="color:var(--accent)">{{ home_away_draw.home }}%</div>
+            <div class="had-lbl">Home</div>
+          </div>
+          <div class="had-card">
+            <div class="had-val" style="color:#a78bfa">{{ home_away_draw.away }}%</div>
+            <div class="had-lbl">Away</div>
+          </div>
+          <div class="had-card">
+            <div class="had-val" style="color:var(--gold)">{{ home_away_draw.draw }}%</div>
+            <div class="had-lbl">Draw</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Engine comparison donut -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-title">Engine Distribution</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="engPieChart"></canvas></div>
+      </div>
+
+      <!-- User summary -->
+      <div class="chart-card">
+        <div class="chart-title">User Metrics</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          {% with s=user_summary %}
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--text2)">Total Users</span>
+            <strong>{{ s.total_users|default:0 }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--text2)">Active (7d)</span>
+            <strong style="color:var(--green)">{{ s.active_last_7d|default:0 }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--text2)">Paid Users</span>
+            <strong style="color:var(--gold)">{{ s.paid_users|default:0 }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--text2)">Avg Predictions</span>
+            <strong>{{ s.avg_predictions_per_user|default:0 }}</strong>
+          </div>
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Animate engine bars
+setTimeout(() => {
+  document.querySelectorAll('.eng-bar[data-w]').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 100);
+
+// Trend chart
+const trendData30 = {{ trend_30_json }};
+const trendData7  = {{ trend_7_json }};
+let trendChart;
+
+function buildTrendChart(data) {
+  const labels = data.map(d => d.date);
+  const vals   = data.map(d => d.accuracy_pct);
+  const totals = data.map(d => d.total);
+  if (trendChart) trendChart.destroy();
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Accuracy %',
+          data: vals,
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.08)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 3,
+          pointBackgroundColor: '#00d4ff',
+          yAxisID: 'y',
+        },
+        {
+          label: 'Predictions',
+          data: totals,
+          borderColor: '#a78bfa',
+          backgroundColor: 'transparent',
+          tension: 0.4,
+          borderDash: [4,4],
+          pointRadius: 2,
+          yAxisID: 'y1',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' }, min: 0, max: 100, title: { display: true, text: 'Accuracy %', color: '#4a6080', font: { size: 10 } } },
+        y1: { position: 'right', ticks: { color: '#4a6080', font: { size: 10 } }, grid: { display: false }, title: { display: true, text: 'Count', color: '#4a6080', font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+buildTrendChart(trendData30);
+
+async function loadTrend(days) {
+  document.querySelectorAll('.trend-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background = 'rgba(255,255,255,.04)';
+    b.style.color = 'var(--text2)';
+  });
+  const active = document.querySelector(`.trend-btn[data-d="${days}"]`);
+  if (active) {
+    active.style.borderColor = 'rgba(0,212,255,.3)';
+    active.style.background = 'rgba(0,212,255,.08)';
+    active.style.color = 'var(--accent)';
+  }
+  if (days === 30) { buildTrendChart(trendData30); return; }
+  if (days === 7)  { buildTrendChart(trendData7);  return; }
+  const resp = await fetch(`{% url 'api_accuracy_trend' %}?days=${days}`);
+  const json = await resp.json();
+  buildTrendChart(json.data);
+}
+
+// Engine pie chart
+const engData = {{ by_engine_json }};
+if (engData.length) {
+  const engColours = { A: '#00d4ff', B: '#a78bfa', C: '#10b981', D: '#fb923c', NL: '#f472b6' };
+  new Chart(document.getElementById('engPieChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: engData.map(e => 'Engine ' + e.engine),
+      datasets: [{
+        data: engData.map(e => e.total),
+        backgroundColor: engData.map(e => engColours[e.engine] || '#94a3b8'),
+        borderWidth: 2,
+        borderColor: '#0d1117',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 10 } },
+      },
+      cutout: '65%',
+    },
+  });
+}
+</script>
+{% endblock %}

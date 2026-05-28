@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Team Analytics{% endblock %}
+{% block extra_css %}
+<style>
+.an-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.an-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.an-nav a:hover,.an-nav a.active{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.chart-wrap{position:relative;height:280px;}
+.team-table{width:100%;border-collapse:collapse;font-size:12px;}
+.team-table th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--border);}
+.team-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);}
+.form-char{display:inline-block;width:18px;height:18px;border-radius:4px;font-size:10px;font-weight:700;text-align:center;line-height:18px;margin-right:2px;}
+.form-W{background:rgba(16,185,129,.2);color:var(--green);}
+.form-D{background:rgba(245,158,11,.2);color:var(--gold);}
+.form-L{background:rgba(239,68,68,.2);color:var(--red);}
+.form-q{background:rgba(100,116,139,.2);color:var(--muted);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Team Analytics</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Team performance, form trends and player impact</div>
+  </div>
+
+  <div class="an-nav">
+    <a href="{% url 'analytics_dashboard' %}">Overview</a>
+    <a href="{% url 'engine_comparison' %}">Engines</a>
+    <a href="{% url 'user_analytics' %}">Users</a>
+    <a href="{% url 'team_analytics' %}" class="active">Teams</a>
+    <a href="{% url 'revenue_analytics' %}">Revenue</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+    <div>
+      <!-- Home vs Away accuracy chart -->
+      <div class="chart-card">
+        <div class="chart-title">Home vs Away Accuracy (top 10 teams)</div>
+        <div class="chart-wrap"><canvas id="homeAwayChart"></canvas></div>
+      </div>
+
+      <!-- Tactical style accuracy -->
+      <div class="chart-card">
+        <div class="chart-title">Accuracy by Tactical Style</div>
+        {% for s in tactical_styles %}
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px">
+          <div style="flex:1;font-weight:600;text-transform:capitalize">{{ s.style }}</div>
+          <div style="color:var(--accent)">Home: {{ s.avg_home_accuracy }}%</div>
+          <div style="color:#a78bfa">Away: {{ s.avg_away_accuracy }}%</div>
+          <div style="color:var(--muted)">{{ s.team_count }} teams</div>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No team profiles yet</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <!-- Form trends -->
+      <div class="chart-card">
+        <div class="chart-title">Recent Form (last 5 matches)</div>
+        {% for t in form_trends %}
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="flex:1;font-size:12px;font-weight:600">{{ t.team_name }}</div>
+          <div>
+            {% for ch in t.form_string %}
+            <span class="form-char form-{{ ch }}">{{ ch }}</span>
+            {% endfor %}
+          </div>
+          <div style="font-size:11px;color:var(--muted)">{{ t.avg_goals_scored|floatformat:1 }} gf</div>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No team data yet</div>
+        {% endfor %}
+      </div>
+
+      <!-- Key player impact -->
+      <div class="chart-card">
+        <div class="chart-title">Key Player Impact</div>
+        <table class="team-table">
+          <thead>
+            <tr><th>Player</th><th>Team</th><th>Pos</th><th>Rating</th><th>Impact</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for p in player_impact %}
+            <tr>
+              <td style="font-weight:600">{{ p.name }}</td>
+              <td style="color:var(--text2)">{{ p.team|default:"—" }}</td>
+              <td style="color:var(--muted)">{{ p.position|default:"—" }}</td>
+              <td style="font-weight:700;color:{% if p.overall_rating >= 75 %}var(--green){% elif p.overall_rating >= 55 %}var(--gold){% else %}var(--red){% endif %}">{{ p.overall_rating|floatformat:0 }}</td>
+              <td style="color:var(--accent)">{{ p.prediction_impact|floatformat:2 }}</td>
+              <td>
+                <span style="font-size:10px;font-weight:700;color:{% if p.injury_status == 'fit' %}var(--green){% elif p.injury_status == 'doubt' %}var(--gold){% elif p.injury_status == 'out' %}var(--red){% else %}var(--muted){% endif %}">
+                  {{ p.injury_status|upper }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No player data yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Home/Away accuracy full table -->
+  {% if home_away %}
+  <div class="chart-card">
+    <div class="chart-title">Team Home / Away Accuracy (min 5 predictions)</div>
+    <table class="team-table">
+      <thead>
+        <tr><th>Team</th><th>Style</th><th>Home Acc</th><th>Away Acc</th><th>Samples</th></tr>
+      </thead>
+      <tbody>
+        {% for t in home_away %}
+        <tr>
+          <td style="font-weight:600">{{ t.team_name }}</td>
+          <td style="color:var(--text2);text-transform:capitalize">{{ t.tactical_style }}</td>
+          <td><strong style="color:{% if t.home_accuracy >= 70 %}var(--green){% elif t.home_accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ t.home_accuracy|floatformat:1 }}%</strong></td>
+          <td><strong style="color:{% if t.away_accuracy >= 70 %}var(--green){% elif t.away_accuracy >= 50 %}var(--gold){% else %}var(--red){% endif %}">{{ t.away_accuracy|floatformat:1 }}%</strong></td>
+          <td style="color:var(--muted)">{{ t.sample_size }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const homeAwayData = {{ home_away_json }}.slice(0, 10);
+if (homeAwayData.length) {
+  new Chart(document.getElementById('homeAwayChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: homeAwayData.map(t => t.team_name.length > 12 ? t.team_name.slice(0,12)+'…' : t.team_name),
+      datasets: [
+        {
+          label: 'Home Accuracy %',
+          data: homeAwayData.map(t => t.home_accuracy),
+          backgroundColor: 'rgba(0,212,255,0.7)',
+          borderRadius: 4,
+        },
+        {
+          label: 'Away Accuracy %',
+          data: homeAwayData.map(t => t.away_accuracy),
+          backgroundColor: 'rgba(167,139,250,0.7)',
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' }, min: 0, max: 100 },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}

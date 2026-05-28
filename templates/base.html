@@ -138,6 +138,7 @@ footer a{color:var(--accent);text-decoration:none;}
       {% if user.is_authenticated %}
         <a href="/dashboard/" class="nl">Dashboard</a>
         <a href="/dashboard/tips/" class="nl">Tips</a>
+        {% if user.is_staff %}<a href="/dashboard/analytics/" class="nl" style="color:#f59e0b">Analytics</a>{% endif %}
         <a href="/accounts/profile/" class="nl">Profile</a>
         <a href="/accounts/logout/" class="btn-n btn-gh">Logout</a>
       {% else %}

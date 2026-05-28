@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}Revenue Analytics{% endblock %}
+{% block extra_css %}
+<style>
+.an-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.an-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;color:var(--text2);border:1px solid var(--border);transition:all .2s;}
+.an-nav a:hover,.an-nav a.active{background:rgba(0,212,255,.1);color:var(--accent);border-color:rgba(0,212,255,.3);}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:16px;}
+.chart-wrap{position:relative;height:260px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:700;margin-bottom:4px;}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.plan-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:24px">
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Revenue Analytics</div>
+    <div style="color:var(--muted);font-size:13px;margin-top:3px">Payment metrics, MRR and subscription health</div>
+  </div>
+
+  <div class="an-nav">
+    <a href="{% url 'analytics_dashboard' %}">Overview</a>
+    <a href="{% url 'engine_comparison' %}">Engines</a>
+    <a href="{% url 'user_analytics' %}">Users</a>
+    <a href="{% url 'team_analytics' %}">Teams</a>
+    <a href="{% url 'revenue_analytics' %}" class="active">Revenue</a>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--green)">{{ mrr.total_mrr|floatformat:0 }}</div>
+      <div class="stat-lbl">MRR (NGN)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--accent)">{{ success_rate.success_rate }}%</div>
+      <div class="stat-lbl">Payment Success</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--gold)">{{ success_rate.success }}</div>
+      <div class="stat-lbl">Successful Payments</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--red)">{{ churn_30.churned_last_n_days }}</div>
+      <div class="stat-lbl">Churned (30d)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--muted)">{{ success_rate.pending }}</div>
+      <div class="stat-lbl">Pending</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;align-items:start">
+    <div>
+      <!-- Revenue trend chart -->
+      <div class="chart-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="chart-title" style="margin-bottom:0">Revenue Trend (30d)</div>
+          <a href="{% url 'export_analytics' %}?dataset=revenue" style="font-size:11px;color:var(--accent);text-decoration:none">Export CSV</a>
+        </div>
+        <div class="chart-wrap"><canvas id="revTrendChart"></canvas></div>
+      </div>
+
+      <!-- Payment status breakdown -->
+      <div class="chart-card">
+        <div class="chart-title">Payment Status Breakdown</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="payStatusChart"></canvas></div>
+      </div>
+    </div>
+
+    <div>
+      <!-- MRR by plan -->
+      <div class="chart-card">
+        <div class="chart-title">MRR by Plan</div>
+        {% for p in mrr.breakdown %}
+        <div class="plan-row">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:13px;text-transform:capitalize">{{ p.plan }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ p.active_subscribers }} active subscribers</div>
+          </div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--green)">
+            {{ p.mrr|floatformat:0 }}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No paid subscribers yet</div>
+        {% endfor %}
+      </div>
+
+      <!-- Revenue by plan -->
+      <div class="chart-card">
+        <div class="chart-title">All-Time Revenue by Plan</div>
+        {% for p in by_plan %}
+        <div class="plan-row">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:13px;text-transform:capitalize">{{ p.plan }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ p.payment_count }} payments</div>
+          </div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--accent)">
+            {{ p.total_revenue|floatformat:0 }}
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No payment data yet</div>
+        {% endfor %}
+      </div>
+
+      <!-- Churn info -->
+      <div class="chart-card">
+        <div class="chart-title">Churn (last 30 days)</div>
+        <div style="text-align:center;padding:16px 0">
+          <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:700;color:{% if churn_30.churned_last_n_days > 0 %}var(--red){% else %}var(--green){% endif %}">
+            {{ churn_30.churned_last_n_days }}
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">subscriptions expired without renewal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Revenue trend
+const revData = {{ revenue_trend_json }};
+if (revData.length) {
+  new Chart(document.getElementById('revTrendChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: revData.map(d => d.date),
+      datasets: [{
+        label: 'Revenue (NGN)',
+        data: revData.map(d => d.revenue),
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16,185,129,0.08)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 3,
+        pointBackgroundColor: '#10b981',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#4a6080', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      },
+    },
+  });
+} else {
+  document.getElementById('revTrendChart').parentElement.innerHTML =
+    '<div style="color:var(--muted);text-align:center;padding:40px;font-size:13px">No payment data yet</div>';
+}
+
+// Payment status pie
+const sr = {{ success_rate_json }};
+if (sr.total > 0) {
+  new Chart(document.getElementById('payStatusChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Success', 'Failed', 'Pending'],
+      datasets: [{
+        data: [sr.success, sr.failed, sr.pending],
+        backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+        borderWidth: 2,
+        borderColor: '#0d1117',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } },
+      cutout: '60%',
+    },
+  });
+} else {
+  document.getElementById('payStatusChart').parentElement.innerHTML =
+    '<div style="color:var(--muted);text-align:center;padding:40px;font-size:13px">No payment data yet</div>';
+}
+</script>
+{% endblock %}
