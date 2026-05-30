@@ -5,6 +5,7 @@ from .engine import (
     extract_upcoming_matches, detect_intent,
     _build_match_engine_input, _build_sim_engine_input,
     engine_a, engine_b, engine_d, get_confidence_badge,
+    consensus_prediction,
 )
 
 logger = logging.getLogger(__name__)
@@ -229,6 +230,40 @@ def smart_predict(question):
             key_factors = []
             betting_insight = ''
 
+        # 3g. Build Smart AI result dict for consensus (carries home_win/draw/away_win)
+        smart_ai_for_consensus = None
+        if ai_answer and 'homeWin' in ai_answer:
+            # AI returned raw probabilities
+            smart_ai_for_consensus = {
+                'home_win': float(ai_answer.get('homeWin', match_result['home_win'])) * 100,
+                'draw': float(ai_answer.get('draw', match_result['draw'])) * 100,
+                'away_win': float(ai_answer.get('awayWin', match_result['away_win'])) * 100,
+                'verdict': ai_answer.get('verdict', match_result['verdict']),
+            }
+        else:
+            # Use Engine A percentages as Smart AI proxy
+            smart_ai_for_consensus = {
+                'home_win': match_result['home_win'],
+                'draw': match_result['draw'],
+                'away_win': match_result['away_win'],
+                'verdict': match_result['verdict'],
+            }
+
+        # 3h. Compute final consensus across all three engines
+        consensus = None
+        if sim_result:
+            try:
+                consensus = consensus_prediction(
+                    engine_a_result=match_result,
+                    engine_d_result=sim_result,
+                    smart_ai_result=smart_ai_for_consensus,
+                )
+                # Attach team names to consensus for template use
+                consensus['home_team'] = home_team
+                consensus['away_team'] = away_team
+            except Exception as e:
+                logger.error(f"consensus_prediction error in smart_predict: {e}")
+
         return {
             'success': True,
             'intent': intent,
@@ -238,6 +273,7 @@ def smart_predict(question):
             'is_today': todays_match is not None,
             'match_prediction': match_result,
             'simulation': sim_result,
+            'consensus': consensus,
             'answer': final_answer,
             'verdict': match_result['verdict'],
             'predicted_score': match_result.get('predicted_score', '1-1'),

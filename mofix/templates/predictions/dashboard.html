@@ -432,6 +432,67 @@ async function runSmartAI(){
             <div style="font-size:10px;color:var(--muted);margin-top:3px">${r.away_team} Win</div>
           </div>
         </div>`;
+        // ── MATCHORACLE OFFICIAL PREDICTION (consensus box) ──────────────
+        if(r.consensus){
+          const cs=r.consensus;
+          const csVc=cs.final_verdict===r.home_team?'var(--accent)':cs.final_verdict===r.away_team?'var(--red)':'var(--gold)';
+          const csBadge=cs.confidence_badge||{badge_type:'watch',emoji:'🟡',label:'Watch List',message:'Monitor team news before committing'};
+          const badgeColor=cs.confidence==='High'?'#10b981':cs.confidence==='Medium'?'#f59e0b':'#ef4444';
+          html+=`<div style="background:linear-gradient(135deg,rgba(0,212,255,0.06),rgba(0,119,255,0.06));border:2px solid rgba(0,212,255,0.30);border-radius:14px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div style="font-size:9px;letter-spacing:3px;color:var(--accent);font-weight:800;text-transform:uppercase">&#127942; MATCHORACLE OFFICIAL PREDICTION</div>
+              <span style="background:${badgeColor};color:#fff;border-radius:20px;padding:3px 12px;font-size:10px;font-weight:700;letter-spacing:1px">${csBadge.emoji} ${csBadge.label}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+              <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.20);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:var(--accent)">${cs.home_win}%</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:3px">${r.home_team} Win</div>
+              </div>
+              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.20);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:var(--gold)">${cs.draw}%</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:3px">Draw</div>
+              </div>
+              <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.20);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:800;color:var(--red)">${cs.away_win}%</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:3px">${r.away_team} Win</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <div style="flex:1;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px">CONSENSUS SCORE</div>
+                <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">${cs.predicted_score||'?-?'}</div>
+                <div style="font-size:9px;color:var(--muted);margin-top:3px">Engine D · 10k sims</div>
+              </div>
+              <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px">FINAL VERDICT</div>
+                <div style="font-size:15px;font-weight:800;color:${csVc}">${cs.final_verdict==='Draw'?'⚖️ Draw':'🏆 '+cs.final_verdict}</div>
+                <div style="font-size:9px;color:var(--muted);margin-top:3px">${csBadge.message}</div>
+              </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:10px">
+              <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Engine Agreement</div>
+              <table style="width:100%;border-collapse:collapse;font-size:11px">
+                <tr style="color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px">
+                  <th style="text-align:left;padding:3px 6px">Engine</th>
+                  <th style="text-align:center;padding:3px 6px">Weight</th>
+                  <th style="text-align:right;padding:3px 6px">Verdict</th>
+                </tr>
+                ${Object.entries(cs.engine_verdicts||{}).map(([eng,v])=>{
+                  const isAgree=cs.engines_agreed&&cs.engines_agreed.includes(eng);
+                  const wt=eng==='Smart AI'?'20%':'40%';
+                  const vColor=v===r.home_team?'var(--accent)':v===r.away_team?'var(--red)':'var(--gold)';
+                  return `<tr style="border-top:1px solid rgba(255,255,255,0.04)">
+                    <td style="padding:4px 6px;font-weight:600">${eng}</td>
+                    <td style="padding:4px 6px;text-align:center;color:var(--muted)">${wt}</td>
+                    <td style="padding:4px 6px;text-align:right;color:${vColor};font-weight:700">${isAgree?'✓ ':''} ${v}</td>
+                  </tr>`;
+                }).join('')}
+              </table>
+              <div style="margin-top:8px;font-size:11px;color:var(--muted);font-style:italic">${cs.agreement_status||''}</div>
+            </div>
+          </div>`;
+        }
+        // ── Individual engine scores (existing) ──────────────────────────
         html+=`<div style="display:flex;gap:10px;margin-bottom:12px">
           <div style="flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:12px;text-align:center">
             <div style="font-size:10px;color:var(--muted);margin-bottom:4px">PREDICTED SCORE</div>
