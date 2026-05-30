@@ -984,3 +984,201 @@ def _try_sportmonks_match(home_team, away_team):
     except Exception as e:
         logger.warning(f"Sportmonks lookup failed: {e}")
     return None
+
+
+# ─── Final Consensus Prediction ───────────────────────────────────────────────
+
+def consensus_prediction(engine_a_result, engine_d_result, smart_ai_result=None):
+    """
+    Combine Engine A (40%), Engine D (40%), and Smart AI (20%) into a single
+    weighted-average consensus prediction.
+
+    Parameters
+    ----------
+    engine_a_result  : dict  – output of engine_a()
+    engine_d_result  : dict  – output of engine_d()
+    smart_ai_result  : dict or None – output of smart_predict() / call_ai()
+                       Expected keys: home_win, draw, away_win (as numbers)
+
+    Returns
+    -------
+    dict with keys:
+        home_win, draw, away_win  – weighted-average percentages (float, sum ≈ 100)
+        predicted_score           – from Engine D (corrected for draw contradictions)
+        confidence                – 'High' | 'Medium' | 'Low'
+        confidence_badge          – badge dict (reuses get_confidence_badge logic)
+        agreement_status          – human-readable string describing engine agreement
+        engines_agreed            – list of engine names that agreed on the winner
+        final_verdict             – winner name or 'Draw'
+        home_team                 – team name from Engine A result
+        away_team                 – team name from Engine A result
+    """
+    try:
+        # ── Extract per-engine probabilities ────────────────────────────────
+        a_hw = float(engine_a_result.get('home_win', 33.3))
+        a_dr = float(engine_a_result.get('draw', 33.3))
+        a_aw = float(engine_a_result.get('away_win', 33.3))
+
+        d_hw = float(engine_d_result.get('home_win', 33.3))
+        d_dr = float(engine_d_result.get('draw', 33.3))
+        d_aw = float(engine_d_result.get('away_win', 33.3))
+
+        # Smart AI weights – fall back to Engine A values if unavailable
+        if smart_ai_result and isinstance(smart_ai_result, dict):
+            ai_hw = float(smart_ai_result.get('home_win', a_hw))
+            ai_dr = float(smart_ai_result.get('draw', a_dr))
+            ai_aw = float(smart_ai_result.get('away_win', a_aw))
+            ai_weight = 0.20
+        else:
+            ai_hw, ai_dr, ai_aw = a_hw, a_dr, a_aw
+            ai_weight = 0.0
+
+        # Normalise weights so they always sum to 1.0
+        a_weight = 0.40
+        d_weight = 0.40
+        total_weight = a_weight + d_weight + ai_weight
+        a_w = a_weight / total_weight
+        d_w = d_weight / total_weight
+        ai_w = ai_weight / total_weight
+
+        # ── Weighted averages ────────────────────────────────────────────────
+        raw_hw = a_hw * a_w + d_hw * d_w + ai_hw * ai_w
+        raw_dr = a_dr * a_w + d_dr * d_w + ai_dr * ai_w
+        raw_aw = a_aw * a_w + d_aw * d_w + ai_aw * ai_w
+
+        # Normalise to exactly 100 %
+        total = raw_hw + raw_dr + raw_aw or 100.0
+        c_hw = round(raw_hw / total * 1000) / 10
+        c_dr = round(raw_dr / total * 1000) / 10
+        c_aw = round(raw_aw / total * 1000) / 10
+
+        # ── Determine per-engine verdicts ────────────────────────────────────
+        home_name = engine_a_result.get('verdict', '')  # may be team name or 'Draw'
+        # Recover actual team names from Engine A internals
+        # Engine A stores them in 'v1' but not directly – use confidence_badge fallback
+        # We'll derive from the result dict keys that smart_predict populates
+        hn = engine_a_result.get('home_name', '')
+        an = engine_a_result.get('away_name', '')
+
+        def _verdict(hw, dr, aw, hn_fallback='Home', an_fallback='Away'):
+            if hw > aw and hw > dr:
+                return hn_fallback or 'Home'
+            elif aw > hw and aw > dr:
+                return an_fallback or 'Away'
+            else:
+                return 'Draw'
+
+        # Engine A verdict is already computed
+        a_verdict = engine_a_result.get('verdict', _verdict(a_hw, a_dr, a_aw))
+        # Engine D verdict
+        d_verdict = _verdict(d_hw, d_dr, d_aw)
+        # Smart AI verdict
+        if smart_ai_result and isinstance(smart_ai_result, dict):
+            ai_verdict = smart_ai_result.get('verdict', _verdict(ai_hw, ai_dr, ai_aw))
+        else:
+            ai_verdict = a_verdict
+
+        # ── Consensus verdict ────────────────────────────────────────────────
+        final_verdict = _verdict(c_hw, c_dr, c_aw)
+
+        # ── Agreement analysis ───────────────────────────────────────────────
+        verdicts = {'Engine A': a_verdict, 'Engine D': d_verdict, 'Smart AI': ai_verdict}
+        agreed = [name for name, v in verdicts.items() if v == final_verdict]
+        disagreed = [name for name, v in verdicts.items() if v != final_verdict]
+
+        all_agree = len(agreed) == 3
+        two_agree = len(agreed) == 2
+        none_agree = len(agreed) <= 1
+
+        # ── Confidence level ─────────────────────────────────────────────────
+        # High: all three agree, OR draw probability within 5 % of highest win prob
+        highest_win = max(c_hw, c_aw)
+        draw_near_winner = abs(c_dr - highest_win) <= 5.0
+
+        if all_agree or (two_agree and draw_near_winner):
+            confidence_level = 'High'
+            confidence_pct = 82
+        elif two_agree:
+            confidence_level = 'Medium'
+            confidence_pct = 65
+        else:
+            confidence_level = 'Low'
+            confidence_pct = 45
+
+        # ── Predicted score (from Engine D, corrected for draw contradictions) ──
+        d_score = engine_d_result.get('likely_score', '1-1')
+
+        # If draw probability is within 5 % of the highest win probability,
+        # the predicted score must reflect a draw.
+        if draw_near_winner and final_verdict == 'Draw':
+            # Parse Engine D score and equalise it
+            parts = str(d_score).split('-')
+            if len(parts) == 2:
+                try:
+                    hg = int(parts[0])
+                    ag = int(parts[1])
+                    avg = round((hg + ag) / 2)
+                    predicted_score = f"{avg}-{avg}"
+                except ValueError:
+                    predicted_score = '1-1'
+            else:
+                predicted_score = '1-1'
+        else:
+            predicted_score = d_score
+
+        # ── Agreement status string ──────────────────────────────────────────
+        if all_agree:
+            agreement_status = f"All three engines agree: {final_verdict}"
+        elif two_agree:
+            agreement_status = f"{' & '.join(agreed)} agree on {final_verdict}; {', '.join(disagreed)} differs"
+        else:
+            agreement_status = f"Engines disagree — consensus leans {final_verdict}"
+
+        # ── Confidence badge (reuse existing helper) ─────────────────────────
+        badge = get_confidence_badge(confidence_pct)
+        # Override label/emoji to match the three-tier naming in the spec
+        if confidence_level == 'High':
+            badge['label'] = 'High Confidence'
+            badge['badge_type'] = 'high'
+            badge['emoji'] = '🟢'
+        elif confidence_level == 'Medium':
+            badge['label'] = 'Watch List'
+            badge['badge_type'] = 'watch'
+            badge['emoji'] = '🟡'
+        else:
+            badge['label'] = 'Risk Alert'
+            badge['badge_type'] = 'risk'
+            badge['emoji'] = '🔴'
+
+        return {
+            'home_win': c_hw,
+            'draw': c_dr,
+            'away_win': c_aw,
+            'predicted_score': predicted_score,
+            'confidence': confidence_level,
+            'confidence_pct': confidence_pct,
+            'confidence_badge': badge,
+            'agreement_status': agreement_status,
+            'engines_agreed': agreed,
+            'engines_disagreed': disagreed,
+            'final_verdict': final_verdict,
+            'engine_verdicts': verdicts,
+        }
+
+    except Exception as e:
+        logger.error(f"consensus_prediction error: {e}", exc_info=True)
+        # Safe fallback
+        return {
+            'home_win': 33.3,
+            'draw': 33.3,
+            'away_win': 33.3,
+            'predicted_score': '1-1',
+            'confidence': 'Low',
+            'confidence_pct': 45,
+            'confidence_badge': get_confidence_badge(45),
+            'agreement_status': 'Unable to compute consensus',
+            'engines_agreed': [],
+            'engines_disagreed': ['Engine A', 'Engine D', 'Smart AI'],
+            'final_verdict': 'Draw',
+            'engine_verdicts': {},
+        }
