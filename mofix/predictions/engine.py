@@ -388,7 +388,7 @@ def call_ai(system, user_msg, max_tokens=700):
         resp = requests.post(
             'https://api.anthropic.com/v1/messages',
             headers={'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
-            json={'model':'claude-3-5-sonnet-20241022','max_tokens':max_tokens,'system':system,
+            json={'model':'claude-3-sonnet-20240229','max_tokens':max_tokens,'system':system,
                   'messages':[{'role':'user','content':user_msg}]},
             timeout=18
         )
@@ -505,15 +505,17 @@ def engine_a(data):
     top_scores=predict_correct_score(h_xg,a_xg)
     predicted_score=top_scores[0][0] if top_scores else '1-1'
     ai=call_ai(
-        'You are a football prediction AI. Return ONLY valid JSON.',
-        f"Match:{hn}({h_style}) vs {an}({a_style}) Type:{match_type}\n"
-        f"Home:form={hform:.0%} goals={hgs}/{hgc} inj={hinj} pos={hpos} pressure={h_pressure:.2f} chem={h_chem:.2f}\n"
-        f"Away:form={aform:.0%} goals={ags}/{agc} inj={ainj} pos={apos} pressure={a_pressure:.2f} chem={a_chem:.2f}\n"
-        f"H2H:{h2hh}W {h2hd}D {h2ha}A Tactical:{h_style} vs {a_style}\n"
-        f"V1:Home={v1h:.1%} Draw={v1d:.1%} Away={v1a:.1%} xG:{hn}={h_xg:.2f} {an}={a_xg:.2f}\n"
-        f"Top Poisson scores:{top_scores[:3]}\n"
-        f'Return JSON:{{"homeWin":0.50,"draw":0.25,"awayWin":0.25,"insight":"2 sentence tactical analysis","predicted_score":"{predicted_score}","tactical_note":"tactical insight"}}'
+        'You are MatchOracle AI, an expert football analyst. Analyse the match data carefully and return ONLY valid JSON with your independent assessment.',
+        f"Match: {hn} ({h_style}) vs {an} ({a_style}) | Type: {match_type}\n"
+        f"Home ({hn}): form={hform:.0%} goals_scored={hgs} goals_conceded={hgc} injuries={hinj} league_pos={hpos} pressure={h_pressure:.2f} chemistry={h_chem:.2f}\n"
+        f"Away ({an}): form={aform:.0%} goals_scored={ags} goals_conceded={agc} injuries={ainj} league_pos={apos} pressure={a_pressure:.2f} chemistry={a_chem:.2f}\n"
+        f"Head-to-head: {hn} wins={h2hh} Draws={h2hd} {an} wins={h2ha} | Tactical matchup: {h_style} vs {a_style}\n"
+        f"Statistical model: Home={v1h:.1%} Draw={v1d:.1%} Away={v1a:.1%} | xG: {hn}={h_xg:.2f} {an}={a_xg:.2f}\n"
+        f"Top Poisson scores: {top_scores[:3]}\n"
+        f"Based on ALL the above data, provide your expert assessment. Consider form, injuries, head-to-head record, tactical matchup, and xG.\n"
+        f'Return JSON: {{"homeWin":0.50,"draw":0.25,"awayWin":0.25,"insight":"3-4 sentence expert tactical analysis explaining WHY one team has the edge, referencing form, injuries, and head-to-head","predicted_score":"{predicted_score}","tactical_note":"one sentence on the key tactical battle that will decide this match"}}'
     )
+
     if ai and 'homeWin' in ai:
         fh=v1h*0.55+float(ai['homeWin'])*0.45
         fd=v1d*0.55+float(ai['draw'])*0.45
@@ -686,23 +688,25 @@ def natural_language(question):
                 'intent': intent,
                 'data_sources': data_sources,
             }
-
         # Build final AI narrative
         ai_answer = call_ai(
-            'You are MatchOracle AI. Give expert football predictions. Return ONLY valid JSON.',
+            'You are MatchOracle AI, an expert football intelligence assistant. You provide detailed, conversational, expert-level match analysis. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
             f'Match: {home_team} vs {away_team}\n'
-            f'Engine A: Home {match_result["home_win"]}% Draw {match_result["draw"]}% Away {match_result["away_win"]}%\n'
-            f'Predicted score: {match_result.get("predicted_score","1-1")}\n'
-            f'Simulation most likely score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
+            f'Engine A probabilities: Home {match_result["home_win"]}% | Draw {match_result["draw"]}% | Away {match_result["away_win"]}%\n'
+            f'Engine A predicted score: {match_result.get("predicted_score","1-1")}\n'
+            f'Engine A tactical insight: {match_result.get("insight","")}\n'
+            f'Monte Carlo simulation most likely score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
             f'Confidence: {match_result["confidence"]}%\n'
-            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-4 sentence expert analysis with percentages",'
-            f'"prediction":"{match_result["verdict"]}",'
+            f'Data sources: {", ".join(data_sources) or "statistical defaults"}\n'
+            f'Task: Based on ALL the above data, give a detailed expert analysis. Explain WHY one team is likely to win — reference their form, any injury concerns, head-to-head history, tactical advantages, and the statistical probabilities. '
+            f'Your prediction must be based on your own analysis of the data, not just the highest percentage.\n'
+            f'Return JSON: {{"answer":"3-4 sentence expert analysis explaining WHY the predicted winner will win, mentioning key factors like form, injuries, tactics, and the probability percentages",'
+            f'"prediction":"name of the team most likely to win OR Draw",'
             f'"confidence":{match_result["confidence"]},'
-            f'"key_factors":["factor1","factor2","factor3"],'
-            f'"betting_insight":"one sentence"}}',
-            max_tokens=600,
+            f'"key_factors":["specific factor 1","specific factor 2","specific factor 3"],'
+            f'"betting_insight":"one sentence on the most confident betting angle for this match"}}',
+            max_tokens=700,
         )
 
         if ai_answer:
@@ -720,6 +724,7 @@ def natural_language(question):
                 'simulation': sim_result,
                 'data_sources': data_sources,
             }
+
 
         # Fallback without AI narrative
         verdict = match_result['verdict']

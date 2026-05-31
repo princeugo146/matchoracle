@@ -24,7 +24,7 @@ def call_ai(system, user_msg, max_tokens=800):
                 'anthropic-version': '2023-06-01'
             },
             json={
-                'model': 'claude-3-5-sonnet-20241022',
+                'model': 'claude-3-sonnet-20240229',
                 'max_tokens': max_tokens,
                 'system': system,
                 'messages': [{'role': 'user', 'content': user_msg}]
@@ -199,36 +199,48 @@ def smart_predict(question):
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
         ai_answer = call_ai(
-            'You are MatchOracle AI, a football intelligence assistant. Give expert predictions. Return ONLY valid JSON.',
+            'You are MatchOracle AI, an expert football intelligence assistant. You provide detailed, conversational, expert-level match analysis. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
             f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Web data snippets: {snippets_text[:300]}\n'
-            f'Engine A: Home {match_result["home_win"]}% Draw {match_result["draw"]}% Away {match_result["away_win"]}%\n'
-            f'Predicted score: {match_result.get("predicted_score","1-1")}\n'
-            f'Simulation (10,000 runs): Most likely score {sim_result["likely_score"] if sim_result else "N/A"}\n'
+            f'Real-world web data: {snippets_text[:400]}\n'
+            f'Engine A probabilities: Home {match_result["home_win"]}% | Draw {match_result["draw"]}% | Away {match_result["away_win"]}%\n'
+            f'Engine A predicted score: {match_result.get("predicted_score","1-1")}\n'
+            f'Engine A tactical insight: {match_result.get("insight","")}\n'
+            f'Monte Carlo simulation (10,000 runs): Most likely score {sim_result["likely_score"] if sim_result else "N/A"}\n'
             f'Confidence: {match_result["confidence"]}%\n'
-            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-4 sentence expert analysis mentioning percentages and predicted score",'
-            f'"verdict":"{match_result["verdict"]}",'
-            f'"key_factors":["factor1","factor2","factor3"],'
-            f'"betting_insight":"one sentence about most likely outcome"}}',
-            max_tokens=600,
+            f'Data sources: {", ".join(data_sources) or "statistical defaults"}\n'
+            f'Task: Based on ALL the above data, give a detailed expert analysis. Explain WHY one team is likely to win — reference their form, any injury concerns, head-to-head history, tactical advantages, and the statistical probabilities. '
+            f'Your verdict must be based on your own analysis of the data, not just the highest percentage.\n'
+            f'Return JSON: {{"answer":"3-4 sentence expert analysis explaining WHY the predicted winner will win, mentioning key factors like form, injuries, tactics, and the probability percentages",'
+            f'"verdict":"name of the team most likely to win OR Draw",'
+            f'"key_factors":["specific factor 1","specific factor 2","specific factor 3"],'
+            f'"betting_insight":"one sentence on the most confident betting angle for this match",'
+            f'"confidence_reasoning":"one sentence explaining the confidence level"}}',
+            max_tokens=700,
         )
+
+
 
         if ai_answer:
             final_answer = ai_answer.get('answer', '')
             key_factors = ai_answer.get('key_factors', [])
             betting_insight = ai_answer.get('betting_insight', '')
+            confidence_reasoning = ai_answer.get('confidence_reasoning', '')
+            # Use AI's verdict if it returned one, otherwise fall back to engine verdict
+            ai_verdict = ai_answer.get('verdict', match_result['verdict'])
         else:
             final_answer = (
-                f"Based on web data and V1 analysis, {match_result['verdict']} is predicted to win "
+                f"Based on statistical analysis, {match_result['verdict']} is predicted to win "
                 f"({match_result['home_win']}% home / {match_result['draw']}% draw / "
                 f"{match_result['away_win']}% away). "
                 f"Predicted score: {match_result.get('predicted_score','1-1')}. "
-                f"Simulation most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}."
+                f"Monte Carlo simulation most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}."
             )
             key_factors = []
             betting_insight = ''
+            confidence_reasoning = ''
+            ai_verdict = match_result['verdict']
+
 
         # 3g. Build Smart AI result dict for consensus (carries home_win/draw/away_win)
         smart_ai_for_consensus = None
@@ -238,15 +250,15 @@ def smart_predict(question):
                 'home_win': float(ai_answer.get('homeWin', match_result['home_win'])) * 100,
                 'draw': float(ai_answer.get('draw', match_result['draw'])) * 100,
                 'away_win': float(ai_answer.get('awayWin', match_result['away_win'])) * 100,
-                'verdict': ai_answer.get('verdict', match_result['verdict']),
+                'verdict': ai_verdict,
             }
         else:
-            # Use Engine A percentages as Smart AI proxy
+            # Use Engine A percentages as Smart AI proxy, but with AI's verdict
             smart_ai_for_consensus = {
                 'home_win': match_result['home_win'],
                 'draw': match_result['draw'],
                 'away_win': match_result['away_win'],
-                'verdict': match_result['verdict'],
+                'verdict': ai_verdict,
             }
 
         # 3h. Compute final consensus across all three engines
@@ -275,13 +287,14 @@ def smart_predict(question):
             'simulation': sim_result,
             'consensus': consensus,
             'answer': final_answer,
-            'verdict': match_result['verdict'],
+            'verdict': ai_verdict,
             'predicted_score': match_result.get('predicted_score', '1-1'),
             'likely_score': sim_result['likely_score'] if sim_result else 'N/A',
             'confidence': match_result['confidence'],
             'confidence_badge': get_confidence_badge(match_result['confidence']),
             'key_factors': key_factors,
             'betting_insight': betting_insight,
+            'confidence_reasoning': confidence_reasoning,
             'home_win': match_result['home_win'],
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
@@ -290,6 +303,7 @@ def smart_predict(question):
 
     # ── 4. Player comparison ────────────────────────────────────────────────
     if intent == 'player_comparison' and players:
+
         ratings = []
         for player in players:
             search_q = f"{player} football stats goals assists 2024 season"
