@@ -24,7 +24,7 @@ def call_ai(system, user_msg, max_tokens=800):
                 'anthropic-version': '2023-06-01'
             },
             json={
-                'model': 'claude-3-5-sonnet-20241022',
+                'model': 'claude-3-sonnet-20240229',
                 'max_tokens': max_tokens,
                 'system': system,
                 'messages': [{'role': 'user', 'content': user_msg}]
