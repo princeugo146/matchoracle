@@ -40,3 +40,52 @@ class WeeklyTip(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering = ['-match_date']
+
+
+class PredictionResult(models.Model):
+    """
+    Tracks the outcome of a prediction for analytics and accuracy metrics.
+    Can be linked to a Prediction or stored independently for aggregate stats.
+    """
+    # Match details
+    home_team = models.CharField(max_length=100, blank=True, db_index=True)
+    away_team = models.CharField(max_length=100, blank=True, db_index=True)
+    match_date = models.DateField(null=True, blank=True)
+
+    # What was predicted
+    predicted_verdict = models.CharField(max_length=100, blank=True)
+    predicted_score = models.CharField(max_length=20, blank=True)
+    confidence_level = models.IntegerField(default=0)
+
+    # Per-engine verdicts for comparison
+    engine_a_verdict = models.CharField(max_length=100, blank=True)
+    engine_d_verdict = models.CharField(max_length=100, blank=True)
+    smart_ai_verdict = models.CharField(max_length=100, blank=True)
+
+    # Actual outcome (filled in after the match)
+    actual_result = models.CharField(max_length=100, blank=True)
+    actual_score = models.CharField(max_length=20, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+
+    # Optional link back to the originating Prediction row
+    prediction = models.OneToOneField(
+        Prediction,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analytics_result',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['home_team', 'away_team']),
+        ]
+
+    def __str__(self):
+        status = 'correct' if self.is_correct else ('wrong' if self.is_correct is False else 'pending')
+        return f"PredictionResult({self.home_team} vs {self.away_team}, {status})"

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 def dashboard(request):
     from core.live_scores import get_live_scores
     from core.models import WeeklyForecast
+    from .analytics import get_dashboard_analytics
     user = request.user
     recent = Prediction.objects.filter(user=user)[:8]
     rankings = TeamRanking.objects.filter(user=user)[:10]
@@ -26,10 +27,11 @@ def dashboard(request):
         'left_today': user.predictions_left_today,
         'limit': plan_info.get('predictions_per_day', 3),
     }
+    analytics = get_dashboard_analytics()
     return render(request, 'predictions/dashboard.html', {
         'recent': recent, 'rankings': rankings, 'stats': stats,
         'tips': tips, 'forecasts': forecasts, 'live_scores': live_scores,
-        'plan_info': plan_info,
+        'plan_info': plan_info, 'analytics': analytics,
     })
 
 @login_required

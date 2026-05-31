@@ -2,6 +2,433 @@
 {% block title %}Dashboard{% endblock %}
 {% block extra_css %}
 <style>
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --db-bg:       #0A1428;
+  --db-card:     #1a2a4a;
+  --db-card2:    #162038;
+  --db-primary:  #0066CC;
+  --db-accent:   #00D4FF;
+  --db-success:  #10B981;
+  --db-warning:  #F59E0B;
+  --db-danger:   #EF4444;
+  --db-text:     #E5E7EB;
+  --db-muted:    #9CA3AF;
+  --db-border:   rgba(0,212,255,.12);
+}
+
+/* ── Layout shell ──────────────────────────────────────────────────────── */
+.db-shell {
+  background: linear-gradient(160deg, #0A1428 0%, #0d1e3a 50%, #0A1428 100%);
+  min-height: 100vh;
+  padding-bottom: 80px; /* room for bottom nav */
+}
+
+/* ── Section wrapper ───────────────────────────────────────────────────── */
+.db-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── Greeting card ─────────────────────────────────────────────────────── */
+.greeting-card {
+  background: linear-gradient(135deg, #0d2050 0%, #0066CC 100%);
+  border-radius: 20px;
+  padding: 20px;
+  margin: 16px 0;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.greeting-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: rgba(0,212,255,.08);
+}
+.greeting-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: 30%;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+.greeting-left { flex: 1; position: relative; z-index: 1; }
+.greeting-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.greeting-sub { font-size: 13px; color: rgba(255,255,255,.7); }
+.greeting-right {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,.1);
+  border-radius: 14px;
+  padding: 12px 18px;
+  backdrop-filter: blur(8px);
+}
+.greeting-acc-num {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #00D4FF;
+  line-height: 1;
+}
+.greeting-acc-lbl { font-size: 10px; color: rgba(255,255,255,.6); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
+.greeting-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #10B981;
+  margin-top: 6px;
+}
+
+/* ── Section title ─────────────────────────────────────────────────────── */
+.db-section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--db-muted);
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.db-section-title a { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--db-accent); text-decoration: none; letter-spacing: 0; text-transform: none; font-weight: 600; }
+
+/* ── Top Prediction card ───────────────────────────────────────────────── */
+.top-pred-card {
+  background: linear-gradient(135deg, #1a2a4a 0%, #162038 100%);
+  border: 1px solid rgba(0,212,255,.2);
+  border-radius: 20px;
+  padding: 20px;
+  min-height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+.top-pred-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0066CC, #00D4FF);
+}
+.top-pred-match {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin-bottom: 6px;
+}
+.top-pred-verdict {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  color: var(--db-accent);
+  margin-bottom: 12px;
+}
+.top-pred-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.top-pred-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tpb-conf { background: rgba(16,185,129,.15); color: #10B981; border: 1px solid rgba(16,185,129,.3); }
+.tpb-engine { background: rgba(0,212,255,.1); color: #00D4FF; border: 1px solid rgba(0,212,255,.2); }
+.btn-analyze {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0066CC, #00D4FF);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: .5px;
+  transition: all .2s;
+}
+.btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,212,255,.3); }
+
+/* ── Quick Analyze card ────────────────────────────────────────────────── */
+.quick-analyze-card {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: 20px;
+  padding: 18px;
+  min-height: 140px;
+}
+.qa-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.qa-field { flex: 1; min-width: 120px; }
+.qa-field label { font-size: 11px; color: var(--db-muted); display: block; margin-bottom: 5px; }
+.qa-select {
+  width: 100%;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(0,212,255,.15);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: var(--db-text);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+.qa-select:focus { border-color: var(--db-accent); }
+.btn-qa {
+  background: linear-gradient(135deg, #0066CC, #00D4FF);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  height: 40px;
+}
+.btn-qa:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,212,255,.3); }
+
+/* ── Live Matches ──────────────────────────────────────────────────────── */
+.live-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.live-scroll::-webkit-scrollbar { display: none; }
+.live-match-card {
+  flex-shrink: 0;
+  width: 200px;
+  min-height: 120px;
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: 16px;
+  padding: 14px;
+  position: relative;
+}
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(239,68,68,.15);
+  color: #EF4444;
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.live-badge::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #EF4444;
+  animation: lp 1.2s infinite;
+}
+.ft-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(156,163,175,.12);
+  color: var(--db-muted);
+  border: 1px solid rgba(156,163,175,.2);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.live-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.live-team-name { font-size: 11px; font-weight: 600; color: var(--db-text); flex: 1; }
+.live-team-name.away { text-align: right; }
+.live-score {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #EF4444;
+  padding: 0 6px;
+}
+.live-score.ft { color: var(--db-muted); }
+.live-league { font-size: 10px; color: var(--db-muted); margin-top: 8px; }
+
+/* ── AI Performance ────────────────────────────────────────────────────── */
+.ai-perf-card {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: 20px;
+  padding: 20px;
+  min-height: 220px;
+}
+.ai-perf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.ai-stat-box {
+  background: var(--db-card2);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.05);
+}
+.ai-stat-num {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.ai-stat-lbl { font-size: 10px; color: var(--db-muted); letter-spacing: 1px; text-transform: uppercase; }
+.ai-stat-won .ai-stat-num  { color: #10B981; }
+.ai-stat-lost .ai-stat-num { color: #EF4444; }
+.ai-stat-total .ai-stat-num { color: #00D4FF; }
+
+/* Circular accuracy chart */
+.acc-circle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0 8px;
+}
+.acc-circle {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.acc-circle-inner {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--db-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.acc-circle-pct {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #00D4FF;
+  line-height: 1;
+}
+.acc-circle-sub { font-size: 8px; color: var(--db-muted); letter-spacing: 1px; }
+
+/* ── Top 3 Predictions list ────────────────────────────────────────────── */
+.top3-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.top3-item {
+  background: var(--db-card);
+  border: 1px solid var(--db-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+}
+.top3-rank {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--db-muted);
+  width: 28px;
+  flex-shrink: 0;
+}
+.top3-rank.r1 { color: #F59E0B; }
+.top3-rank.r2 { color: #9CA3AF; }
+.top3-rank.r3 { color: #CD7F32; }
+.top3-info { flex: 1; }
+.top3-match { font-size: 13px; font-weight: 600; color: var(--db-text); }
+.top3-verdict { font-size: 11px; color: var(--db-accent); margin-top: 2px; }
+.top3-conf {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.conf-high  { background: rgba(16,185,129,.15); color: #10B981; border: 1px solid rgba(16,185,129,.3); }
+.conf-watch { background: rgba(245,158,11,.15);  color: #F59E0B; border: 1px solid rgba(245,158,11,.3); }
+.conf-risk  { background: rgba(239,68,68,.15);   color: #EF4444; border: 1px solid rgba(239,68,68,.3); }
+
+/* ── Bottom navigation ─────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(10,20,40,.97);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0,212,255,.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 500;
+  padding: 0 8px;
+}
+.bn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .2s;
+  flex: 1;
+  max-width: 80px;
+}
+.bn-item:hover, .bn-item.active { background: rgba(0,212,255,.08); }
+.bn-icon { font-size: 20px; line-height: 1; }
+.bn-label { font-size: 9px; font-weight: 600; letter-spacing: .5px; color: var(--db-muted); text-transform: uppercase; }
+.bn-item.active .bn-label { color: var(--db-accent); }
+.bn-item.active .bn-icon { filter: drop-shadow(0 0 6px rgba(0,212,255,.6)); }
+
+/* ── Engines section (existing, preserved) ─────────────────────────────── */
 .et{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 8px;cursor:pointer;transition:all .25s;text-align:center;width:100%;}
 .et:hover{transform:translateY(-2px);}
 .et.a-on{border-color:var(--accent);background:rgba(0,212,255,.06);}
@@ -23,265 +450,565 @@
 .sb{text-align:center;}
 .sb .n{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:700;}
 .sb .l{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ── Responsive grid ───────────────────────────────────────────────────── */
+.db-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.db-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+@media (max-width: 768px) {
+  .db-grid-2, .db-grid-3 { grid-template-columns: 1fr; }
+  .ai-perf-grid { grid-template-columns: 1fr 1fr 1fr; }
+  .greeting-name { font-size: 15px; }
+  .greeting-acc-num { font-size: 22px; }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  .db-grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Divider ───────────────────────────────────────────────────────────── */
+.engines-divider {
+  border: none;
+  border-top: 1px solid rgba(0,212,255,.08);
+  margin: 32px 0 24px;
+}
+.engines-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.engines-header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.engines-header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 </style>
 {% endblock %}
 {% block content %}
-<div class="wrap" style="padding-top:24px">
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
-  <div><div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700">Dashboard</div><div style="color:var(--muted);font-size:13px;margin-top:3px">Welcome back, {{ user.first_name|default:user.email }}</div></div>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <span class="p{% if user.plan == 'free' %}f{% elif user.plan == 'basic' %}b{% else %}p{% endif %}">{{ user.plan|upper }}</span>
-    {% if user.plan == 'free' %}<a href="/pricing/" class="btn btn-p" style="padding:7px 14px;font-size:12px">Upgrade</a>{% endif %}
-    <a href="/dashboard/history/" class="btn btn-s" style="padding:7px 12px;font-size:12px">History</a>
-  </div>
-</div>
+<div class="db-shell">
+<div class="db-wrap">
 
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
-  <div class="card sb"><div class="n" style="color:var(--accent)">{{ stats.total }}</div><div class="l">Total</div></div>
-  <div class="card sb"><div class="n" style="color:var(--green)">{{ stats.left_today }}</div><div class="l">Left Today</div></div>
-  <div class="card sb"><div class="n" style="color:var(--gold)">{{ stats.limit }}</div><div class="l">Daily Limit</div></div>
-  <div class="card sb"><div class="n" style="color:var(--accent2)">{{ stats.accuracy }}%</div><div class="l">Accuracy</div></div>
-</div>
-
-<div style="display:grid;grid-template-columns:1fr 290px;gap:18px;align-items:start">
-<div>
-<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px">
-  <button class="et a-on" onclick="sw('a',this,'a-on')"><div style="font-size:18px;margin-bottom:3px">&#127919;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--accent)">ENG A</div><div style="font-size:11px;font-weight:600;margin-top:2px">Predict</div></button>
-  <button class="et" onclick="sw('b',this,'b-on')"><div style="font-size:18px;margin-bottom:3px">&#11088;</div><div style="font-size:8px;letter-spacing:1.5px;color:#a78bfa">ENG B</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rate</div></button>
-  <button class="et" onclick="sw('c',this,'c-on')"><div style="font-size:18px;margin-bottom:3px">&#127942;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--green)">ENG C</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rank</div></button>
-  <button class="et" onclick="sw('d',this,'d-on')"><div style="font-size:18px;margin-bottom:3px">&#127918;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--orange)">ENG D</div><div style="font-size:11px;font-weight:600;margin-top:2px">Simulate</div></button>
-  <button class="et" onclick="sw('nl',this,'nl-on')"><div style="font-size:18px;margin-bottom:3px">&#128172;</div><div style="font-size:8px;letter-spacing:1.5px;color:#f472b6">AI ASK</div><div style="font-size:11px;font-weight:600;margin-top:2px">Ask AI</div></button>
-</div>
-
-<!-- ENGINE A -->
-<div class="panel show" id="pa">
-  <div class="g2" style="margin-bottom:12px">
-    <div class="card"><div class="ct">Home Team</div>
-      <div class="field"><label>Team Name</label><input id="ahn" placeholder="e.g. Arsenal"></div>
-      <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="ahgs" placeholder="2.1" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="ahgc" placeholder="0.9" step="0.1"></div></div>
-      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="ahf" placeholder="W W D W W"></div>
-      <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="ahwr" placeholder="68"></div><div class="field"><label>Key Injuries</label><input type="number" id="ahi" placeholder="0" min="0" max="5"></div></div>
-      <div class="field"><label>League Position</label><input type="number" id="ahp" placeholder="2"></div>
-      <div class="field"><label>Tactical Style</label>
-        <select id="ah_style">
-          <option value="balanced">Balanced</option>
-          <option value="high_press">High Press</option>
-          <option value="counter_attack">Counter Attack</option>
-          <option value="possession">Possession</option>
-          <option value="defensive_block">Defensive Block</option>
-          <option value="wing_play">Wing Play</option>
-          <option value="long_ball">Long Ball</option>
-        </select>
+  <!-- ── Greeting Card ──────────────────────────────────────────────── -->
+  <div class="greeting-card">
+    <div class="greeting-left">
+      <div class="greeting-name">
+        ⚽ Hey, {{ user.first_name|default:user.username|default:"Analyst" }}!
       </div>
-      <div class="f2">
-        <div class="field"><label>Tournament Exp (0-10)</label><input type="number" id="ah_tour" placeholder="5" min="0" max="10"></div>
-        <div class="field"><label>Knockout Mentality (0-10)</label><input type="number" id="ah_ment" placeholder="5" min="0" max="10"></div>
+      <div class="greeting-sub">
+        {% if stats.left_today > 0 %}
+          {{ stats.left_today }} prediction{{ stats.left_today|pluralize }} left today
+        {% else %}
+          Daily limit reached — <a href="/pricing/" style="color:#00D4FF;text-decoration:none">upgrade for more</a>
+        {% endif %}
+      </div>
+      <div class="greeting-trend">
+        ↑ AI-powered football intelligence
       </div>
     </div>
-    <div class="card"><div class="ct">Away Team</div>
-      <div class="field"><label>Team Name</label><input id="aan" placeholder="e.g. Real Madrid"></div>
-      <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="aags" placeholder="2.4" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="aagc" placeholder="0.8" step="0.1"></div></div>
-      <div class="field"><label>Last 5 Form (W/D/L)</label><input id="aaf" placeholder="W W W D W"></div>
-      <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="aawr" placeholder="55"></div><div class="field"><label>Key Injuries</label><input type="number" id="aai" placeholder="1" min="0" max="5"></div></div>
-      <div class="field"><label>League Position</label><input type="number" id="aap" placeholder="1"></div>
-      <div class="field"><label>Tactical Style</label>
-        <select id="aa_style">
-          <option value="balanced">Balanced</option>
-          <option value="high_press">High Press</option>
-          <option value="counter_attack">Counter Attack</option>
-          <option value="possession">Possession</option>
-          <option value="defensive_block">Defensive Block</option>
-          <option value="wing_play">Wing Play</option>
-          <option value="long_ball">Long Ball</option>
-        </select>
-      </div>
-      <div class="f2">
-        <div class="field"><label>Tournament Exp (0-10)</label><input type="number" id="aa_tour" placeholder="5" min="0" max="10"></div>
-        <div class="field"><label>Knockout Mentality (0-10)</label><input type="number" id="aa_ment" placeholder="5" min="0" max="10"></div>
-      </div>
+    <div class="greeting-right">
+      <div class="greeting-acc-num">{{ stats.accuracy }}%</div>
+      <div class="greeting-acc-lbl">Accuracy</div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:12px"><div class="ct">Head to Head (last 10)</div>
-    <div class="f3"><div class="field"><label>Home Wins</label><input type="number" id="ah2hh" placeholder="4"></div><div class="field"><label>Draws</label><input type="number" id="ah2hd" placeholder="3"></div><div class="field"><label>Away Wins</label><input type="number" id="ah2ha" placeholder="3"></div></div>
-  </div>
-  <div class="card" style="margin-bottom:12px">
-    <div class="ct">Match Context</div>
-    <div class="f2">
-      <div class="field"><label>Match Type</label>
-        <select id="a_match_type">
-          <option value="league">League Match</option>
-          <option value="friendly">Friendly</option>
-          <option value="qualifier">World Cup Qualifier</option>
-          <option value="group">World Cup Group Stage</option>
-          <option value="knockout">World Cup Knockout</option>
-          <option value="semifinal">World Cup Semi-Final</option>
-          <option value="final">World Cup Final</option>
-          <option value="worldcup">World Cup (General)</option>
-          <option value="champions">Champions League</option>
-        </select>
-      </div>
-      <div class="field"><label>Include Penalty Analysis?</label>
-        <select id="a_penalties">
-          <option value="no">No (League match)</option>
-          <option value="yes">Yes (Knockout match)</option>
-        </select>
-      </div>
-    </div>
-  </div>
-  <button class="btn btn-p btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px" onclick="run('A')">RUN PREDICTION ENGINE</button>
-  <div class="ld" id="la"><div class="spin"></div><div style="color:var(--text2)">V1 + AI Hybrid Analysis...</div></div>
-  <div class="res card" id="ra" style="border-top:3px solid var(--accent)"><div class="ct">PREDICTION RESULT</div><div id="abars"></div><div id="averdict" style="margin-top:14px;padding:14px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:12px"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="ainsight"></div></div></div>
-</div>
 
-<!-- ENGINE B -->
-<div class="panel" id="pb">
-  <div class="g2" style="margin-bottom:12px">
-    <div class="card"><div class="ct">Player Info</div>
-      <div class="field"><label>Player Name</label><input id="bname" placeholder="e.g. Haaland"></div>
-      <div class="field"><label>Position</label><select id="bpos"><option value="ST">Striker (ST)</option><option value="LW">Left Wing</option><option value="RW">Right Wing</option><option value="CAM">Attacking Mid</option><option value="CM">Central Mid</option><option value="CDM">Defensive Mid</option><option value="CB">Centre-Back</option><option value="LB">Left-Back</option><option value="RB">Right-Back</option><option value="GK">Goalkeeper</option></select></div>
-      <div class="f2"><div class="field"><label>Goals</label><input type="number" id="bgoals" placeholder="22"></div><div class="field"><label>Assists</label><input type="number" id="bassists" placeholder="8"></div></div>
-      <div class="field"><label>Games Played</label><input type="number" id="bgames" placeholder="28"></div>
-      <div class="field"><label>Injury Status</label><select id="binj"><option value="fit">Fully Fit</option><option value="doubt">Doubt</option><option value="minor">Minor Injury</option><option value="major">Major Injury</option></select></div>
-    </div>
-    <div class="card"><div class="ct">Performance Stats</div>
-      <div class="field"><label>Pass Accuracy %</label><input type="number" id="bpass" placeholder="84"></div>
-      <div class="field"><label>Shots on Target %</label><input type="number" id="bshot" placeholder="61"></div>
-      <div class="field"><label>Dribble Success %</label><input type="number" id="bdrib" placeholder="55"></div>
-      <div class="field"><label>Tackle Success %</label><input type="number" id="btackle" placeholder="50"></div>
-      <div class="field"><label>Aerial Duels Won %</label><input type="number" id="baerial" placeholder="60"></div>
-      <div class="field"><label>Distance Covered (km/g)</label><input type="number" id="bdist" placeholder="10.8" step="0.1"></div>
-    </div>
+  <!-- ── Top Prediction Today + Quick Analyze ──────────────────────── -->
+  <div class="db-section-title">
+    <span>🏆 Top Prediction Today</span>
+    <a href="/dashboard/history/">View All</a>
   </div>
-  <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white" onclick="run('B')">CALCULATE PLAYER RATING</button>
-  <div class="ld" id="lb"><div class="spin" style="border-top-color:#a78bfa"></div><div style="color:var(--text2)">Calculating...</div></div>
-  <div class="res card" id="rb" style="border-top:3px solid #a78bfa"><div class="ct">PLAYER RATING</div><div id="boutput" style="text-align:center;padding:20px 0"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="binsight"></div></div></div>
-</div>
 
-<!-- ENGINE C -->
-<div class="panel" id="pc">
-  <div class="card" style="margin-bottom:12px"><div class="ct">Add Team to ELO Ranking</div>
-    <div class="f2"><div class="field"><label>Team Name</label><input id="cname" placeholder="e.g. Man City"></div><div class="field"><label>Base ELO</label><input type="number" id="celo" placeholder="1000"></div></div>
-    <div class="f3"><div class="field"><label>Wins</label><input type="number" id="cw" placeholder="18"></div><div class="field"><label>Draws</label><input type="number" id="cd_" placeholder="6"></div><div class="field"><label>Losses</label><input type="number" id="cl" placeholder="4"></div></div>
-    <div class="f3"><div class="field"><label>Goals For</label><input type="number" id="cgf" placeholder="62"></div><div class="field"><label>Goals Against</label><input type="number" id="cga" placeholder="28"></div><div class="field"><label>Opp. Strength (1-10)</label><input type="number" id="copp" placeholder="6.5" step="0.5"></div></div>
-    <button class="btn btn-full" style="padding:12px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#34d399,#059669);color:#030508" onclick="addTeam()">ADD AND RANK TEAM</button>
-  </div>
-  <div class="card"><div class="ct">POWER RANKINGS (ELO)</div><div id="ctable"><div style="color:var(--muted);text-align:center;padding:28px;font-size:13px">Add teams above to build your rankings</div></div></div>
-</div>
+  <div class="db-grid-2" style="margin-bottom:0">
+    <!-- Top Prediction card -->
+    <div class="top-pred-card">
+      {% with top=analytics.top_predictions_today|first %}
+      {% if top %}
+        <div class="top-pred-match">{{ top.home_team }} vs {{ top.away_team }}</div>
+        <div class="top-pred-verdict">{{ top.predicted_verdict|default:"Prediction pending" }}</div>
+        <div class="top-pred-meta">
+          <span class="top-pred-badge tpb-conf">
+            🟢 {{ top.confidence_level }}% Confidence
+          </span>
+          {% if top.predicted_score %}
+          <span class="top-pred-badge tpb-engine">
+            Score: {{ top.predicted_score }}
+          </span>
+          {% endif %}
+        </div>
+        <a href="/dashboard/" class="btn-analyze" onclick="scrollToEngines(event)">
+          ⚡ View Full Analysis
+        </a>
+      {% else %}
+        <!-- Placeholder when no analytics predictions yet -->
+        {% if recent %}
+          {% with p=recent.0 %}
+          <div class="top-pred-match">
+            {% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}Latest Prediction{% endif %}
+          </div>
+          <div class="top-pred-verdict">{{ p.predicted_result|default:"Run an engine to see predictions" }}</div>
+          <div class="top-pred-meta">
+            {% if p.confidence > 0 %}
+            <span class="top-pred-badge tpb-conf">
+              {% if p.confidence >= 80 %}🟢{% elif p.confidence >= 60 %}🟡{% else %}🔴{% endif %}
+              {{ p.confidence }}% Confidence
+            </span>
+            {% endif %}
+            <span class="top-pred-badge tpb-engine">Engine {{ p.engine }}</span>
+          </div>
+          {% endwith %}
+        {% else %}
+          <div class="top-pred-match" style="color:var(--db-muted)">No predictions yet today</div>
+          <div class="top-pred-verdict">Run an engine below to get started</div>
+          <div class="top-pred-meta">
+            <span class="top-pred-badge tpb-engine">5 Engines Available</span>
+          </div>
+        {% endif %}
+        <a href="/dashboard/" class="btn-analyze" onclick="scrollToEngines(event)">
+          ⚡ Run Analysis Now
+        </a>
+      {% endif %}
+      {% endwith %}
+    </div>
 
-<!-- ENGINE D -->
-<div class="panel" id="pd">
-  <div class="g2" style="margin-bottom:12px">
-    <div class="card"><div class="ct">Home Team</div>
-      <div class="field"><label>Team Name</label><input id="dhn" placeholder="e.g. Liverpool"></div>
-      <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="dhatk" placeholder="85"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dhdef" placeholder="78"></div></div>
-      <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="dhelo" placeholder="1350"></div><div class="field"><label>Key Injuries</label><select id="dhinj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
-    </div>
-    <div class="card"><div class="ct">Away Team</div>
-      <div class="field"><label>Team Name</label><input id="dan" placeholder="e.g. Bayern Munich"></div>
-      <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="daatk" placeholder="88"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dadef" placeholder="80"></div></div>
-      <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="daelo" placeholder="1380"></div><div class="field"><label>Key Injuries</label><select id="dainj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:12px"><div class="ct">Settings</div>
-    <div class="f3">
-      <div class="field"><label>Competition</label><select id="dcomp"><option value="league">League</option><option value="champions">Champions League</option><option value="cup">Cup</option><option value="friendly">Friendly</option></select></div>
-      <div class="field"><label>Simulations</label><select id="dsims"><option value="1000">1,000</option><option value="10000" selected>10,000</option><option value="50000">50,000</option></select></div>
-      <div class="field"><label>Weather</label><select id="dwx"><option value="normal">Normal</option><option value="rain">Rain</option><option value="wind">Wind</option><option value="heat">Heat</option></select></div>
-    </div>
-  </div>
-  <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#fb923c,#d97706);color:#030508" onclick="run('D')">RUN FULL SIMULATION</button>
-  <div class="ld" id="ld"><div class="spin" style="border-top-color:var(--orange)"></div><div style="color:var(--text2)">Running Monte Carlo Simulation...</div></div>
-  <div class="res card" id="rd" style="border-top:3px solid var(--orange)"><div class="ct">SIMULATION RESULT</div><div id="doutput"></div><div class="ai-box"><div class="ai-lbl">AI MATCH ANALYSIS</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="dinsight"></div></div></div>
-</div>
-
-<!-- ENGINE NL - SMART AI -->
-<div class="panel" id="pnl">
-  <!-- Chat messages -->
-  <div id="chatMessages" style="min-height:120px;max-height:400px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:12px">
-    <div style="background:linear-gradient(135deg,rgba(244,114,182,0.08),rgba(219,39,119,0.08));border:1px solid rgba(244,114,182,0.2);border-radius:12px;padding:14px 16px">
-      <div style="font-size:10px;letter-spacing:2px;color:#f472b6;font-weight:700;text-transform:uppercase;margin-bottom:6px">MATCHORACLE AI</div>
-      <div style="font-size:14px;color:var(--text2);line-height:1.7">Hi! I'm your football AI assistant. Ask me anything like:<br>
-        <span style="color:#f472b6">&#x2022; "Who will win Arsenal vs Chelsea today?"</span><br>
-        <span style="color:#f472b6">&#x2022; "Predict Manchester City vs Real Madrid"</span><br>
-        <span style="color:#f472b6">&#x2022; "Will Liverpool win the Champions League?"</span><br>
-        I'll automatically detect the teams, run all 4 engines and give you a full AI prediction!
+    <!-- Quick Analyze card -->
+    <div class="quick-analyze-card">
+      <div class="db-section-title" style="margin-top:0;margin-bottom:12px">
+        <span>⚡ Quick Analyze</span>
+      </div>
+      <div class="qa-row">
+        <div class="qa-field">
+          <label>Home Team</label>
+          <select class="qa-select" id="qaHome">
+            <option value="">Select team…</option>
+            <option>Arsenal</option><option>Chelsea</option><option>Liverpool</option>
+            <option>Manchester City</option><option>Manchester United</option>
+            <option>Tottenham</option><option>Newcastle</option><option>Aston Villa</option>
+            <option>Real Madrid</option><option>Barcelona</option><option>Atletico Madrid</option>
+            <option>Bayern Munich</option><option>Dortmund</option><option>PSG</option>
+            <option>Juventus</option><option>Inter Milan</option><option>AC Milan</option>
+            <option>Napoli</option><option>Ajax</option><option>Porto</option>
+          </select>
+        </div>
+        <div class="qa-field">
+          <label>Away Team</label>
+          <select class="qa-select" id="qaAway">
+            <option value="">Select team…</option>
+            <option>Arsenal</option><option>Chelsea</option><option>Liverpool</option>
+            <option>Manchester City</option><option>Manchester United</option>
+            <option>Tottenham</option><option>Newcastle</option><option>Aston Villa</option>
+            <option>Real Madrid</option><option>Barcelona</option><option>Atletico Madrid</option>
+            <option>Bayern Munich</option><option>Dortmund</option><option>PSG</option>
+            <option>Juventus</option><option>Inter Milan</option><option>AC Milan</option>
+            <option>Napoli</option><option>Ajax</option><option>Porto</option>
+          </select>
+        </div>
+        <button class="btn-qa" onclick="quickAnalyze()">Analyze →</button>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--db-muted)">
+        Powered by Smart AI — runs all 4 engines automatically
       </div>
     </div>
   </div>
 
-  <!-- Quick suggestion buttons -->
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="suggestions">
-    <button onclick="setSuggestion('Who will win Arsenal vs Chelsea?')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">Arsenal vs Chelsea</button>
-    <button onclick="setSuggestion('Predict Real Madrid vs Barcelona')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">El Clasico</button>
-    <button onclick="setSuggestion('Who will win Man City vs Liverpool?')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">Man City vs Liverpool</button>
-  </div>
-
-  <!-- Input area -->
-  <div style="display:flex;gap:10px;align-items:flex-end">
-    <div style="flex:1">
-      <textarea id="nlq" placeholder="Ask anything e.g. Who will win Arsenal vs Chelsea today?" style="height:70px;resize:none;border-color:rgba(244,114,182,0.3);font-size:14px"></textarea>
-    </div>
-    <button onclick="runSmartAI()" style="background:linear-gradient(135deg,#f472b6,#db2777);color:white;border:none;border-radius:10px;padding:22px 18px;cursor:pointer;font-size:20px;flex-shrink:0">&#10148;</button>
-  </div>
-
-  <div class="ld" id="lnl" style="margin-top:12px">
-    <div class="spin" style="border-top-color:#f472b6"></div>
-    <div style="color:var(--text2)">AI is analysing the match...</div>
-    <div style="color:var(--muted);font-size:12px;margin-top:4px">Running 10,000 simulations + V1 analysis...</div>
-  </div>
-</div>
-
-{% if recent %}
-<div style="margin-top:24px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700">Recent Predictions</div>
-    <a href="/dashboard/history/" style="color:var(--accent);font-size:12px;text-decoration:none">View All</a>
-  </div>
-  <div class="card">
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
-        <th style="text-align:left;padding:8px 10px">Eng</th><th style="text-align:left;padding:8px 10px">Match</th><th style="text-align:left;padding:8px 10px">Prediction</th><th style="text-align:left;padding:8px 10px">Confidence</th><th style="text-align:left;padding:8px 10px">Date</th>
-      </tr></thead>
-      <tbody>{% for p in recent %}
-        <tr style="border-top:1px solid rgba(255,255,255,.04)">
-          <td style="padding:9px 10px"><span class="badge bb">{{ p.engine }}</span></td>
-          <td style="padding:9px 10px;color:var(--text2)">{% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}{{ p.input_data.name|default:"—" }}{% endif %}</td>
-          <td style="padding:9px 10px;font-weight:600;color:var(--accent)">{{ p.predicted_result|default:"—" }}</td>
-          <td style="padding:9px 10px">{% if p.confidence > 0 %}{% if p.confidence >= 80 %}<span class="confidence-badge badge-high" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟢</span>High</span>{% elif p.confidence >= 60 %}<span class="confidence-badge badge-watch" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟡</span>Watch</span>{% else %}<span class="confidence-badge badge-risk" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🔴</span>Risk</span>{% endif %}{% else %}<span style="color:var(--muted);font-size:12px">—</span>{% endif %}</td>
-          <td style="padding:9px 10px;color:var(--muted)">{{ p.created_at|date:"d M" }}</td>
-        </tr>{% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>{% endif %}
-</div>
-
-<!-- SIDEBAR -->
-<div>
-  <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.15)">
-    <div class="ct">Your API Key</div>
-    <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:10px;word-break:break-all;margin-bottom:10px" id="apiK">{{ user.api_key|slice:":20" }}...</div>
-    <div style="display:flex;gap:6px"><button onclick="toggleK()" class="btn btn-s" style="flex:1;padding:7px;font-size:11px">Show</button><button onclick="copyK()" class="btn btn-p" style="flex:1;padding:7px;font-size:11px">Copy</button></div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Ref code: <strong style="color:var(--accent)">{{ user.referral_code }}</strong></div>
-  </div>
+  <!-- ── Live Matches ───────────────────────────────────────────────── -->
   {% if live_scores %}
-  <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Live Now</div><a href="/scores/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
-    {% for s in live_scores %}<div class="li"><div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.home }}</div><div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;{% if s.minute %}color:var(--red){% else %}color:var(--muted){% endif %};padding:0 6px">{% if s.home_score is not None %}{{ s.home_score }}-{{ s.away_score }}{% else %}vs{% endif %}</div><div style="flex:1;font-size:12px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.away }}</div></div>{% endfor %}
+  <div class="db-section-title">
+    <span>🔴 Live Matches</span>
+    <a href="/scores/">See All</a>
+  </div>
+  <div class="live-scroll">
+    {% for s in live_scores %}
+    <div class="live-match-card">
+      {% if s.minute %}
+        <div class="live-badge">LIVE {{ s.minute }}'</div>
+      {% else %}
+        <div class="ft-badge">FT</div>
+      {% endif %}
+      <div class="live-teams">
+        <div class="live-team-name">{{ s.home }}</div>
+        <div class="live-score {% if not s.minute %}ft{% endif %}">
+          {% if s.home_score is not None %}{{ s.home_score }}-{{ s.away_score }}{% else %}vs{% endif %}
+        </div>
+        <div class="live-team-name away">{{ s.away }}</div>
+      </div>
+      <div class="live-league">{{ s.league|default:"Football" }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── AI Performance + Top 3 Predictions ────────────────────────── -->
+  <div class="db-grid-2" style="margin-top:0">
+
+    <!-- AI Performance -->
+    <div>
+      <div class="db-section-title" style="margin-top:20px">
+        <span>🤖 AI Performance</span>
+      </div>
+      <div class="ai-perf-card">
+        <!-- Circular accuracy chart -->
+        <div class="acc-circle-wrap">
+          <div class="acc-circle" id="accCircle" style="background:conic-gradient(#00D4FF {{ analytics.accuracy_pct|default:0 }}%, rgba(255,255,255,.06) 0%)">
+            <div class="acc-circle-inner">
+              <div class="acc-circle-pct">{{ analytics.accuracy_pct|default:0 }}%</div>
+              <div class="acc-circle-sub">ACCURACY</div>
+            </div>
+          </div>
+        </div>
+        <!-- Won / Lost / Total stats -->
+        <div class="ai-perf-grid">
+          <div class="ai-stat-box ai-stat-won">
+            <div class="ai-stat-num">{{ analytics.win_count|default:0 }}</div>
+            <div class="ai-stat-lbl">Won</div>
+          </div>
+          <div class="ai-stat-box ai-stat-lost">
+            <div class="ai-stat-num">{{ analytics.loss_count|default:0 }}</div>
+            <div class="ai-stat-lbl">Lost</div>
+          </div>
+          <div class="ai-stat-box ai-stat-total">
+            <div class="ai-stat-num">{{ analytics.total_predictions|default:stats.total }}</div>
+            <div class="ai-stat-lbl">Total</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 3 Predictions -->
+    <div>
+      <div class="db-section-title" style="margin-top:20px">
+        <span>🎯 Top 3 Predictions</span>
+        <a href="/dashboard/history/">History</a>
+      </div>
+      <div class="top3-list">
+        {% for pred in analytics.top_predictions_today %}
+        <div class="top3-item">
+          <div class="top3-rank r{{ forloop.counter }}">{{ forloop.counter }}</div>
+          <div class="top3-info">
+            <div class="top3-match">
+              {% if pred.home_team %}{{ pred.home_team }} vs {{ pred.away_team }}{% else %}Prediction #{{ pred.id }}{% endif %}
+            </div>
+            <div class="top3-verdict">{{ pred.predicted_verdict|default:"—" }}</div>
+          </div>
+          <div class="top3-conf {% if pred.confidence_level >= 80 %}conf-high{% elif pred.confidence_level >= 60 %}conf-watch{% else %}conf-risk{% endif %}">
+            {{ pred.confidence_level }}%
+          </div>
+        </div>
+        {% empty %}
+        <!-- Fallback: show from recent predictions -->
+        {% for p in recent|slice:":3" %}
+        <div class="top3-item">
+          <div class="top3-rank r{{ forloop.counter }}">{{ forloop.counter }}</div>
+          <div class="top3-info">
+            <div class="top3-match">
+              {% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}{{ p.input_data.name|default:"Prediction" }}{% endif %}
+            </div>
+            <div class="top3-verdict">{{ p.predicted_result|default:"—" }}</div>
+          </div>
+          <div class="top3-conf {% if p.confidence >= 80 %}conf-high{% elif p.confidence >= 60 %}conf-watch{% else %}conf-risk{% endif %}">
+            {{ p.confidence }}%
+          </div>
+        </div>
+        {% empty %}
+        <div class="top3-item" style="justify-content:center;color:var(--db-muted);font-size:13px">
+          No predictions yet — run an engine below
+        </div>
+        {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+
+  </div><!-- /db-grid-2 -->
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- PREDICTION ENGINES — all existing engines preserved below       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <hr class="engines-divider" id="enginesSection">
+  <div class="engines-header">
+    <div>
+      <div class="engines-header-title">🔬 Prediction Engines</div>
+      <div class="engines-header-sub">Full transparency — run any engine manually for detailed analysis</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="p{% if user.plan == 'free' %}f{% elif user.plan == 'basic' %}b{% else %}p{% endif %}">{{ user.plan|upper }}</span>
+      {% if user.plan == 'free' %}<a href="/pricing/" class="btn btn-p" style="padding:7px 14px;font-size:12px">Upgrade</a>{% endif %}
+      <a href="/dashboard/history/" class="btn btn-s" style="padding:7px 12px;font-size:12px">History</a>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+    <div class="card sb"><div class="n" style="color:var(--accent)">{{ stats.total }}</div><div class="l">Total</div></div>
+    <div class="card sb"><div class="n" style="color:var(--green)">{{ stats.left_today }}</div><div class="l">Left Today</div></div>
+    <div class="card sb"><div class="n" style="color:var(--gold)">{{ stats.limit }}</div><div class="l">Daily Limit</div></div>
+    <div class="card sb"><div class="n" style="color:var(--accent2)">{{ stats.accuracy }}%</div><div class="l">Accuracy</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 290px;gap:18px;align-items:start">
+  <div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px">
+    <button class="et a-on" onclick="sw('a',this,'a-on')"><div style="font-size:18px;margin-bottom:3px">&#127919;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--accent)">ENG A</div><div style="font-size:11px;font-weight:600;margin-top:2px">Predict</div></button>
+    <button class="et" onclick="sw('b',this,'b-on')"><div style="font-size:18px;margin-bottom:3px">&#11088;</div><div style="font-size:8px;letter-spacing:1.5px;color:#a78bfa">ENG B</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rate</div></button>
+    <button class="et" onclick="sw('c',this,'c-on')"><div style="font-size:18px;margin-bottom:3px">&#127942;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--green)">ENG C</div><div style="font-size:11px;font-weight:600;margin-top:2px">Rank</div></button>
+    <button class="et" onclick="sw('d',this,'d-on')"><div style="font-size:18px;margin-bottom:3px">&#127918;</div><div style="font-size:8px;letter-spacing:1.5px;color:var(--orange)">ENG D</div><div style="font-size:11px;font-weight:600;margin-top:2px">Simulate</div></button>
+    <button class="et" onclick="sw('nl',this,'nl-on')"><div style="font-size:18px;margin-bottom:3px">&#128172;</div><div style="font-size:8px;letter-spacing:1.5px;color:#f472b6">AI ASK</div><div style="font-size:11px;font-weight:600;margin-top:2px">Ask AI</div></button>
+  </div>
+
+  <!-- ENGINE A -->
+  <div class="panel show" id="pa">
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card"><div class="ct">Home Team</div>
+        <div class="field"><label>Team Name</label><input id="ahn" placeholder="e.g. Arsenal"></div>
+        <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="ahgs" placeholder="2.1" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="ahgc" placeholder="0.9" step="0.1"></div></div>
+        <div class="field"><label>Last 5 Form (W/D/L)</label><input id="ahf" placeholder="W W D W W"></div>
+        <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="ahwr" placeholder="68"></div><div class="field"><label>Key Injuries</label><input type="number" id="ahi" placeholder="0" min="0" max="5"></div></div>
+        <div class="field"><label>League Position</label><input type="number" id="ahp" placeholder="2"></div>
+        <div class="field"><label>Tactical Style</label>
+          <select id="ah_style">
+            <option value="balanced">Balanced</option>
+            <option value="high_press">High Press</option>
+            <option value="counter_attack">Counter Attack</option>
+            <option value="possession">Possession</option>
+            <option value="defensive_block">Defensive Block</option>
+            <option value="wing_play">Wing Play</option>
+            <option value="long_ball">Long Ball</option>
+          </select>
+        </div>
+        <div class="f2">
+          <div class="field"><label>Tournament Exp (0-10)</label><input type="number" id="ah_tour" placeholder="5" min="0" max="10"></div>
+          <div class="field"><label>Knockout Mentality (0-10)</label><input type="number" id="ah_ment" placeholder="5" min="0" max="10"></div>
+        </div>
+      </div>
+      <div class="card"><div class="ct">Away Team</div>
+        <div class="field"><label>Team Name</label><input id="aan" placeholder="e.g. Real Madrid"></div>
+        <div class="f2"><div class="field"><label>Goals Scored/game</label><input type="number" id="aags" placeholder="2.4" step="0.1"></div><div class="field"><label>Goals Conceded/game</label><input type="number" id="aagc" placeholder="0.8" step="0.1"></div></div>
+        <div class="field"><label>Last 5 Form (W/D/L)</label><input id="aaf" placeholder="W W W D W"></div>
+        <div class="f2"><div class="field"><label>Win Rate %</label><input type="number" id="aawr" placeholder="55"></div><div class="field"><label>Key Injuries</label><input type="number" id="aai" placeholder="1" min="0" max="5"></div></div>
+        <div class="field"><label>League Position</label><input type="number" id="aap" placeholder="1"></div>
+        <div class="field"><label>Tactical Style</label>
+          <select id="aa_style">
+            <option value="balanced">Balanced</option>
+            <option value="high_press">High Press</option>
+            <option value="counter_attack">Counter Attack</option>
+            <option value="possession">Possession</option>
+            <option value="defensive_block">Defensive Block</option>
+            <option value="wing_play">Wing Play</option>
+            <option value="long_ball">Long Ball</option>
+          </select>
+        </div>
+        <div class="f2">
+          <div class="field"><label>Tournament Exp (0-10)</label><input type="number" id="aa_tour" placeholder="5" min="0" max="10"></div>
+          <div class="field"><label>Knockout Mentality (0-10)</label><input type="number" id="aa_ment" placeholder="5" min="0" max="10"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px"><div class="ct">Head to Head (last 10)</div>
+      <div class="f3"><div class="field"><label>Home Wins</label><input type="number" id="ah2hh" placeholder="4"></div><div class="field"><label>Draws</label><input type="number" id="ah2hd" placeholder="3"></div><div class="field"><label>Away Wins</label><input type="number" id="ah2ha" placeholder="3"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="ct">Match Context</div>
+      <div class="f2">
+        <div class="field"><label>Match Type</label>
+          <select id="a_match_type">
+            <option value="league">League Match</option>
+            <option value="friendly">Friendly</option>
+            <option value="qualifier">World Cup Qualifier</option>
+            <option value="group">World Cup Group Stage</option>
+            <option value="knockout">World Cup Knockout</option>
+            <option value="semifinal">World Cup Semi-Final</option>
+            <option value="final">World Cup Final</option>
+            <option value="worldcup">World Cup (General)</option>
+            <option value="champions">Champions League</option>
+          </select>
+        </div>
+        <div class="field"><label>Include Penalty Analysis?</label>
+          <select id="a_penalties">
+            <option value="no">No (League match)</option>
+            <option value="yes">Yes (Knockout match)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-p btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px" onclick="run('A')">RUN PREDICTION ENGINE</button>
+    <div class="ld" id="la"><div class="spin"></div><div style="color:var(--text2)">V1 + AI Hybrid Analysis...</div></div>
+    <div class="res card" id="ra" style="border-top:3px solid var(--accent)"><div class="ct">PREDICTION RESULT</div><div id="abars"></div><div id="averdict" style="margin-top:14px;padding:14px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:12px"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="ainsight"></div></div></div>
+  </div>
+
+  <!-- ENGINE B -->
+  <div class="panel" id="pb">
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card"><div class="ct">Player Info</div>
+        <div class="field"><label>Player Name</label><input id="bname" placeholder="e.g. Haaland"></div>
+        <div class="field"><label>Position</label><select id="bpos"><option value="ST">Striker (ST)</option><option value="LW">Left Wing</option><option value="RW">Right Wing</option><option value="CAM">Attacking Mid</option><option value="CM">Central Mid</option><option value="CDM">Defensive Mid</option><option value="CB">Centre-Back</option><option value="LB">Left-Back</option><option value="RB">Right-Back</option><option value="GK">Goalkeeper</option></select></div>
+        <div class="f2"><div class="field"><label>Goals</label><input type="number" id="bgoals" placeholder="22"></div><div class="field"><label>Assists</label><input type="number" id="bassists" placeholder="8"></div></div>
+        <div class="field"><label>Games Played</label><input type="number" id="bgames" placeholder="28"></div>
+        <div class="field"><label>Injury Status</label><select id="binj"><option value="fit">Fully Fit</option><option value="doubt">Doubt</option><option value="minor">Minor Injury</option><option value="major">Major Injury</option></select></div>
+      </div>
+      <div class="card"><div class="ct">Performance Stats</div>
+        <div class="field"><label>Pass Accuracy %</label><input type="number" id="bpass" placeholder="84"></div>
+        <div class="field"><label>Shots on Target %</label><input type="number" id="bshot" placeholder="61"></div>
+        <div class="field"><label>Dribble Success %</label><input type="number" id="bdrib" placeholder="55"></div>
+        <div class="field"><label>Tackle Success %</label><input type="number" id="btackle" placeholder="50"></div>
+        <div class="field"><label>Aerial Duels Won %</label><input type="number" id="baerial" placeholder="60"></div>
+        <div class="field"><label>Distance Covered (km/g)</label><input type="number" id="bdist" placeholder="10.8" step="0.1"></div>
+      </div>
+    </div>
+    <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:white" onclick="run('B')">CALCULATE PLAYER RATING</button>
+    <div class="ld" id="lb"><div class="spin" style="border-top-color:#a78bfa"></div><div style="color:var(--text2)">Calculating...</div></div>
+    <div class="res card" id="rb" style="border-top:3px solid #a78bfa"><div class="ct">PLAYER RATING</div><div id="boutput" style="text-align:center;padding:20px 0"></div><div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="binsight"></div></div></div>
+  </div>
+
+  <!-- ENGINE C -->
+  <div class="panel" id="pc">
+    <div class="card" style="margin-bottom:12px"><div class="ct">Add Team to ELO Ranking</div>
+      <div class="f2"><div class="field"><label>Team Name</label><input id="cname" placeholder="e.g. Man City"></div><div class="field"><label>Base ELO</label><input type="number" id="celo" placeholder="1000"></div></div>
+      <div class="f3"><div class="field"><label>Wins</label><input type="number" id="cw" placeholder="18"></div><div class="field"><label>Draws</label><input type="number" id="cd_" placeholder="6"></div><div class="field"><label>Losses</label><input type="number" id="cl" placeholder="4"></div></div>
+      <div class="f3"><div class="field"><label>Goals For</label><input type="number" id="cgf" placeholder="62"></div><div class="field"><label>Goals Against</label><input type="number" id="cga" placeholder="28"></div><div class="field"><label>Opp. Strength (1-10)</label><input type="number" id="copp" placeholder="6.5" step="0.5"></div></div>
+      <button class="btn btn-full" style="padding:12px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#34d399,#059669);color:#030508" onclick="addTeam()">ADD AND RANK TEAM</button>
+    </div>
+    <div class="card"><div class="ct">POWER RANKINGS (ELO)</div><div id="ctable"><div style="color:var(--muted);text-align:center;padding:28px;font-size:13px">Add teams above to build your rankings</div></div></div>
+  </div>
+
+  <!-- ENGINE D -->
+  <div class="panel" id="pd">
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card"><div class="ct">Home Team</div>
+        <div class="field"><label>Team Name</label><input id="dhn" placeholder="e.g. Liverpool"></div>
+        <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="dhatk" placeholder="85"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dhdef" placeholder="78"></div></div>
+        <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="dhelo" placeholder="1350"></div><div class="field"><label>Key Injuries</label><select id="dhinj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
+      </div>
+      <div class="card"><div class="ct">Away Team</div>
+        <div class="field"><label>Team Name</label><input id="dan" placeholder="e.g. Bayern Munich"></div>
+        <div class="f2"><div class="field"><label>Attack (1-100)</label><input type="number" id="daatk" placeholder="88"></div><div class="field"><label>Defence (1-100)</label><input type="number" id="dadef" placeholder="80"></div></div>
+        <div class="f2"><div class="field"><label>ELO Rating</label><input type="number" id="daelo" placeholder="1380"></div><div class="field"><label>Key Injuries</label><select id="dainj"><option value="0">None</option><option value="1">1 Player</option><option value="2">2 Players</option><option value="3">3+</option></select></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px"><div class="ct">Settings</div>
+      <div class="f3">
+        <div class="field"><label>Competition</label><select id="dcomp"><option value="league">League</option><option value="champions">Champions League</option><option value="cup">Cup</option><option value="friendly">Friendly</option></select></div>
+        <div class="field"><label>Simulations</label><select id="dsims"><option value="1000">1,000</option><option value="10000" selected>10,000</option><option value="50000">50,000</option></select></div>
+        <div class="field"><label>Weather</label><select id="dwx"><option value="normal">Normal</option><option value="rain">Rain</option><option value="wind">Wind</option><option value="heat">Heat</option></select></div>
+      </div>
+    </div>
+    <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#fb923c,#d97706);color:#030508" onclick="run('D')">RUN FULL SIMULATION</button>
+    <div class="ld" id="ld"><div class="spin" style="border-top-color:var(--orange)"></div><div style="color:var(--text2)">Running Monte Carlo Simulation...</div></div>
+    <div class="res card" id="rd" style="border-top:3px solid var(--orange)"><div class="ct">SIMULATION RESULT</div><div id="doutput"></div><div class="ai-box"><div class="ai-lbl">AI MATCH ANALYSIS</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="dinsight"></div></div></div>
+  </div>
+
+  <!-- ENGINE NL - SMART AI -->
+  <div class="panel" id="pnl">
+    <!-- Chat messages -->
+    <div id="chatMessages" style="min-height:120px;max-height:400px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:12px">
+      <div style="background:linear-gradient(135deg,rgba(244,114,182,0.08),rgba(219,39,119,0.08));border:1px solid rgba(244,114,182,0.2);border-radius:12px;padding:14px 16px">
+        <div style="font-size:10px;letter-spacing:2px;color:#f472b6;font-weight:700;text-transform:uppercase;margin-bottom:6px">MATCHORACLE AI</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.7">Hi! I'm your football AI assistant. Ask me anything like:<br>
+          <span style="color:#f472b6">&#x2022; "Who will win Arsenal vs Chelsea today?"</span><br>
+          <span style="color:#f472b6">&#x2022; "Predict Manchester City vs Real Madrid"</span><br>
+          <span style="color:#f472b6">&#x2022; "Will Liverpool win the Champions League?"</span><br>
+          I'll automatically detect the teams, run all 4 engines and give you a full AI prediction!
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick suggestion buttons -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="suggestions">
+      <button onclick="setSuggestion('Who will win Arsenal vs Chelsea?')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">Arsenal vs Chelsea</button>
+      <button onclick="setSuggestion('Predict Real Madrid vs Barcelona')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">El Clasico</button>
+      <button onclick="setSuggestion('Who will win Man City vs Liverpool?')" style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:20px;padding:6px 14px;font-size:12px;color:#f472b6;cursor:pointer">Man City vs Liverpool</button>
+    </div>
+
+    <!-- Input area -->
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div style="flex:1">
+        <textarea id="nlq" placeholder="Ask anything e.g. Who will win Arsenal vs Chelsea today?" style="height:70px;resize:none;border-color:rgba(244,114,182,0.3);font-size:14px"></textarea>
+      </div>
+      <button onclick="runSmartAI()" style="background:linear-gradient(135deg,#f472b6,#db2777);color:white;border:none;border-radius:10px;padding:22px 18px;cursor:pointer;font-size:20px;flex-shrink:0">&#10148;</button>
+    </div>
+
+    <div class="ld" id="lnl" style="margin-top:12px">
+      <div class="spin" style="border-top-color:#f472b6"></div>
+      <div style="color:var(--text2)">AI is analysing the match...</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">Running 10,000 simulations + V1 analysis...</div>
+    </div>
+  </div>
+
+  {% if recent %}
+  <div style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700">Recent Predictions</div>
+      <a href="/dashboard/history/" style="color:var(--accent);font-size:12px;text-decoration:none">View All</a>
+    </div>
+    <div class="card">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:8px 10px">Eng</th><th style="text-align:left;padding:8px 10px">Match</th><th style="text-align:left;padding:8px 10px">Prediction</th><th style="text-align:left;padding:8px 10px">Confidence</th><th style="text-align:left;padding:8px 10px">Date</th>
+        </tr></thead>
+        <tbody>{% for p in recent %}
+          <tr style="border-top:1px solid rgba(255,255,255,.04)">
+            <td style="padding:9px 10px"><span class="badge bb">{{ p.engine }}</span></td>
+            <td style="padding:9px 10px;color:var(--text2)">{% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}{% else %}{{ p.input_data.name|default:"—" }}{% endif %}</td>
+            <td style="padding:9px 10px;font-weight:600;color:var(--accent)">{{ p.predicted_result|default:"—" }}</td>
+            <td style="padding:9px 10px">{% if p.confidence > 0 %}{% if p.confidence >= 80 %}<span class="confidence-badge badge-high" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟢</span>High</span>{% elif p.confidence >= 60 %}<span class="confidence-badge badge-watch" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🟡</span>Watch</span>{% else %}<span class="confidence-badge badge-risk" style="padding:3px 10px;margin-bottom:0;font-size:10px"><span class="badge-emoji" style="font-size:12px">🔴</span>Risk</span>{% endif %}{% else %}<span style="color:var(--muted);font-size:12px">—</span>{% endif %}</td>
+            <td style="padding:9px 10px;color:var(--muted)">{{ p.created_at|date:"d M" }}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>{% endif %}
-  {% if tips %}
-  <div class="card" style="margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Weekly Tips</div><a href="/dashboard/tips/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
-    {% for t in tips %}<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">{{ t.home_team }} vs {{ t.away_team }}</div><div style="font-size:13px;font-weight:600">{{ t.tip }}</div><div style="font-size:11px;color:var(--green);margin-top:4px">{{ t.confidence }}% conf</div></div>{% endfor %}
-  </div>{% endif %}
-  {% if rankings %}
-  <div class="card">
-    <div class="ct">My Rankings</div>
-    {% for r in rankings %}<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px"><div style="font-family:'Orbitron',sans-serif;font-weight:700;width:22px;color:var(--muted)">{{ forloop.counter }}</div><div style="flex:1;font-weight:600">{{ r.name }}</div><div style="font-family:'Orbitron',sans-serif;color:var(--accent)">{{ r.power_elo }}</div></div>{% endfor %}
-  </div>{% endif %}
-</div>
-</div>
-</div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div>
+    <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.15)">
+      <div class="ct">Your API Key</div>
+      <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:10px;word-break:break-all;margin-bottom:10px" id="apiK">{{ user.api_key|slice:":20" }}...</div>
+      <div style="display:flex;gap:6px"><button onclick="toggleK()" class="btn btn-s" style="flex:1;padding:7px;font-size:11px">Show</button><button onclick="copyK()" class="btn btn-p" style="flex:1;padding:7px;font-size:11px">Copy</button></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted)">Ref code: <strong style="color:var(--accent)">{{ user.referral_code }}</strong></div>
+    </div>
+    {% if live_scores %}
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Live Now</div><a href="/scores/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
+      {% for s in live_scores %}<div class="li"><div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.home }}</div><div style="font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;{% if s.minute %}color:var(--red){% else %}color:var(--muted){% endif %};padding:0 6px">{% if s.home_score is not None %}{{ s.home_score }}-{{ s.away_score }}{% else %}vs{% endif %}</div><div style="flex:1;font-size:12px;font-weight:600;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.away }}</div></div>{% endfor %}
+    </div>{% endif %}
+    {% if tips %}
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><div class="ct" style="margin-bottom:0">Weekly Tips</div><a href="/dashboard/tips/" style="color:var(--accent);font-size:11px;text-decoration:none">All</a></div>
+      {% for t in tips %}<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">{{ t.home_team }} vs {{ t.away_team }}</div><div style="font-size:13px;font-weight:600">{{ t.tip }}</div><div style="font-size:11px;color:var(--green);margin-top:4px">{{ t.confidence }}% conf</div></div>{% endfor %}
+    </div>{% endif %}
+    {% if rankings %}
+    <div class="card">
+      <div class="ct">My Rankings</div>
+      {% for r in rankings %}<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px"><div style="font-family:'Orbitron',sans-serif;font-weight:700;width:22px;color:var(--muted)">{{ forloop.counter }}</div><div style="flex:1;font-weight:600">{{ r.name }}</div><div style="font-family:'Orbitron',sans-serif;color:var(--accent)">{{ r.power_elo }}</div></div>{% endfor %}
+    </div>{% endif %}
+  </div>
+  </div><!-- /engines grid -->
+
+</div><!-- /db-wrap -->
+</div><!-- /db-shell -->
+
+<!-- ── Bottom Navigation ──────────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <a href="/dashboard/" class="bn-item active">
+    <span class="bn-icon">🏠</span>
+    <span class="bn-label">Home</span>
+  </a>
+  <a href="/dashboard/" class="bn-item" onclick="scrollToEngines(event)">
+    <span class="bn-icon">🎯</span>
+    <span class="bn-label">Predict</span>
+  </a>
+  <a href="/scores/" class="bn-item">
+    <span class="bn-icon">🔴</span>
+    <span class="bn-label">Live</span>
+  </a>
+  <a href="/dashboard/history/" class="bn-item">
+    <span class="bn-icon">📊</span>
+    <span class="bn-label">Analytics</span>
+  </a>
+  <a href="/accounts/profile/" class="bn-item">
+    <span class="bn-icon">👤</span>
+    <span class="bn-label">Profile</span>
+  </a>
+</nav>
 {% endblock %}
 {% block extra_js %}
 <script>
@@ -542,5 +1269,57 @@ async function runSmartAI(){
 document.getElementById('nlq')?.addEventListener('keydown',function(e){
   if(e.key==='Enter' && !e.shiftKey){e.preventDefault();runSmartAI();}
 });
+
+// ── New dashboard functions ──────────────────────────────────────────────
+
+/**
+ * Scroll to the engines section and optionally activate the Smart AI tab.
+ * Used by the bottom nav "Predict" button and the "View Full Analysis" CTA.
+ */
+function scrollToEngines(e){
+  if(e) e.preventDefault();
+  const el=document.getElementById('enginesSection');
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+
+/**
+ * Quick Analyze: read the two team dropdowns, pre-fill the Smart AI textarea
+ * with a natural-language question, switch to the AI tab, and fire the query.
+ */
+function quickAnalyze(){
+  const home=document.getElementById('qaHome')?.value;
+  const away=document.getElementById('qaAway')?.value;
+  if(!home||!away){
+    alert('Please select both teams to analyze.');
+    return;
+  }
+  if(home===away){
+    alert('Please select two different teams.');
+    return;
+  }
+  // Build question and route to Smart AI
+  const q=`Who will win ${home} vs ${away}?`;
+  const nlqEl=document.getElementById('nlq');
+  if(nlqEl) nlqEl.value=q;
+  // Switch to Smart AI panel
+  const nlBtn=document.querySelector('.et[onclick*="nl"]');
+  if(nlBtn) sw('nl',nlBtn,'nl-on');
+  // Scroll to engines section
+  scrollToEngines(null);
+  // Small delay so the panel is visible before firing
+  setTimeout(()=>runSmartAI(),300);
+}
+
+// ── Animate the circular accuracy chart on load ──────────────────────────
+(function(){
+  const circle=document.getElementById('accCircle');
+  if(!circle) return;
+  // The conic-gradient is already set server-side; animate opacity in
+  circle.style.opacity='0';
+  circle.style.transition='opacity .6s ease';
+  setTimeout(()=>{ circle.style.opacity='1'; }, 200);
+})();
 </script>
 {% endblock %}
