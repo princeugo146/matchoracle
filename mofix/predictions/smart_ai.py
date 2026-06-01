@@ -1,4 +1,4 @@
-import json, requests, re, logging
+import json, os, requests, re, logging
 from django.conf import settings
 from .engine import (
     search_web, extract_match_data, extract_player_data,
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def call_ai(system, user_msg, max_tokens=800):
-    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')
+    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
     if not key:
         return None
     try:
@@ -135,7 +135,10 @@ def smart_predict(question):
     data_sources = []
 
     # ── 2. If intent unclear, try AI extraction as fallback ─────────────────
-    if intent in ('general', 'match_prediction') and not teams:
+    # Only attempt AI team extraction for general questions (not greetings or
+    # explicit match_prediction requests — those either have teams already or
+    # should prompt the user to provide them).
+    if intent == 'general' and not teams:
         extraction = extract_teams_from_question(question)
         if extraction:
             ht = extraction.get('home_team', '').strip()
@@ -408,20 +411,53 @@ def smart_predict(question):
                 'data_sources': data_sources,
             }
 
-    # ── 6. General football question (Claude only) ──────────────────────────
-    ai = call_ai(
-        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
-        f'Football question: "{question}"\n'
-        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-        max_tokens=500,
-    )
+    # ── 6. Greeting / general / conversational — route to Claude ────────────
+    # Only show the "mention two teams" prompt when the user was clearly asking
+    # for a match prediction but forgot to name the teams.
+    if intent == 'match_prediction' and not teams:
+        return {
+            'success': False,
+            'intent': intent,
+            'home_team': None,
+            'away_team': None,
+            'answer': 'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"',
+            'verdict': '',
+            'key_factors': [],
+            'match_prediction': None,
+            'simulation': None,
+            'confidence': 0,
+            'data_sources': data_sources,
+        }
+
+    # Greetings and general questions — let Claude respond conversationally
+    if intent == 'greeting':
+        system_prompt = (
+            'You are MatchOracle AI, a friendly and knowledgeable football assistant. '
+            'Respond warmly and conversationally to greetings. Return ONLY valid JSON.'
+        )
+        user_prompt = (
+            f'The user said: "{question}"\n'
+            f'Respond in a friendly, conversational way. You can mention that you\'re here to help with football predictions and analysis.\n'
+            f'Return: {{"answer":"your warm conversational response","key_factors":[],"verdict":""}}'
+        )
+    else:
+        system_prompt = (
+            'You are MatchOracle AI, a football expert assistant. '
+            'Answer football questions conversationally and expertly. Return ONLY valid JSON.'
+        )
+        user_prompt = (
+            f'Football question: "{question}"\n'
+            f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}'
+        )
+
+    ai = call_ai(system_prompt, user_prompt, max_tokens=500)
     return {
         'success': True,
         'intent': intent,
         'home_team': None,
         'away_team': None,
         'answer': (ai or {}).get('answer',
-            'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"'),
+            'Hello! I\'m MatchOracle AI. Ask me about any football match and I\'ll give you a detailed prediction and analysis.'),
         'verdict': (ai or {}).get('verdict', ''),
         'key_factors': (ai or {}).get('key_factors', []),
         'match_prediction': None,
