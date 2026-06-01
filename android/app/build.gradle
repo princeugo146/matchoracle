@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.matchoracle.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.matchoracle.app"
+        minSdk 26          // Android 8.0 Oreo
+        targetSdk 34       // Android 14
+        versionCode 1
+        versionName "1.0.0"
+
+        // App name
+        resValue "string", "app_name", "MatchOracle"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Signing config — set up via Android Studio or CI environment variables
+            // signingConfig signingConfigs.release
+        }
+    }
+
+    // Signing config for Play Store (fill in via environment or keystore file)
+    // signingConfigs {
+    //     release {
+    //         storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+    //         storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+    //         keyAlias System.getenv("KEY_ALIAS") ?: ""
+    //         keyPassword System.getenv("KEY_PASSWORD") ?: ""
+    //     }
+    // }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.core:core:1.12.0'
+}

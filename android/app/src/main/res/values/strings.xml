@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MatchOracle</string>
+    <string name="app_tagline">Football Intelligence Engine</string>
+    <string name="base_url">https://matchoracle.up.railway.app</string>
+    <string name="error_no_connection">No internet connection. Please check your network and try again.</string>
+    <string name="error_loading">Failed to load page. Pull down to refresh.</string>
+    <string name="loading">Loading MatchOracle…</string>
+</resources>

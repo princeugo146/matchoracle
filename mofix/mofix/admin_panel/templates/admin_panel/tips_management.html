@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Tips Management{% endblock %}
+{% block extra_css %}
+<style>
+.admin-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.admin-nav a{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.admin-nav a:hover,.admin-nav a.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#a78bfa;}
+.tip-table{width:100%;border-collapse:collapse;}
+.tip-table th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);}
+.tip-table td{padding:12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.tip-table tr:hover td{background:rgba(255,255,255,.02);}
+.action-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;border:none;cursor:pointer;display:inline-block;}
+.btn-edit{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.btn-del{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.15);}
+@media(max-width:768px){.hide-mobile{display:none;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700">Tips Management</div>
+    <a href="{% url 'admin_tip_create' %}" class="btn btn-p" style="padding:10px 20px">+ New Tip</a>
+  </div>
+
+  <div class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}">📊 Dashboard</a>
+    <a href="{% url 'admin_users_list' %}">👥 Users</a>
+    <a href="{% url 'admin_tips_list' %}" class="active">💡 Tips</a>
+    <a href="{% url 'admin_revenue' %}">💰 Revenue</a>
+    <a href="{% url 'admin_audit_log' %}">📋 Audit Log</a>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">{{ tips|length }} tip{{ tips|length|pluralize }} total</div>
+    <table class="tip-table">
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th class="hide-mobile">Competition</th>
+          <th>Tip</th>
+          <th class="hide-mobile">Date</th>
+          <th>Conf.</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tips %}
+        <tr>
+          <td>
+            <div style="font-weight:600">{{ t.home_team }}</div>
+            <div style="font-size:11px;color:var(--muted)">vs {{ t.away_team }}</div>
+          </td>
+          <td class="hide-mobile" style="color:var(--text2)">{{ t.competition }}</td>
+          <td style="max-width:200px">
+            <div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.12);border-radius:7px;padding:6px 10px;font-size:12px">{{ t.tip|truncatechars:60 }}</div>
+          </td>
+          <td class="hide-mobile" style="color:var(--muted);font-size:12px">{{ t.match_date|date:"d M Y" }}</td>
+          <td>
+            {% if t.confidence >= 80 %}
+              <span class="badge bg">{{ t.confidence }}%</span>
+            {% elif t.confidence >= 60 %}
+              <span style="background:rgba(251,146,60,.12);color:var(--orange);border:1px solid rgba(251,146,60,.2);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700">{{ t.confidence }}%</span>
+            {% else %}
+              <span class="badge br">{{ t.confidence }}%</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.is_pro_only %}
+              <span class="pp">PRO</span>
+            {% else %}
+              <span class="pf">FREE</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{% url 'admin_tip_edit' t.pk %}" class="action-btn btn-edit">Edit</a>
+              <a href="{% url 'admin_tip_delete' t.pk %}" class="action-btn btn-del"
+                 onclick="return confirm('Delete this tip?')">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No tips yet. <a href="{% url 'admin_tip_create' %}" style="color:var(--accent)">Create the first one →</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

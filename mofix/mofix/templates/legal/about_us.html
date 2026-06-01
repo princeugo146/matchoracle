@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}About MatchOracle{% endblock %}
+{% block extra_css %}
+<style>
+.about-hero{text-align:center;padding:60px 20px 48px;max-width:700px;margin:0 auto;}
+.about-hero h1{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;margin-bottom:16px;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.about-hero p{color:var(--text2);font-size:16px;line-height:1.7;}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin:40px 0;}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:border-color .2s;}
+.feature-card:hover{border-color:rgba(0,212,255,.3);}
+.feature-icon{font-size:36px;margin-bottom:14px;}
+.feature-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.feature-desc{font-size:13px;color:var(--text2);line-height:1.7;}
+.stat-row{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin:48px 0;padding:32px;background:var(--card);border:1px solid var(--border);border-radius:16px;}
+.stat-item{text-align:center;}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.stat-lbl{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+.engine-card{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;}
+.engine-badge{background:linear-gradient(135deg,var(--accent),#0077ff);color:#030508;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.legal-nav{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:32px;justify-content:center;}
+.legal-nav a{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;padding:6px 14px;border:1px solid rgba(0,212,255,.2);border-radius:20px;transition:all .2s;}
+.legal-nav a:hover{background:rgba(0,212,255,.08);}
+.legal-nav a.active{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.4);}
+@media(max-width:768px){.stat-row{gap:24px;}.about-hero h1{font-size:24px;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+
+  <div style="display:flex;justify-content:center;margin-bottom:8px">
+    <div class="legal-nav">
+      <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
+      <a href="{% url 'terms_of_service' %}">Terms of Service</a>
+      <a href="{% url 'about_us' %}" class="active">About Us</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <h1>Democratising Football Intelligence Through AI</h1>
+    <p>MatchOracle combines four prediction engines, Claude AI, and Monte Carlo simulations to give every football fan access to the kind of analysis previously reserved for professional clubs and betting syndicates.</p>
+  </div>
+
+  <!-- Mission -->
+  <div class="card" style="max-width:700px;margin:0 auto 40px;text-align:center;padding:32px">
+    <div style="font-size:32px;margin-bottom:14px">🎯</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;margin-bottom:12px">Our Mission</div>
+    <p style="color:var(--text2);font-size:15px;line-height:1.8">To make football prediction accessible to everyone — not just data scientists and professional analysts. We believe every fan deserves intelligent insights to understand the game better, make informed predictions, and enjoy football on a deeper level.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="stat-item">
+      <div class="stat-num">4</div>
+      <div class="stat-lbl">Prediction Engines</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">AI</div>
+      <div class="stat-lbl">Claude-Powered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">10K+</div>
+      <div class="stat-lbl">Simulations / Match</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">24/7</div>
+      <div class="stat-lbl">Live Scores</div>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <div style="max-width:800px;margin:0 auto 48px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px">How MatchOracle Works</div>
+      <div style="color:var(--text2);font-size:14px">Our Hybrid V1 algorithm combines four specialised engines for maximum accuracy</div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge">A</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">Engine A — Match Prediction</div>
+        <div style="font-size:13px;color:var(--text2)">Analyses team form, head-to-head records, home advantage, goals scored/conceded, and tactical matchups to predict win/draw/loss probabilities with percentage breakdowns.</div>
+      </div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge">B</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">Engine B — Player Rating</div>
+        <div style="font-size:13px;color:var(--text2)">FIFA-style player rating system that evaluates goals, assists, appearances, position-specific metrics, and overall contribution to generate a 0–100 performance score.</div>
+      </div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge" style="background:linear-gradient(135deg,#a78bfa,#7c3aed)">D</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">Engine D — Monte Carlo Simulation</div>
+        <div style="font-size:13px;color:var(--text2)">Runs 10,000+ match simulations using attack/defence ratings and ELO scores to generate the most likely scoreline, goal distributions, and outcome probabilities.</div>
+      </div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-badge" style="background:linear-gradient(135deg,#10b981,#059669)">AI</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">Smart AI — Natural Language Interface</div>
+        <div style="font-size:13px;color:var(--text2)">Ask any football question in plain English. Our Claude AI integration understands context, remembers your conversation, and provides detailed analysis with confidence ratings.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefits -->
+  <div style="max-width:900px;margin:0 auto 48px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px">Who MatchOracle Helps</div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚽</div>
+        <div class="feature-title">Football Fans</div>
+        <div class="feature-desc">Get deeper insights into your favourite teams and matches. Understand why teams win or lose beyond the surface-level narrative.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Analysts &amp; Tipsters</div>
+        <div class="feature-desc">Use our API and prediction engines to power your own analysis. Access structured data and probability breakdowns for any match.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Fantasy Players</div>
+        <div class="feature-desc">Make smarter fantasy football decisions with player ratings, form analysis, and match difficulty assessments.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">Developers</div>
+        <div class="feature-desc">Integrate football intelligence into your own apps via our REST API. Available on Basic and Pro plans with full documentation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technology -->
+  <div class="card" style="max-width:700px;margin:0 auto 48px;padding:32px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;text-align:center">Our Technology Stack</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="padding:12px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:10px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:4px;color:var(--accent)">Backend</div>
+        <div style="color:var(--text2)">Django 4.2, Python 3.11, Celery, Redis</div>
+      </div>
+      <div style="padding:12px;background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.15);border-radius:10px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:4px;color:#a78bfa">AI Engine</div>
+        <div style="color:var(--text2)">Claude AI (Anthropic), Custom ML models</div>
+      </div>
+      <div style="padding:12px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.15);border-radius:10px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:4px;color:var(--green)">Infrastructure</div>
+        <div style="color:var(--text2)">Railway, PostgreSQL, WhiteNoise CDN</div>
+      </div>
+      <div style="padding:12px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:10px;font-size:13px">
+        <div style="font-weight:700;margin-bottom:4px;color:var(--gold)">Payments</div>
+        <div style="color:var(--text2)">Paystack (NGN), Secure webhooks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vision -->
+  <div style="text-align:center;max-width:600px;margin:0 auto 48px;padding:40px 20px">
+    <div style="font-size:40px;margin-bottom:16px">🔭</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;margin-bottom:14px">Our Vision</div>
+    <p style="color:var(--text2);font-size:15px;line-height:1.8">Making football prediction accessible to everyone — from the casual fan in Lagos to the professional analyst in London. We're building the future of football intelligence, one prediction at a time.</p>
+  </div>
+
+  <!-- Contact -->
+  <div class="card" style="max-width:500px;margin:0 auto 60px;text-align:center;padding:32px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px">Get in Touch</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="mailto:support@matchoracle.com" class="btn btn-p" style="padding:12px">📧 support@matchoracle.com</a>
+      <a href="{% url 'pricing' %}" class="btn btn-s" style="padding:12px">View Plans &amp; Pricing</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

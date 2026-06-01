@@ -10,7 +10,13 @@
     {% if error %}<div class="alert al-e">{{ error }}</div>{% endif %}
     <form method="post" novalidate>{% csrf_token %}
       <div class="field"><label>Email Address</label><input type="email" name="email" placeholder="your@email.com" required autofocus></div>
-      <div class="field"><label>Password</label><input type="password" name="password" placeholder="Your password" required></div>
+      <div class="field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <label style="margin-bottom:0">Password</label>
+          <a href="/accounts/forgot-password/" style="font-size:11px;color:var(--accent);text-decoration:none">Forgot password?</a>
+        </div>
+        <input type="password" name="password" placeholder="Your password" required>
+      </div>
       <button type="submit" class="btn btn-p btn-full" style="margin-top:8px;padding:13px">Login to Dashboard</button>
     </form>
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text2)">No account? <a href="/accounts/register/" style="color:var(--accent);font-weight:600">Sign up free</a></div>

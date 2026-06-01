@@ -8,6 +8,12 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.cache import cache
 from .models import User, Payment
 from datetime import timedelta
 
@@ -145,3 +151,113 @@ def verify_payment(request):
         logger.error(f"Payment verify error: {e}", exc_info=True)
     messages.error(request, 'Payment verification failed. Contact support.')
     return redirect('dashboard')
+
+
+# ─── Password Reset ───────────────────────────────────────────────────────────
+
+def forgot_password(request):
+    """Step 1: User enters email, receives reset link."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    sent = False
+    error = None
+    email = ''
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        if not email:
+            error = 'Please enter your email address.'
+        else:
+            # Rate-limit: max 3 reset requests per email per hour
+            cache_key = f'pwd_reset_{email}'
+            attempts = cache.get(cache_key, 0)
+            if attempts >= 3:
+                error = 'Too many reset requests. Please wait an hour before trying again.'
+            else:
+                cache.set(cache_key, attempts + 1, timeout=3600)
+                # Always show "sent" to prevent email enumeration
+                try:
+                    user = User.objects.get(email=email)
+                    _send_reset_email(request, user)
+                except User.DoesNotExist:
+                    pass  # Don't reveal whether email exists
+                except Exception as e:
+                    logger.error(f"Password reset email error: {e}", exc_info=True)
+                sent = True
+
+    return render(request, 'accounts/forgot_password.html', {
+        'sent': sent,
+        'error': error,
+        'email': email,
+    })
+
+
+def _send_reset_email(request, user):
+    """Generate a secure token and send the reset email."""
+    uid   = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    reset_url = request.build_absolute_uri(
+        f'/accounts/reset-password/{uid}/{token}/'
+    )
+    html_body = render_to_string('accounts/password_reset_email.html', {
+        'user': user,
+        'reset_url': reset_url,
+    })
+    send_mail(
+        subject='Reset your MatchOracle password',
+        message=(
+            f'Hi {user.first_name or user.email},\n\n'
+            f'Click the link below to reset your password (valid for 24 hours):\n\n'
+            f'{reset_url}\n\n'
+            f'If you did not request this, ignore this email.\n\n'
+            f'— MatchOracle Team'
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        html_message=html_body,
+        fail_silently=False,
+    )
+
+
+def reset_password(request, uidb64, token):
+    """Step 2: User clicks link, sets new password."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    # Validate token
+    try:
+        uid  = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is None or not default_token_generator.check_token(user, token):
+        return render(request, 'accounts/reset_password.html', {'invalid_link': True})
+
+    error   = None
+    success = False
+
+    if request.method == 'POST':
+        password  = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+
+        if not password or not password2:
+            error = 'Please fill in both password fields.'
+        elif password != password2:
+            error = 'Passwords do not match.'
+        elif len(password) < 8:
+            error = 'Password must be at least 8 characters.'
+        else:
+            user.set_password(password)
+            user.save()
+            logger.info(f"Password reset successful for {user.email}")
+            success = True
+
+    return render(request, 'accounts/reset_password.html', {
+        'invalid_link': False,
+        'success': success,
+        'error': error,
+        'uidb64': uidb64,
+        'token': token,
+    })
