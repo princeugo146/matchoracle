@@ -35,6 +35,15 @@ def api_docs(request):
 def health_check(request):
     return JsonResponse({'status': 'ok', 'version': '2.0.0'})
 
+def privacy_policy(request):
+    return render(request, 'legal/privacy_policy.html')
+
+def terms_of_service(request):
+    return render(request, 'legal/terms_of_service.html')
+
+def about_us(request):
+    return render(request, 'legal/about_us.html')
+
 def api_docs(request):
     endpoints = [
         {'method':'POST','path':'/api/v1/predict/match/','desc':'Engine A - Match prediction with win/draw/loss %','example':'{"home":{"name":"Arsenal","goals_scored":2.1,"form":"W W D W W"},"away":{"name":"Chelsea"}}'},
