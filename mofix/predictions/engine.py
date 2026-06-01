@@ -1,4 +1,4 @@
-import math, random, json, re, time, requests, logging
+import math, os, random, json, re, time, requests, logging
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -382,7 +382,7 @@ def parse_form(s):
     return total/wtotal if wtotal else 0.5
 
 def call_ai(system, user_msg, max_tokens=700):
-    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY','')
+    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
     if not key: return None
     try:
         resp = requests.post(
@@ -470,6 +470,7 @@ def simulate_penalty_shootout(hn, an, h_comp, a_comp, h_gk, a_gk, h_conv, a_conv
     return {'home_win_pct':hp,'away_win_pct':round(100-hp,1),'home_name':hn,'away_name':an}
 
 def engine_a(data):
+    logger.info(f"AI key available: {bool(settings.MATCHORACLE.get('ANTHROPIC_API_KEY') or os.environ.get('ANTHROPIC_API_KEY'))}")
     home=data.get('home',{}); away=data.get('away',{}); h2h=data.get('h2h',{})
     match_ctx=data.get('match_context',{})
     hgs=float(home.get('goals_scored',1.5)); hgc=float(home.get('goals_conceded',1.0))
