@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% block title %}Terms of Service{% endblock %}
+
+{% block extra_css %}
+<style>
+.legal-hero{padding:60px 0 40px;text-align:center;}
+.legal-hero h1{font-family:'Orbitron',sans-serif;font-size:clamp(24px,4vw,38px);font-weight:900;margin-bottom:12px;}
+.legal-meta{display:inline-flex;align-items:center;gap:8px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:20px;padding:5px 14px;font-size:12px;color:#a78bfa;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:16px;}
+.legal-body{max-width:820px;margin:0 auto;padding-bottom:80px;}
+.legal-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:20px;transition:border-color .2s;}
+.legal-section:hover{border-color:var(--border2);}
+.section-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.section-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.icon-blue{background:rgba(0,212,255,.12);}
+.icon-green{background:rgba(16,185,129,.12);}
+.icon-purple{background:rgba(124,58,237,.12);}
+.icon-gold{background:rgba(245,158,11,.12);}
+.icon-red{background:rgba(239,68,68,.12);}
+.icon-orange{background:rgba(251,146,60,.12);}
+.section-title{font-size:18px;font-weight:700;color:var(--text);}
+.section-subtitle{font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:.5px;}
+.legal-section p{color:var(--text2);font-size:14px;line-height:1.8;margin-bottom:14px;}
+.legal-section p:last-child{margin-bottom:0;}
+.legal-list{list-style:none;padding:0;margin:14px 0;}
+.legal-list li{color:var(--text2);font-size:14px;line-height:1.7;padding:6px 0 6px 22px;position:relative;border-bottom:1px solid rgba(255,255,255,.03);}
+.legal-list li:last-child{border-bottom:none;}
+.legal-list li::before{content:'›';position:absolute;left:0;color:#a78bfa;font-weight:700;font-size:16px;}
+.warning-box{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:16px 20px;margin:16px 0;}
+.warning-box p{color:#fca5a5;font-size:13px;margin:0;}
+.warning-box strong{color:#ef4444;}
+.info-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:16px 20px;margin:16px 0;}
+.info-box p{color:#fde68a;font-size:13px;margin:0;}
+.info-box strong{color:var(--gold);}
+.highlight-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:16px 20px;margin:16px 0;}
+.highlight-box p{color:var(--text2);font-size:13px;margin:0;}
+.highlight-box strong{color:var(--accent);}
+.disclaimer-banner{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(245,158,11,.06));border:1px solid rgba(239,68,68,.25);border-radius:14px;padding:24px 28px;margin-bottom:28px;text-align:center;}
+.disclaimer-banner h3{font-size:16px;font-weight:700;color:#fca5a5;margin-bottom:8px;}
+.disclaimer-banner p{font-size:13px;color:var(--text2);margin:0;line-height:1.7;}
+.toc{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:28px;}
+.toc h3{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.toc-links{display:flex;flex-wrap:wrap;gap:8px;}
+.toc-links a{font-size:12px;color:#a78bfa;text-decoration:none;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:4px 12px;transition:all .2s;}
+.toc-links a:hover{background:rgba(124,58,237,.15);}
+.contact-card{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(124,58,237,.06));border:1px solid rgba(0,212,255,.2);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.contact-card .contact-info h4{font-size:15px;font-weight:700;margin-bottom:4px;}
+.contact-card .contact-info p{font-size:13px;color:var(--text2);margin:0;}
+.contact-card a{color:var(--accent);text-decoration:none;font-weight:600;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap">
+  <div class="legal-hero">
+    <div class="legal-meta">📜 Terms of Service</div>
+    <h1 style="margin-top:16px">Terms of <span style="background:linear-gradient(90deg,#a78bfa,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Service</span></h1>
+    <p>Please read these terms carefully before using MatchOracle. By accessing our platform, you agree to be bound by these terms.</p>
+    <div style="margin-top:14px;font-size:12px;color:var(--muted)">Last updated: January 2026 &nbsp;·&nbsp; Effective: January 1, 2026</div>
+  </div>
+
+  <div class="legal-body">
+
+    <!-- Prediction Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <h3>⚠️ Important: Predictions Are Not Guaranteed</h3>
+      <p>MatchOracle provides AI-powered football predictions for informational and entertainment purposes only. Predictions are probabilistic estimates — they are <strong style="color:#fca5a5">not guarantees of match outcomes</strong>. Never make financial decisions based solely on our predictions. Past accuracy does not guarantee future results.</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Contents</h3>
+      <div class="toc-links">
+        <a href="#acceptance">Acceptance</a>
+        <a href="#service">The Service</a>
+        <a href="#accounts">Accounts</a>
+        <a href="#responsibilities">User Responsibilities</a>
+        <a href="#predictions">Prediction Disclaimer</a>
+        <a href="#subscriptions">Subscriptions</a>
+        <a href="#limitations">Limitations</a>
+        <a href="#disclaimers">Disclaimers</a>
+        <a href="#termination">Termination</a>
+        <a href="#governing">Governing Law</a>
+      </div>
+    </div>
+
+    <!-- Acceptance -->
+    <div class="legal-section" id="acceptance">
+      <div class="section-header">
+        <div class="section-icon icon-purple">✅</div>
+        <div>
+          <div class="section-title">1. Acceptance of Terms</div>
+          <div class="section-subtitle">Your agreement to these terms</div>
+        </div>
+      </div>
+      <p>By accessing or using MatchOracle ("the Service", "the Platform"), you ("User", "you") agree to be bound by these Terms of Service ("Terms") and our Privacy Policy. If you do not agree to these Terms, you must not use the Service.</p>
+      <p>These Terms constitute a legally binding agreement between you and MatchOracle. We reserve the right to update these Terms at any time. Continued use of the Service after changes are posted constitutes your acceptance of the revised Terms. We will notify users of material changes via email or a prominent notice on the platform.</p>
+      <p>You must be at least 18 years of age to use MatchOracle. By using the Service, you represent and warrant that you meet this age requirement.</p>
+    </div>
+
+    <!-- The Service -->
+    <div class="legal-section" id="service">
+      <div class="section-header">
+        <div class="section-icon icon-blue">⚽</div>
+        <div>
+          <div class="section-title">2. Description of Service</div>
+          <div class="section-subtitle">What MatchOracle provides</div>
+        </div>
+      </div>
+      <p>MatchOracle is an AI-powered football intelligence platform that provides:</p>
+      <ul class="legal-list">
+        <li><strong>Match Predictions:</strong> Probabilistic win/draw/loss predictions using our Hybrid V1 algorithm and machine learning models.</li>
+        <li><strong>Player Ratings:</strong> FIFA-style player performance ratings based on statistical inputs.</li>
+        <li><strong>Team Rankings:</strong> ELO-based team ranking and comparison tools.</li>
+        <li><strong>Match Simulations:</strong> Monte Carlo simulation of match outcomes.</li>
+        <li><strong>Live Scores:</strong> Real-time match scores and fixture information from third-party data providers.</li>
+        <li><strong>Weekly Forecasts:</strong> Curated match predictions published by our editorial team.</li>
+        <li><strong>API Access:</strong> Programmatic access to prediction engines for eligible subscribers.</li>
+      </ul>
+      <p>We reserve the right to modify, suspend, or discontinue any part of the Service at any time with or without notice. We shall not be liable to you or any third party for any modification, suspension, or discontinuation of the Service.</p>
+    </div>
+
+    <!-- Accounts -->
+    <div class="legal-section" id="accounts">
+      <div class="section-header">
+        <div class="section-icon icon-green">👤</div>
+        <div>
+          <div class="section-title">3. User Accounts</div>
+          <div class="section-subtitle">Registration, security, and account responsibilities</div>
+        </div>
+      </div>
+      <p>To access certain features of MatchOracle, you must create an account. When registering, you agree to:</p>
+      <ul class="legal-list">
+        <li>Provide accurate, current, and complete information during registration.</li>
+        <li>Maintain and promptly update your account information to keep it accurate.</li>
+        <li>Maintain the security and confidentiality of your password.</li>
+        <li>Accept responsibility for all activities that occur under your account.</li>
+        <li>Notify us immediately of any unauthorised use of your account.</li>
+        <li>Not share your account credentials with any third party.</li>
+        <li>Not create multiple accounts to circumvent usage limits or bans.</li>
+      </ul>
+      <p>We reserve the right to terminate accounts that violate these Terms, contain false information, or are used for fraudulent purposes.</p>
+    </div>
+
+    <!-- User Responsibilities -->
+    <div class="legal-section" id="responsibilities">
+      <div class="section-header">
+        <div class="section-icon icon-gold">📋</div>
+        <div>
+          <div class="section-title">4. User Responsibilities & Acceptable Use</div>
+          <div class="section-subtitle">What you may and may not do on the platform</div>
+        </div>
+      </div>
+      <p>You agree to use MatchOracle only for lawful purposes and in accordance with these Terms. You must not:</p>
+      <ul class="legal-list">
+        <li>Use the Service for any illegal purpose or in violation of any applicable laws or regulations.</li>
+        <li>Attempt to gain unauthorised access to any part of the Service, other user accounts, or our infrastructure.</li>
+        <li>Reverse engineer, decompile, or disassemble any part of the Service.</li>
+        <li>Use automated scripts, bots, or scrapers to access the Service without our express written permission.</li>
+        <li>Exceed API rate limits or attempt to circumvent usage quotas.</li>
+        <li>Resell, sublicense, or redistribute access to the Service without authorisation.</li>
+        <li>Use the Service to transmit spam, malware, or any harmful content.</li>
+        <li>Impersonate any person or entity or misrepresent your affiliation with any person or entity.</li>
+        <li>Use prediction outputs to operate unlicensed gambling or betting services.</li>
+        <li>Interfere with or disrupt the integrity or performance of the Service.</li>
+      </ul>
+      <div class="warning-box">
+        <p><strong>Gambling Warning:</strong> MatchOracle predictions must not be used as the sole basis for gambling or betting decisions. We are not a licensed gambling operator. If you choose to use our predictions in conjunction with betting activities, you do so entirely at your own risk and in compliance with the laws of your jurisdiction.</p>
+      </div>
+    </div>
+
+    <!-- Prediction Disclaimer -->
+    <div class="legal-section" id="predictions">
+      <div class="section-header">
+        <div class="section-icon icon-orange">🎯</div>
+        <div>
+          <div class="section-title">5. Prediction Accuracy Disclaimer</div>
+          <div class="section-subtitle">Understanding the nature of AI predictions</div>
+        </div>
+      </div>
+      <p>This section is critically important. Please read it carefully.</p>
+      <div class="warning-box">
+        <p><strong>Predictions Are Probabilistic, Not Certain.</strong> All match predictions, player ratings, team rankings, and simulations provided by MatchOracle are statistical estimates based on historical data and algorithmic models. Football matches are inherently unpredictable, and no algorithm — however sophisticated — can guarantee accurate outcomes.</p>
+      </div>
+      <ul class="legal-list">
+        <li><strong>No Guarantee of Accuracy:</strong> We make no representations or warranties that any prediction will be accurate. Our stated accuracy rates are historical averages and do not guarantee future performance.</li>
+        <li><strong>Data Limitations:</strong> Predictions are only as good as the input data. Injuries, weather, referee decisions, and other real-world factors may not be fully captured by our models.</li>
+        <li><strong>AI Limitations:</strong> Our AI models, including Claude AI integration, may produce outputs that are incorrect, biased, or outdated. AI-generated content should be treated as one input among many, not as authoritative advice.</li>
+        <li><strong>Not Financial Advice:</strong> Nothing on MatchOracle constitutes financial, investment, or betting advice. We are not regulated as a financial or gambling advisory service.</li>
+        <li><strong>Entertainment Purpose:</strong> Predictions are provided for informational and entertainment purposes. Use them to enhance your football knowledge, not to make high-stakes decisions.</li>
+        <li><strong>Historical Performance:</strong> Past prediction accuracy is not indicative of future results. Model performance may vary across leagues, seasons, and match types.</li>
+      </ul>
+      <div class="info-box">
+        <p><strong>Our Commitment:</strong> We continuously work to improve our prediction models and are transparent about our methodology. However, we will never claim 100% accuracy, and you should be sceptical of any service that does.</p>
+      </div>
+    </div>
+
+    <!-- Subscriptions -->
+    <div class="legal-section" id="subscriptions">
+      <div class="section-header">
+        <div class="section-icon icon-blue">💳</div>
+        <div>
+          <div class="section-title">6. Subscriptions & Payments</div>
+          <div class="section-subtitle">Billing, refunds, and plan management</div>
+        </div>
+      </div>
+      <p>MatchOracle offers both free and paid subscription plans. By subscribing to a paid plan, you agree to the following:</p>
+      <ul class="legal-list">
+        <li><strong>Billing Cycle:</strong> Paid subscriptions are billed monthly or annually in advance, depending on the plan selected.</li>
+        <li><strong>Automatic Renewal:</strong> Subscriptions automatically renew at the end of each billing period unless cancelled before the renewal date.</li>
+        <li><strong>Payment Processing:</strong> Payments are processed securely by Stripe. By providing payment information, you authorise us to charge your payment method for the applicable fees.</li>
+        <li><strong>Price Changes:</strong> We reserve the right to change subscription prices with 30 days' notice. Continued use after the notice period constitutes acceptance of the new pricing.</li>
+        <li><strong>Refund Policy:</strong> Subscription fees are generally non-refundable. We may, at our sole discretion, offer a refund in exceptional circumstances. Contact support within 7 days of a charge if you believe an error occurred.</li>
+        <li><strong>Cancellation:</strong> You may cancel your subscription at any time through your account settings. Cancellation takes effect at the end of the current billing period; you retain access until then.</li>
+        <li><strong>Free Tier Limits:</strong> Free accounts are subject to usage limits (predictions per day/month). We reserve the right to adjust these limits at any time.</li>
+      </ul>
+    </div>
+
+    <!-- Limitations of Liability -->
+    <div class="legal-section" id="limitations">
+      <div class="section-header">
+        <div class="section-icon icon-red">⚠️</div>
+        <div>
+          <div class="section-title">7. Limitation of Liability</div>
+          <div class="section-subtitle">The extent of our legal responsibility</div>
+        </div>
+      </div>
+      <p>To the maximum extent permitted by applicable law, MatchOracle and its officers, directors, employees, and agents shall not be liable for:</p>
+      <ul class="legal-list">
+        <li>Any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service.</li>
+        <li>Any financial losses, including losses from betting or gambling decisions made using our predictions.</li>
+        <li>Any loss of data, profits, goodwill, or business opportunities.</li>
+        <li>Any damages resulting from errors, inaccuracies, or omissions in prediction outputs.</li>
+        <li>Any damages resulting from service interruptions, downtime, or technical failures.</li>
+        <li>Any damages resulting from unauthorised access to your account or data.</li>
+        <li>Any damages resulting from third-party services or data providers we rely upon.</li>
+      </ul>
+      <p>In jurisdictions that do not allow the exclusion of certain warranties or limitation of liability, our liability shall be limited to the maximum extent permitted by law.</p>
+      <div class="highlight-box">
+        <p><strong>Maximum Liability Cap:</strong> In no event shall our total aggregate liability to you exceed the greater of (a) the amount you paid to MatchOracle in the 12 months preceding the claim, or (b) £50 GBP.</p>
+      </div>
+    </div>
+
+    <!-- Disclaimers -->
+    <div class="legal-section" id="disclaimers">
+      <div class="section-header">
+        <div class="section-icon icon-orange">📣</div>
+        <div>
+          <div class="section-title">8. Disclaimers & Warranties</div>
+          <div class="section-subtitle">What we do and do not warrant</div>
+        </div>
+      </div>
+      <p>THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
+      <ul class="legal-list">
+        <li>Warranties of merchantability, fitness for a particular purpose, or non-infringement.</li>
+        <li>Warranties that the Service will be uninterrupted, error-free, or secure.</li>
+        <li>Warranties regarding the accuracy, reliability, or completeness of any prediction, rating, or content.</li>
+        <li>Warranties that defects will be corrected or that the Service is free of viruses or harmful components.</li>
+      </ul>
+      <p>We do not warrant that live scores, fixture data, or any third-party data displayed on the platform is accurate or up to date. Such data is provided by external APIs and may be subject to delays or errors.</p>
+      <p>MatchOracle is not affiliated with, endorsed by, or in any way officially connected with FIFA, UEFA, the Premier League, or any other football governing body or club.</p>
+    </div>
+
+    <!-- Termination -->
+    <div class="legal-section" id="termination">
+      <div class="section-header">
+        <div class="section-icon icon-red">🚫</div>
+        <div>
+          <div class="section-title">9. Termination</div>
+          <div class="section-subtitle">When and how accounts may be terminated</div>
+        </div>
+      </div>
+      <p>Either party may terminate the relationship under these Terms at any time:</p>
+      <ul class="legal-list">
+        <li><strong>By You:</strong> You may delete your account at any time through your account settings or by contacting support. Deletion is permanent and cannot be undone after the 90-day recovery window.</li>
+        <li><strong>By Us — For Cause:</strong> We may immediately suspend or terminate your account if you violate these Terms, engage in fraudulent activity, abuse the Service, or pose a security risk.</li>
+        <li><strong>By Us — For Convenience:</strong> We may terminate or suspend your account with 30 days' notice if we discontinue the Service or a particular feature.</li>
+        <li><strong>Effect of Termination:</strong> Upon termination, your right to access the Service ceases immediately. Provisions of these Terms that by their nature should survive termination (including disclaimers, limitations of liability, and governing law) shall survive.</li>
+      </ul>
+      <p>If your account is terminated for cause, you will not be entitled to a refund of any prepaid subscription fees.</p>
+    </div>
+
+    <!-- Governing Law -->
+    <div class="legal-section" id="governing">
+      <div class="section-header">
+        <div class="section-icon icon-purple">⚖️</div>
+        <div>
+          <div class="section-title">10. Governing Law & Disputes</div>
+          <div class="section-subtitle">Legal jurisdiction and dispute resolution</div>
+        </div>
+      </div>
+      <p>These Terms shall be governed by and construed in accordance with the laws of England and Wales, without regard to its conflict of law provisions.</p>
+      <p>Any dispute arising from or relating to these Terms or the Service shall first be attempted to be resolved through good-faith negotiation. If negotiation fails, disputes shall be submitted to the exclusive jurisdiction of the courts of England and Wales.</p>
+      <p>If any provision of these Terms is found to be unenforceable or invalid, that provision shall be limited or eliminated to the minimum extent necessary so that the remaining Terms shall otherwise remain in full force and effect.</p>
+      <div class="contact-card" style="margin-top:20px">
+        <div style="font-size:32px">📬</div>
+        <div class="contact-info">
+          <h4>Legal & Support Contact</h4>
+          <p>Email: <a href="mailto:legal@matchoracle.app">legal@matchoracle.app</a></p>
+          <p style="margin-top:4px">For general support: <a href="mailto:support@matchoracle.app">support@matchoracle.app</a></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
