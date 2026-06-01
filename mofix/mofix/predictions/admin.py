@@ -1,13 +1,54 @@
 from django.contrib import admin
+from django.db.models import Sum, Count, Avg
+from django.utils.html import format_html
 from .models import (
     Prediction, TeamRanking, WeeklyTip,
     TeamProfile, EngineAccuracy, PredictionResult, ConversationMemory,
     WeightAdjustment, PatternMemory, PlayerProfile,
 )
 
-admin.site.register(Prediction)
-admin.site.register(TeamRanking)
-admin.site.register(WeeklyTip)
+
+@admin.register(Prediction)
+class PredictionAdmin(admin.ModelAdmin):
+    list_display = [
+        'user', 'engine', 'home_team', 'away_team',
+        'predicted_result', 'confidence', 'was_correct', 'created_at',
+    ]
+    list_filter = ['engine', 'was_correct']
+    search_fields = ['user__email', 'home_team', 'away_team']
+    ordering = ['-created_at']
+    readonly_fields = ['created_at', 'input_data', 'output_data']
+
+
+@admin.register(TeamRanking)
+class TeamRankingAdmin(admin.ModelAdmin):
+    list_display = ['name', 'user', 'power_elo', 'wins', 'draws', 'losses', 'goals_for', 'goals_against']
+    search_fields = ['name', 'user__email']
+    ordering = ['-power_elo']
+
+
+@admin.register(WeeklyTip)
+class WeeklyTipAdmin(admin.ModelAdmin):
+    list_display = [
+        'home_team', 'away_team', 'competition', 'match_date',
+        'tip', 'confidence', 'is_pro_only', 'created_at',
+    ]
+    list_filter = ['is_pro_only', 'competition']
+    search_fields = ['home_team', 'away_team', 'competition', 'tip']
+    ordering = ['-match_date']
+    list_editable = ['is_pro_only']
+    readonly_fields = ['created_at']
+    fieldsets = (
+        ('Match Details', {
+            'fields': ('home_team', 'away_team', 'competition', 'match_date'),
+        }),
+        ('Tip', {
+            'fields': ('tip', 'confidence', 'is_pro_only'),
+        }),
+        ('Meta', {
+            'fields': ('created_at',),
+        }),
+    )
 
 
 @admin.register(TeamProfile)

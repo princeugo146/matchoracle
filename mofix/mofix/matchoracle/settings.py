@@ -100,6 +100,9 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
+# Password reset link expires after 1 hour (3600 seconds)
+PASSWORD_RESET_TIMEOUT = 3600
+
 MATCHORACLE = {
     'CURRENCY': 'NGN',
     'CURRENCY_SYMBOL': 'NGN',

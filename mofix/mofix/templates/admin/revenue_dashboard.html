@@ -1,0 +1,110 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+<style>
+  .revenue-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #1a2332;
+    border: 1px solid #243044;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #00d4ff;
+  }
+  .plan-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    background: #1a2332;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .plan-table th {
+    background: #243044;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+  }
+  .plan-table td {
+    padding: 10px 16px;
+    border-top: 1px solid #243044;
+    color: #f0f6ff;
+    font-size: 14px;
+  }
+  .plan-table tr:hover td {
+    background: rgba(0, 212, 255, 0.04);
+  }
+  h2.revenue-heading {
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin: 0 0 12px;
+  }
+</style>
+
+<h2 class="revenue-heading">📊 Revenue Overview</h2>
+<div class="revenue-stats">
+  <div class="stat-card">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value">{{ total_revenue }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Transactions</div>
+    <div class="stat-value">{{ transaction_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Users</div>
+    <div class="stat-value">{{ total_users }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg. Revenue / User</div>
+    <div class="stat-value">{{ avg_user_value }}</div>
+  </div>
+</div>
+
+{% if plan_breakdown %}
+<h2 class="revenue-heading">💳 Revenue by Plan</h2>
+<table class="plan-table">
+  <thead>
+    <tr>
+      <th>Plan</th>
+      <th>Transactions</th>
+      <th>Revenue (NGN)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in plan_breakdown %}
+    <tr>
+      <td>{{ row.plan|title }}</td>
+      <td>{{ row.count }}</td>
+      <td>{{ row.revenue }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2 class="revenue-heading">🧾 Transaction Log</h2>
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}About MatchOracle{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:860px;margin:60px auto;padding-bottom:60px">
+
+  <!-- Hero -->
+  <div style="text-align:center;margin-bottom:56px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px">About Us</div>
+    <h1 style="font-size:38px;font-weight:900;font-family:'Orbitron',sans-serif;margin-bottom:16px;line-height:1.2">
+      <span style="color:#c0e8ff">MATCH</span><span style="background:linear-gradient(90deg,var(--accent),#0077ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">ORACLE</span>
+    </h1>
+    <p style="font-size:17px;color:var(--text2);max-width:560px;margin:0 auto;line-height:1.7">
+      The Football Intelligence Engine — where data science meets the beautiful game.
+    </p>
+  </div>
+
+  <!-- Mission -->
+  <div class="card" style="margin-bottom:24px;border-left:3px solid var(--accent)">
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Our Mission</div>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2)">
+      MatchOracle exists to democratise football intelligence. We believe that the same analytical power used by professional clubs and betting syndicates should be accessible to every fan, analyst, and enthusiast — not locked behind expensive data subscriptions or proprietary tools. Our mission is to make world-class football prediction technology open, transparent, and genuinely useful.
+    </p>
+  </div>
+
+  <!-- What We Do -->
+  <div class="card" style="margin-bottom:24px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">What We Do</div>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2);margin-bottom:16px">
+      MatchOracle combines a proprietary multi-engine prediction system — the Hybrid V1 Algorithm — with Claude AI to deliver match outcome probabilities, player performance ratings, team power rankings, and full Monte Carlo match simulations. Our engines analyse historical form, head-to-head records, tactical styles, home advantage, and dozens of other variables to produce predictions that go far beyond simple win/draw/loss percentages.
+    </p>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2)">
+      We also run a self-learning system that continuously tracks prediction outcomes and adjusts engine weights over time. Every verified result makes MatchOracle smarter — the platform improves with every match played, every season completed, and every pattern discovered in the data.
+    </p>
+  </div>
+
+  <!-- How It Helps -->
+  <div class="card" style="margin-bottom:24px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">How We Help the Football World</div>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2);margin-bottom:16px">
+      For <strong style="color:var(--text)">fans</strong>, MatchOracle adds a new dimension to watching football. Instead of just hoping your team wins, you can understand <em>why</em> they are likely to win — or lose — based on real data. Our weekly tips and live match forecasts give you something to talk about before kick-off and something to analyse after the final whistle.
+    </p>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2);margin-bottom:16px">
+      For <strong style="color:var(--text)">analysts and content creators</strong>, our API provides programmatic access to prediction engines, player ratings, and team rankings. Build your own dashboards, power your football blog with AI-generated insights, or integrate our data into your own applications.
+    </p>
+    <p style="font-size:15px;line-height:1.8;color:var(--text2)">
+      For <strong style="color:var(--text)">the broader football ecosystem</strong>, MatchOracle contributes to a culture of data-driven thinking. We believe that better analysis leads to better conversations, better coaching decisions, and ultimately a richer experience of the sport for everyone involved.
+    </p>
+  </div>
+
+  <!-- Stats -->
+  <div class="g3" style="margin-bottom:24px">
+    <div class="card" style="text-align:center">
+      <div style="font-size:32px;font-weight:900;color:var(--accent);font-family:'Orbitron',sans-serif">4</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;letter-spacing:1px;text-transform:uppercase">Prediction Engines</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:32px;font-weight:900;color:var(--green);font-family:'Orbitron',sans-serif">AI</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;letter-spacing:1px;text-transform:uppercase">Claude-Powered Insights</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:32px;font-weight:900;color:var(--gold);font-family:'Orbitron',sans-serif">24/7</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;letter-spacing:1px;text-transform:uppercase">Live Score Tracking</div>
+    </div>
+  </div>
+
+  <!-- Technology -->
+  <div class="card" style="margin-bottom:24px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Our Technology</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">⚡</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);margin-bottom:3px">Engine A — Match Prediction</div>
+          <div style="font-size:13px;color:var(--text2)">Statistical model computing win/draw/loss probabilities using form, ELO ratings, home advantage, and head-to-head history.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🎯</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);margin-bottom:3px">Engine B — Player Rating</div>
+          <div style="font-size:13px;color:var(--text2)">FIFA-style player rating system that evaluates goals, assists, defensive contributions, and positional performance.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🏆</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);margin-bottom:3px">Engine C — Team Rankings</div>
+          <div style="font-size:13px;color:var(--text2)">Power ranking system that builds league tables from raw match data using ELO-style calculations.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🎲</div>
+        <div>
+          <div style="font-weight:600;color:var(--text);margin-bottom:3px">Engine D — Monte Carlo Simulation</div>
+          <div style="font-size:13px;color:var(--text2)">Runs thousands of match simulations to produce score distributions, expected goals, and outcome probabilities.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="card" style="text-align:center">
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Get in Touch</div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Have a question, partnership enquiry, or feedback? We'd love to hear from you.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="mailto:hello@matchoracle.com" class="btn btn-p" style="font-size:13px">✉ hello@matchoracle.com</a>
+      <a href="/api-docs/" class="btn btn-s" style="font-size:13px">📡 API Documentation</a>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap">
+    <a href="/privacy/" class="btn btn-s" style="font-size:13px">Privacy Policy</a>
+    <a href="/terms/" class="btn btn-s" style="font-size:13px">Terms of Service</a>
+  </div>
+
+</div>
+{% endblock %}

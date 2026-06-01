@@ -29,11 +29,21 @@ def leaderboard(request):
     top_users = User.objects.annotate(pred_count=Count('predictions')).order_by('-pred_count')[:20]
     return render(request, 'core/leaderboard.html', {'top_users': top_users})
 
-def api_docs(request):
-    return render(request, 'core/api_docs.html')
-
 def health_check(request):
     return JsonResponse({'status': 'ok', 'version': '2.0.0'})
+
+
+def privacy_view(request):
+    return render(request, 'core/privacy.html')
+
+
+def terms_view(request):
+    return render(request, 'core/terms.html')
+
+
+def about_view(request):
+    return render(request, 'core/about.html')
+
 
 def api_docs(request):
     endpoints = [
