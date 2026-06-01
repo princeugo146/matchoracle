@@ -19,6 +19,8 @@ INSTALLED_APPS = [
     'core',
     'predictions',
     'api',
+    'admin_panel',
+    'legal',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +101,20 @@ DEFAULT_FROM_EMAIL = 'MatchOracle <' + os.environ.get('EMAIL_HOST_USER', 'norepl
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Password reset token expires after 24 hours (86400 seconds)
+PASSWORD_RESET_TIMEOUT = 86400
+
+# ─── Cache (used for password reset rate limiting) ────────────────────────────
+# Uses database cache by default (no extra infrastructure needed).
+# Switch to Redis cache in production for better performance:
+#   CACHES = {'default': {'BACKEND': 'django.core.cache.backends.redis.RedisCache', 'LOCATION': REDIS_URL}}
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
 
 MATCHORACLE = {
     'CURRENCY': 'NGN',

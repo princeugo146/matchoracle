@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy{% endblock %}
+{% block extra_css %}
+<style>
+.legal-wrap{max-width:800px;margin:0 auto;padding:48px 20px 80px;}
+.legal-title{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;margin-bottom:8px;}
+.legal-subtitle{color:var(--text2);font-size:14px;margin-bottom:40px;}
+.legal-section{margin-bottom:36px;}
+.legal-section h2{font-size:17px;font-weight:700;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.legal-section p,.legal-section li{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:10px;}
+.legal-section ul{padding-left:20px;}
+.legal-section li{margin-bottom:6px;}
+.legal-nav{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:32px;}
+.legal-nav a{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;padding:6px 14px;border:1px solid rgba(0,212,255,.2);border-radius:20px;transition:all .2s;}
+.legal-nav a:hover{background:rgba(0,212,255,.08);}
+.legal-nav a.active{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.4);}
+.highlight-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:12px;padding:16px 20px;margin-bottom:20px;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="legal-wrap">
+  <div class="legal-title">Privacy Policy</div>
+  <div class="legal-subtitle">Last updated: January 2025 &nbsp;·&nbsp; Effective immediately</div>
+
+  <div class="legal-nav">
+    <a href="{% url 'privacy_policy' %}" class="active">Privacy Policy</a>
+    <a href="{% url 'terms_of_service' %}">Terms of Service</a>
+    <a href="{% url 'about_us' %}">About Us</a>
+  </div>
+
+  <div class="highlight-box">
+    <strong style="color:var(--accent)">Your privacy matters to us.</strong>
+    <span style="color:var(--text2);font-size:14px"> MatchOracle is committed to protecting your personal data and being transparent about how we use it. This policy explains what we collect, why, and your rights.</span>
+  </div>
+
+  <div class="legal-section">
+    <h2>1. Information We Collect</h2>
+    <p>We collect the following types of information when you use MatchOracle:</p>
+    <ul>
+      <li><strong style="color:var(--text)">Account Information:</strong> Your email address, name, and password (stored as a secure hash) when you register.</li>
+      <li><strong style="color:var(--text)">Usage Data:</strong> Predictions you make, teams you analyse, and features you use within the platform.</li>
+      <li><strong style="color:var(--text)">Payment Information:</strong> Transaction references and payment status processed via Paystack. We do not store card numbers or banking details.</li>
+      <li><strong style="color:var(--text)">Technical Data:</strong> IP address, browser type, device information, and session data for security and performance purposes.</li>
+      <li><strong style="color:var(--text)">Communications:</strong> Any messages you send to our support team.</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>2. How We Use Your Information</h2>
+    <p>We use your data to:</p>
+    <ul>
+      <li>Provide and improve the MatchOracle prediction service</li>
+      <li>Process payments and manage your subscription</li>
+      <li>Send transactional emails (account confirmation, password resets, payment receipts)</li>
+      <li>Personalise your experience and track your prediction accuracy</li>
+      <li>Detect and prevent fraud or abuse</li>
+      <li>Comply with legal obligations</li>
+      <li>Analyse aggregate usage patterns to improve our AI models (anonymised data only)</li>
+    </ul>
+    <p>We do <strong style="color:var(--text)">not</strong> sell your personal data to third parties.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>3. Data Sharing</h2>
+    <p>We share your data only with:</p>
+    <ul>
+      <li><strong style="color:var(--text)">Paystack:</strong> Our payment processor, for handling subscription payments securely.</li>
+      <li><strong style="color:var(--text)">Anthropic (Claude AI):</strong> Natural language queries may be processed by Claude AI. No personally identifiable information is included in AI requests.</li>
+      <li><strong style="color:var(--text)">Railway / Hosting:</strong> Our infrastructure provider stores your data on secure servers.</li>
+      <li><strong style="color:var(--text)">Legal authorities:</strong> If required by law or to protect our rights.</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>4. Data Protection &amp; Security</h2>
+    <p>We implement industry-standard security measures including:</p>
+    <ul>
+      <li>HTTPS encryption for all data in transit</li>
+      <li>Bcrypt password hashing — we never store plain-text passwords</li>
+      <li>Secure session management with CSRF protection</li>
+      <li>Regular security reviews and dependency updates</li>
+      <li>Access controls limiting who can view user data</li>
+    </ul>
+    <p>No system is 100% secure. If you suspect a security issue, please contact us immediately at <a href="mailto:privacy@matchoracle.com" style="color:var(--accent)">privacy@matchoracle.com</a>.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>5. Your Rights (GDPR &amp; Data Subject Rights)</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li><strong style="color:var(--text)">Access:</strong> Request a copy of all personal data we hold about you.</li>
+      <li><strong style="color:var(--text)">Rectification:</strong> Correct inaccurate or incomplete data.</li>
+      <li><strong style="color:var(--text)">Erasure:</strong> Request deletion of your account and associated data ("right to be forgotten").</li>
+      <li><strong style="color:var(--text)">Portability:</strong> Receive your data in a machine-readable format.</li>
+      <li><strong style="color:var(--text)">Objection:</strong> Object to processing of your data for marketing purposes.</li>
+      <li><strong style="color:var(--text)">Restriction:</strong> Request that we limit how we process your data.</li>
+    </ul>
+    <p>To exercise any of these rights, email <a href="mailto:privacy@matchoracle.com" style="color:var(--accent)">privacy@matchoracle.com</a>. We will respond within 30 days.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>6. Cookies &amp; Local Storage</h2>
+    <p>We use:</p>
+    <ul>
+      <li><strong style="color:var(--text)">Session cookies:</strong> To keep you logged in (expires after 30 days of inactivity).</li>
+      <li><strong style="color:var(--text)">CSRF cookies:</strong> To protect against cross-site request forgery attacks.</li>
+      <li><strong style="color:var(--text)">Local storage:</strong> To remember your PWA install preference and service worker state.</li>
+    </ul>
+    <p>We do not use advertising or tracking cookies.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>7. Data Retention</h2>
+    <p>We retain your data for as long as your account is active. If you delete your account, we will remove your personal data within 30 days, except where retention is required by law (e.g. payment records for tax purposes, retained for 7 years).</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>8. Children's Privacy</h2>
+    <p>MatchOracle is not intended for users under 18 years of age. We do not knowingly collect data from minors. If you believe a minor has registered, please contact us and we will delete the account promptly.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify you of significant changes via email or a prominent notice on the platform. Continued use of MatchOracle after changes constitutes acceptance of the updated policy.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>10. Contact Us</h2>
+    <p>For privacy-related questions or to exercise your rights:</p>
+    <ul>
+      <li>Email: <a href="mailto:privacy@matchoracle.com" style="color:var(--accent)">privacy@matchoracle.com</a></li>
+      <li>Support: <a href="mailto:support@matchoracle.com" style="color:var(--accent)">support@matchoracle.com</a></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

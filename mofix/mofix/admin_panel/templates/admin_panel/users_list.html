@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+{% block extra_css %}
+<style>
+.admin-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.admin-nav a{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.admin-nav a:hover,.admin-nav a.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#a78bfa;}
+.user-table{width:100%;border-collapse:collapse;}
+.user-table th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);}
+.user-table td{padding:12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.user-table tr:hover td{background:rgba(255,255,255,.02);}
+.action-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;text-decoration:none;border:none;cursor:pointer;display:inline-block;}
+.btn-edit{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.btn-toggle-off{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.btn-toggle-on{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.btn-del{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.15);}
+.inactive-row td{opacity:.55;}
+@media(max-width:768px){.hide-mobile{display:none;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700">User Management</div>
+    <span style="background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase">Admin Only</span>
+  </div>
+
+  <div class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}">📊 Dashboard</a>
+    <a href="{% url 'admin_users_list' %}" class="active">👥 Users</a>
+    <a href="{% url 'admin_tips_list' %}">💡 Tips</a>
+    <a href="{% url 'admin_revenue' %}">💰 Revenue</a>
+    <a href="{% url 'admin_audit_log' %}">📋 Audit Log</a>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="card" style="margin-bottom:20px">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="flex:1;min-width:200px;margin-bottom:0">
+        <label>Search</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Email or name…">
+      </div>
+      <div class="field" style="min-width:140px;margin-bottom:0">
+        <label>Plan</label>
+        <select name="plan">
+          <option value="">All Plans</option>
+          <option value="free"  {% if plan_filter == 'free'  %}selected{% endif %}>Free</option>
+          <option value="basic" {% if plan_filter == 'basic' %}selected{% endif %}>Basic</option>
+          <option value="pro"   {% if plan_filter == 'pro'   %}selected{% endif %}>Pro</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-p" style="padding:10px 20px;margin-bottom:0">Filter</button>
+      <a href="{% url 'admin_users_list' %}" class="btn btn-s" style="padding:10px 16px;margin-bottom:0">Clear</a>
+    </form>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2)">{{ users|length }} user{{ users|length|pluralize }} found</div>
+    </div>
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th class="hide-mobile">Predictions</th>
+          <th class="hide-mobile">Joined</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr {% if not u.is_active %}class="inactive-row"{% endif %}>
+          <td>
+            <div style="font-weight:600">{{ u.first_name|default:"—" }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ u.email }}</div>
+          </td>
+          <td>
+            <span class="p{% if u.plan == 'free' %}f{% elif u.plan == 'basic' %}b{% else %}p{% endif %}">{{ u.plan|upper }}</span>
+          </td>
+          <td class="hide-mobile" style="color:var(--text2)">{{ u.total_predictions }}</td>
+          <td class="hide-mobile" style="color:var(--muted);font-size:12px">{{ u.created_at|date:"d M Y" }}</td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge bg">Active</span>
+            {% else %}
+              <span class="badge br">Inactive</span>
+            {% endif %}
+            {% if u.is_staff %}<span class="badge bb" style="margin-left:4px">Staff</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a href="{% url 'admin_user_edit' u.pk %}" class="action-btn btn-edit">Edit</a>
+              <a href="{% url 'admin_user_toggle' u.pk %}" class="action-btn {% if u.is_active %}btn-toggle-off{% else %}btn-toggle-on{% endif %}"
+                 onclick="return confirm('{% if u.is_active %}Deactivate{% else %}Activate{% endif %} {{ u.email }}?')">
+                {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+              </a>
+              {% if u != request.user %}
+              <a href="{% url 'admin_user_delete' u.pk %}" class="action-btn btn-del">Delete</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

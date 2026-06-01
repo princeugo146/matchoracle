@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Revenue Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.admin-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.admin-nav a{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.admin-nav a:hover,.admin-nav a.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#a78bfa;}
+.rev-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;}
+.rev-val{font-size:28px;font-weight:800;font-family:'Orbitron',sans-serif;margin-bottom:4px;}
+.rev-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+.bar-wrap{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bar-label{width:70px;font-size:12px;color:var(--text2);text-align:right;}
+.bar-track{flex:1;height:12px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;transition:width 1s ease;}
+.bar-val{width:80px;font-size:12px;font-weight:700;text-align:right;}
+.pay-table{width:100%;border-collapse:collapse;}
+.pay-table th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);}
+.pay-table td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:13px;}
+@media(max-width:768px){.hide-mobile{display:none;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:24px">Revenue Dashboard</div>
+
+  <div class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}">📊 Dashboard</a>
+    <a href="{% url 'admin_users_list' %}">👥 Users</a>
+    <a href="{% url 'admin_tips_list' %}">💡 Tips</a>
+    <a href="{% url 'admin_revenue' %}" class="active">💰 Revenue</a>
+    <a href="{% url 'admin_audit_log' %}">📋 Audit Log</a>
+  </div>
+
+  <!-- Top Stats -->
+  <div class="g4" style="margin-bottom:28px">
+    <div class="rev-stat">
+      <div class="rev-val" style="color:var(--gold)">₦{{ total_revenue|floatformat:0 }}</div>
+      <div class="rev-lbl">All-Time Revenue</div>
+    </div>
+    <div class="rev-stat">
+      <div class="rev-val" style="color:var(--green)">{{ total_payments }}</div>
+      <div class="rev-lbl">Successful Payments</div>
+    </div>
+    <div class="rev-stat">
+      <div class="rev-val" style="color:var(--accent)">{{ active_subs }}</div>
+      <div class="rev-lbl">Active Subscriptions</div>
+    </div>
+    <div class="rev-stat">
+      <div class="rev-val" style="color:#a78bfa">₦{{ rev_per_user|floatformat:0 }}</div>
+      <div class="rev-lbl">Revenue / User</div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:28px">
+    <!-- Revenue by Plan -->
+    <div class="card">
+      <div class="ct">Revenue by Plan</div>
+      {% with max_rev=total_revenue|default:1 %}
+      <div class="bar-wrap">
+        <div class="bar-label">Basic</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{% widthratio revenue_by_plan.basic max_rev 100 %}%;background:var(--accent)"></div></div>
+        <div class="bar-val" style="color:var(--accent)">₦{{ revenue_by_plan.basic|floatformat:0 }}</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-label">Pro</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{% widthratio revenue_by_plan.pro max_rev 100 %}%;background:#a78bfa"></div></div>
+        <div class="bar-val" style="color:#a78bfa">₦{{ revenue_by_plan.pro|floatformat:0 }}</div>
+      </div>
+      {% endwith %}
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text2)">Total</span>
+          <span style="font-weight:700;color:var(--gold)">₦{{ total_revenue|floatformat:0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Trend (text-based chart) -->
+    <div class="card">
+      <div class="ct">Monthly Revenue (Last 12 Months)</div>
+      {% with max_month=monthly|last %}
+      {% for m in monthly %}
+      <div class="bar-wrap" style="margin-bottom:5px">
+        <div class="bar-label" style="font-size:10px;width:60px">{{ m.label|slice:":6" }}</div>
+        <div class="bar-track" style="height:10px">
+          <div class="bar-fill" style="width:{% if m.revenue > 0 %}{% widthratio m.revenue 1 1 %}{% else %}0{% endif %}%;background:linear-gradient(90deg,var(--accent),#0077ff);min-width:{% if m.revenue > 0 %}4{% else %}0{% endif %}px"></div>
+        </div>
+        <div class="bar-val" style="font-size:11px;color:var(--text2)">₦{{ m.revenue|floatformat:0 }}</div>
+      </div>
+      {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="card" style="overflow-x:auto">
+    <div class="ct">Recent Successful Payments</div>
+    <table class="pay-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Amount</th>
+          <th class="hide-mobile">Reference</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in recent_payments %}
+        <tr>
+          <td>
+            <div style="font-weight:600;font-size:13px">{{ p.user.first_name|default:p.user.email }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ p.user.email }}</div>
+          </td>
+          <td><span class="p{% if p.plan == 'basic' %}b{% else %}p{% endif %}">{{ p.plan|upper }}</span></td>
+          <td style="font-weight:700;color:var(--gold)">₦{{ p.amount|floatformat:0 }}</td>
+          <td class="hide-mobile" style="font-family:monospace;font-size:11px;color:var(--muted)">{{ p.reference|truncatechars:20 }}</td>
+          <td style="font-size:12px;color:var(--text2)">{{ p.verified_at|date:"d M Y H:i"|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No payments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

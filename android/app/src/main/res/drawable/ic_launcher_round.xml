@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MatchOracle Round App Icon — circular version for Android adaptive icons
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Circular background -->
+    <path
+        android:fillColor="#030508"
+        android:pathData="M54,4 A50,50 0 1,1 53.999,4 Z" />
+
+    <!-- Shield body -->
+    <path
+        android:fillColor="#0055CC"
+        android:strokeColor="#00D4FF"
+        android:strokeWidth="1"
+        android:pathData="M54,18 L82,27 L82,50 C82,66 68,77 54,81 C40,77 26,66 26,50 L26,27 Z" />
+
+    <!-- M lettermark -->
+    <path
+        android:fillColor="#00D4FF"
+        android:pathData="M34,68 L34,44 L43,44 L54,58 L65,44 L74,44 L74,68 L67,68 L67,52 L54,66 L41,52 L41,68 Z" />
+
+</vector>

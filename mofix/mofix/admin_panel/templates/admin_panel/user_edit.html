@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Edit User{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:560px;margin:40px auto">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <a href="{% url 'admin_users_list' %}" style="color:var(--text2);text-decoration:none;font-size:13px">← Back to Users</a>
+  </div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px">Edit User</div>
+  <div class="card">
+    <div style="margin-bottom:16px;padding:12px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:10px">
+      <div style="font-size:12px;color:var(--muted)">User ID: {{ target.pk }}</div>
+      <div style="font-size:13px;color:var(--text2)">Member since {{ target.created_at|date:"d M Y" }}</div>
+    </div>
+    <form method="post">{% csrf_token %}
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" name="first_name" value="{{ target.first_name }}">
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="email" value="{{ target.email }}" required>
+      </div>
+      <div class="field">
+        <label>Plan</label>
+        <select name="plan">
+          <option value="free"  {% if target.plan == 'free'  %}selected{% endif %}>Free</option>
+          <option value="basic" {% if target.plan == 'basic' %}selected{% endif %}>Basic</option>
+          <option value="pro"   {% if target.plan == 'pro'   %}selected{% endif %}>Pro</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:20px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" name="is_active" {% if target.is_active %}checked{% endif %} style="width:auto">
+          Active Account
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" name="is_staff" {% if target.is_staff %}checked{% endif %} style="width:auto">
+          Staff / Admin
+        </label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-p" style="flex:1;padding:12px">Save Changes</button>
+        <a href="{% url 'admin_users_list' %}" class="btn btn-s" style="flex:1;padding:12px;text-align:center">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

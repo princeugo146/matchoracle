@@ -50,4 +50,6 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('predictions.urls')),
     path('api/v1/', include('api.urls')),
+    path('admin-panel/', include('admin_panel.urls')),
+    path('legal/', include('legal.urls')),
 ]

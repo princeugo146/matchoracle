@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Tip{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:600px;margin:40px auto">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <a href="{% url 'admin_tips_list' %}" style="color:var(--text2);text-decoration:none;font-size:13px">← Back to Tips</a>
+  </div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px">{{ action }} Tip</div>
+  <div class="card">
+    <form method="post">{% csrf_token %}
+      <div class="g2">
+        <div class="field">
+          <label>Home Team *</label>
+          <input type="text" name="home_team" value="{{ tip.home_team|default:'' }}" placeholder="e.g. Arsenal" required>
+        </div>
+        <div class="field">
+          <label>Away Team *</label>
+          <input type="text" name="away_team" value="{{ tip.away_team|default:'' }}" placeholder="e.g. Chelsea" required>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field">
+          <label>Competition</label>
+          <input type="text" name="competition" value="{{ tip.competition|default:'' }}" placeholder="e.g. Premier League">
+        </div>
+        <div class="field">
+          <label>Match Date *</label>
+          <input type="datetime-local" name="match_date"
+            value="{% if tip %}{{ tip.match_date|date:'Y-m-d' }}T{{ tip.match_date|date:'H:i' }}{% endif %}" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Tip / Prediction *</label>
+        <textarea name="tip" rows="3" placeholder="e.g. Arsenal to win — strong home form, Chelsea missing key players" required>{{ tip.tip|default:'' }}</textarea>
+      </div>
+      <div class="g2">
+        <div class="field">
+          <label>Confidence Level (0–100)</label>
+          <input type="number" name="confidence" value="{{ tip.confidence|default:70 }}" min="0" max="100">
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:24px">
+            <input type="checkbox" name="is_pro_only" {% if tip.is_pro_only %}checked{% endif %} style="width:auto">
+            Pro Only Tip
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-p" style="flex:1;padding:12px">{{ action }} Tip</button>
+        <a href="{% url 'admin_tips_list' %}" class="btn btn-s" style="flex:1;padding:12px;text-align:center">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

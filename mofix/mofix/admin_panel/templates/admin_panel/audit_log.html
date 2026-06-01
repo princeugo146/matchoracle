@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log{% endblock %}
+{% block extra_css %}
+<style>
+.admin-nav{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+.admin-nav a{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.admin-nav a:hover,.admin-nav a.active{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#a78bfa;}
+.log-table{width:100%;border-collapse:collapse;}
+.log-table th{text-align:left;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--border);}
+.log-table td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+@media(max-width:768px){.hide-mobile{display:none;}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="wrap" style="padding-top:32px">
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:24px">Audit Log</div>
+
+  <div class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}">📊 Dashboard</a>
+    <a href="{% url 'admin_users_list' %}">👥 Users</a>
+    <a href="{% url 'admin_tips_list' %}">💡 Tips</a>
+    <a href="{% url 'admin_revenue' %}">💰 Revenue</a>
+    <a href="{% url 'admin_audit_log' %}" class="active">📋 Audit Log</a>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Showing last {{ logs|length }} actions</div>
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Admin</th>
+          <th>Action</th>
+          <th>Description</th>
+          <th class="hide-mobile">IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td style="color:var(--muted);font-size:12px;white-space:nowrap">{{ log.created_at|date:"d M Y H:i" }}</td>
+          <td style="font-weight:600;color:var(--accent)">{{ log.admin.email|default:"?" }}</td>
+          <td>
+            <span style="background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.15);padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase">
+              {{ log.get_action_display }}
+            </span>
+          </td>
+          <td style="color:var(--text2)">{{ log.description|truncatechars:80 }}</td>
+          <td class="hide-mobile" style="font-family:monospace;font-size:11px;color:var(--muted)">{{ log.ip_address|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No admin actions logged yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
