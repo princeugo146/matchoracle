@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Admin — Users{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:1300px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.filter-bar .field{margin:0;flex:1;min-width:140px;}
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:9px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-table tr:hover td{background:rgba(255,255,255,.02);}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.badge-sm{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.plan-free{background:rgba(100,116,139,.15);color:var(--text2);border:1px solid var(--border2);}
+.plan-basic{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.plan-pro{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);}
+.status-active{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.status-inactive{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+@media(max-width:768px){.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">👥 User Management</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">{{ total_count }} user{{ total_count|pluralize }} found</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_users' %}" class="active">Users</a>
+      <a href="{% url 'admin_tips' %}">Tips</a>
+      <a href="{% url 'admin_revenue' %}">Revenue</a>
+      <a href="{% url 'admin_logs' %}">Logs</a>
+    </nav>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="filter-bar">
+    <div class="field">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Email, username, name…">
+    </div>
+    <div class="field" style="min-width:120px;max-width:160px">
+      <label>Plan</label>
+      <select name="plan">
+        <option value="">All Plans</option>
+        <option value="free"  {% if plan_filter == 'free'  %}selected{% endif %}>Free</option>
+        <option value="basic" {% if plan_filter == 'basic' %}selected{% endif %}>Basic</option>
+        <option value="pro"   {% if plan_filter == 'pro'   %}selected{% endif %}>Pro</option>
+      </select>
+    </div>
+    <div class="field" style="min-width:120px;max-width:160px">
+      <label>Status</label>
+      <select name="status">
+        <option value="">All</option>
+        <option value="active"   {% if status_filter == 'active'   %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn btn-p" style="padding:10px 18px;font-size:13px">Filter</button>
+      <a href="{% url 'admin_users' %}" class="btn btn-s" style="padding:10px 14px;font-size:13px">Clear</a>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="sec" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Plan</th>
+            <th>Status</th>
+            <th>Predictions</th>
+            <th>Accuracy</th>
+            <th>Joined</th>
+            <th>Last Login</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <div style="font-weight:600">{{ u.email }}</div>
+              {% if u.first_name %}<div style="font-size:11px;color:var(--muted)">{{ u.first_name }} {{ u.last_name }}</div>{% endif %}
+              {% if u.is_staff %}<span style="font-size:9px;color:#a78bfa;font-weight:700;letter-spacing:1px">STAFF</span>{% endif %}
+            </td>
+            <td><span class="badge-sm plan-{{ u.plan }}">{{ u.plan|upper }}</span></td>
+            <td>
+              <span class="badge-sm {% if u.is_active %}status-active{% else %}status-inactive{% endif %}">
+                {% if u.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
+            </td>
+            <td style="font-weight:600;color:var(--accent)">{{ u.total_predictions }}</td>
+            <td style="color:{% if u.accuracy_rate >= 60 %}var(--green){% elif u.accuracy_rate >= 40 %}var(--gold){% else %}var(--red){% endif %}">
+              {{ u.accuracy_rate }}%
+            </td>
+            <td style="color:var(--muted);font-size:12px">{{ u.date_joined|date:"d M Y" }}</td>
+            <td style="color:var(--muted);font-size:12px">
+              {% if u.last_login %}{{ u.last_login|timesince }} ago{% else %}Never{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'admin_user_detail' u.pk %}"
+                 style="font-size:11px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid rgba(0,212,255,.2);border-radius:6px;white-space:nowrap">
+                View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">No users match your filters.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

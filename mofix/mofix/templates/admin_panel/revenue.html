@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Admin — Revenue{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:1200px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:1px;text-transform:uppercase;}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:6px;}
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:9px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-table tr:hover td{background:rgba(255,255,255,.02);}
+.badge-sm{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.plan-free{background:rgba(100,116,139,.15);color:var(--text2);border:1px solid var(--border2);}
+.plan-basic{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.plan-pro{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);}
+/* Monthly chart */
+.chart-wrap{display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 4px;}
+.chart-bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--accent),rgba(0,212,255,.3));min-height:4px;transition:height .8s ease;}
+.chart-label{font-size:9px;color:var(--muted);text-align:center;white-space:nowrap;}
+.chart-val{font-size:9px;color:var(--text2);font-weight:600;}
+@media(max-width:768px){.stat-grid{grid-template-columns:1fr 1fr;}.adm-wrap{padding:16px 12px;}}
+@media(max-width:480px){.stat-grid{grid-template-columns:1fr;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">💰 Revenue Analytics</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">Verified payments only</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_users' %}">Users</a>
+      <a href="{% url 'admin_tips' %}">Tips</a>
+      <a href="{% url 'admin_revenue' %}" class="active">Revenue</a>
+      <a href="{% url 'admin_logs' %}">Logs</a>
+    </nav>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stat-grid">
+    {% for plan_key, plan_data in revenue_breakdown.items %}
+    <div class="stat-card">
+      <div class="stat-val" style="color:{% if plan_key == 'free' %}var(--muted){% elif plan_key == 'basic' %}var(--accent){% else %}#a78bfa{% endif %}">
+        {% if plan_key == 'free' %}{{ plan_data.subscribers }}{% else %}NGN {{ plan_data.revenue|floatformat:0 }}{% endif %}
+      </div>
+      <div class="stat-lbl">{{ plan_data.name }} {% if plan_key == 'free' %}Users{% else %}Revenue{% endif %}</div>
+      <div class="stat-sub">{{ plan_data.subscribers }} subscriber{{ plan_data.subscribers|pluralize }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Monthly Chart -->
+  <div class="sec">
+    <div class="sec-title">Monthly Revenue (Last 6 Months)</div>
+    {% with max_rev=monthly_data|last %}
+    <div class="chart-wrap" id="monthlyChart">
+      {% for month in monthly_data %}
+      <div class="chart-bar-col">
+        <span class="chart-val">{{ month.revenue|floatformat:0 }}</span>
+        <div class="chart-bar"
+          data-revenue="{{ month.revenue }}"
+          style="height:4px">
+        </div>
+        <span class="chart-label">{{ month.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endwith %}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;color:var(--muted)">Total Revenue (All Time)</span>
+      <span style="font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;color:var(--gold)">NGN {{ total_revenue|floatformat:0 }}</span>
+    </div>
+  </div>
+
+  <!-- Plan Breakdown Table -->
+  <div class="sec">
+    <div class="sec-title">Plan Breakdown</div>
+    <div style="overflow-x:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Price (NGN)</th>
+            <th>Subscribers</th>
+            <th>Revenue</th>
+            <th>% of Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for plan_key, plan_data in revenue_breakdown.items %}
+          <tr>
+            <td><span class="badge-sm plan-{{ plan_key }}">{{ plan_data.name }}</span></td>
+            <td style="font-weight:600">{% if plan_key == 'free' %}Free{% else %}{{ plan_data.price|floatformat:0 }}{% endif %}</td>
+            <td style="color:var(--accent);font-weight:600">{{ plan_data.subscribers }}</td>
+            <td style="font-weight:700;color:{% if plan_key == 'free' %}var(--muted){% else %}var(--gold){% endif %}">
+              {% if plan_key == 'free' %}—{% else %}NGN {{ plan_data.revenue|floatformat:0 }}{% endif %}
+            </td>
+            <td>
+              {% if total_revenue > 0 and plan_key != 'free' %}
+                {% widthratio plan_data.revenue total_revenue 100 %}%
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          <tr style="background:rgba(255,255,255,.02)">
+            <td colspan="3" style="font-weight:700;color:var(--text2)">Total</td>
+            <td style="font-weight:700;color:var(--gold);font-family:'Orbitron',sans-serif">NGN {{ total_revenue|floatformat:0 }}</td>
+            <td style="color:var(--muted)">100%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="sec" style="padding:0;overflow:hidden">
+    <div style="padding:20px 20px 0">
+      <div class="sec-title">Recent Verified Payments</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Reference</th>
+            <th>Verified At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pay in recent_payments %}
+          <tr>
+            <td>
+              <div style="font-weight:600;font-size:13px">{{ pay.user.email }}</div>
+            </td>
+            <td><span class="badge-sm plan-{{ pay.plan }}">{{ pay.plan|upper }}</span></td>
+            <td style="font-weight:700;color:var(--gold)">{{ pay.currency }} {{ pay.amount|floatformat:0 }}</td>
+            <td style="font-family:monospace;font-size:11px;color:var(--muted)">{{ pay.reference|truncatechars:22 }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ pay.verified_at|date:"d M Y H:i"|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">No verified payments yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Animate monthly revenue bars
+document.addEventListener('DOMContentLoaded', () => {
+  const bars = document.querySelectorAll('.chart-bar[data-revenue]');
+  const revenues = Array.from(bars).map(b => parseFloat(b.dataset.revenue) || 0);
+  const maxRev = Math.max(...revenues, 1);
+  setTimeout(() => {
+    bars.forEach(bar => {
+      const rev = parseFloat(bar.dataset.revenue) || 0;
+      const pct = (rev / maxRev) * 100;
+      bar.style.height = Math.max(pct, 2) + 'px';
+    });
+  }, 100);
+});
+</script>
+{% endblock %}

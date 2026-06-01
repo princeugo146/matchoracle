@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Admin — Weekly Tips{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:1200px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:9px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-table tr:hover td{background:rgba(255,255,255,.02);}
+.badge-sm{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.pro-yes{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);}
+.pro-no{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+@media(max-width:768px){.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">⚽ Weekly Tips</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">{{ tips|length }} tip{{ tips|length|pluralize }}</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_users' %}">Users</a>
+      <a href="{% url 'admin_tips' %}" class="active">Tips</a>
+      <a href="{% url 'admin_revenue' %}">Revenue</a>
+      <a href="{% url 'admin_logs' %}">Logs</a>
+    </nav>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+    <a href="{% url 'admin_tip_create' %}" class="btn btn-p" style="font-size:13px;padding:10px 20px">
+      ➕ Add New Tip
+    </a>
+  </div>
+
+  <div class="sec" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Match</th>
+            <th>Competition</th>
+            <th>Tip</th>
+            <th>Confidence</th>
+            <th>Pro Only</th>
+            <th>Match Date</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tip in tips %}
+          <tr>
+            <td style="color:var(--muted);font-size:12px">{{ tip.pk }}</td>
+            <td>
+              <div style="font-weight:600">{{ tip.home_team }}</div>
+              <div style="font-size:11px;color:var(--muted)">vs {{ tip.away_team }}</div>
+            </td>
+            <td style="color:var(--text2);font-size:12px">{{ tip.competition }}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tip.tip }}</td>
+            <td>
+              <span style="font-weight:700;font-size:13px;color:{% if tip.confidence >= 75 %}var(--green){% elif tip.confidence >= 60 %}var(--gold){% else %}var(--red){% endif %}">
+                {{ tip.confidence }}%
+              </span>
+            </td>
+            <td>
+              <span class="badge-sm {% if tip.is_pro_only %}pro-yes{% else %}pro-no{% endif %}">
+                {% if tip.is_pro_only %}Pro{% else %}Free{% endif %}
+              </span>
+            </td>
+            <td style="color:var(--muted);font-size:12px;white-space:nowrap">{{ tip.match_date|date:"d M Y H:i" }}</td>
+            <td style="color:var(--muted);font-size:12px;white-space:nowrap">{{ tip.created_at|date:"d M Y" }}</td>
+            <td>
+              <div style="display:flex;gap:6px;white-space:nowrap">
+                <a href="{% url 'admin_tip_edit' tip.pk %}"
+                   style="font-size:11px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid rgba(0,212,255,.2);border-radius:6px">
+                  ✏ Edit
+                </a>
+                <form method="post" action="{% url 'admin_tip_delete' tip.pk %}" onsubmit="return confirm('Delete tip: {{ tip.home_team }} vs {{ tip.away_team }}?')">
+                  {% csrf_token %}
+                  <button type="submit"
+                    style="font-size:11px;color:var(--red);background:none;border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:4px 10px;cursor:pointer">
+                    🗑 Del
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">
+              No tips yet.
+              <a href="{% url 'admin_tip_create' %}" style="color:var(--accent)">Add the first one →</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
