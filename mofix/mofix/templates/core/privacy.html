@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:800px;margin:60px auto;padding-bottom:60px">
+
+  <div style="margin-bottom:36px">
+    <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px">Legal</div>
+    <h1 style="font-size:32px;font-weight:700;margin-bottom:10px">Privacy Policy</h1>
+    <p style="color:var(--text2);font-size:14px">Last updated: January 2026 &nbsp;·&nbsp; Effective immediately</p>
+  </div>
+
+  <div class="card" style="line-height:1.8;font-size:14px;color:var(--text2)">
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">1. Introduction</h2>
+      <p>MatchOracle ("we", "our", or "us") is committed to protecting your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our platform at matchoracle.com and any associated services. By using MatchOracle, you agree to the practices described in this policy.</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">2. Data We Collect</h2>
+      <p style="margin-bottom:10px">We collect the following categories of information:</p>
+      <ul style="padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <li><strong style="color:var(--text)">Account data</strong> — email address, username, and password (stored as a secure hash).</li>
+        <li><strong style="color:var(--text)">Profile data</strong> — first name, phone number, and subscription plan.</li>
+        <li><strong style="color:var(--text)">Usage data</strong> — prediction history, engine inputs/outputs, and session activity.</li>
+        <li><strong style="color:var(--text)">Payment data</strong> — transaction references and plan details. Full card numbers are never stored; payments are processed by Paystack.</li>
+        <li><strong style="color:var(--text)">Technical data</strong> — IP address, browser type, and device information collected automatically via server logs.</li>
+      </ul>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">3. How We Use Your Data</h2>
+      <p style="margin-bottom:10px">Your data is used to:</p>
+      <ul style="padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <li>Provide, operate, and improve the MatchOracle prediction service.</li>
+        <li>Process payments and manage your subscription.</li>
+        <li>Send transactional emails (e.g. password resets, payment confirmations).</li>
+        <li>Detect and prevent fraud or abuse.</li>
+        <li>Comply with legal obligations.</li>
+      </ul>
+      <p style="margin-top:10px">We do <strong style="color:var(--text)">not</strong> sell your personal data to third parties, and we do not use it for advertising profiling.</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">4. GDPR Compliance</h2>
+      <p>If you are located in the European Economic Area (EEA), you have the following rights under the General Data Protection Regulation (GDPR):</p>
+      <ul style="padding-left:20px;margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <li><strong style="color:var(--text)">Right of access</strong> — request a copy of the personal data we hold about you.</li>
+        <li><strong style="color:var(--text)">Right to rectification</strong> — request correction of inaccurate data.</li>
+        <li><strong style="color:var(--text)">Right to erasure</strong> — request deletion of your account and associated data.</li>
+        <li><strong style="color:var(--text)">Right to restriction</strong> — request that we limit how we process your data.</li>
+        <li><strong style="color:var(--text)">Right to portability</strong> — receive your data in a structured, machine-readable format.</li>
+        <li><strong style="color:var(--text)">Right to object</strong> — object to processing based on legitimate interests.</li>
+      </ul>
+      <p style="margin-top:10px">To exercise any of these rights, contact us at <a href="mailto:privacy@matchoracle.com" style="color:var(--accent)">privacy@matchoracle.com</a>. We will respond within 30 days.</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">5. Data Retention</h2>
+      <p>We retain your account data for as long as your account is active. If you delete your account, we will erase your personal data within 30 days, except where we are required to retain it for legal or financial compliance purposes (e.g. payment records, which are kept for 7 years in line with standard accounting requirements).</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">6. Third-Party Services</h2>
+      <p>We use the following third-party services that may process your data:</p>
+      <ul style="padding-left:20px;margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <li><strong style="color:var(--text)">Paystack</strong> — payment processing. Subject to Paystack's own privacy policy.</li>
+        <li><strong style="color:var(--text)">Anthropic (Claude AI)</strong> — AI-powered prediction insights. Inputs are processed but not stored by Anthropic for training without consent.</li>
+        <li><strong style="color:var(--text)">Railway</strong> — cloud hosting infrastructure.</li>
+      </ul>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">7. Cookies</h2>
+      <p>We use session cookies to keep you logged in and CSRF cookies to protect form submissions. We do not use tracking or advertising cookies. You can disable cookies in your browser settings, but this will prevent you from logging in.</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">8. Security</h2>
+      <p>We implement industry-standard security measures including HTTPS encryption, hashed passwords (Django's PBKDF2 algorithm), and secure session management. No system is 100% secure; if you believe your account has been compromised, contact us immediately.</p>
+    </div>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">9. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. We will notify you of significant changes by posting a notice on the platform or sending an email. Continued use of MatchOracle after changes constitutes acceptance of the updated policy.</p>
+    </div>
+
+    <div>
+      <h2 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:10px">10. Contact</h2>
+      <p>For privacy-related questions or to exercise your rights, contact us at:<br>
+      <a href="mailto:privacy@matchoracle.com" style="color:var(--accent)">privacy@matchoracle.com</a></p>
+    </div>
+
+  </div>
+
+  <div style="margin-top:24px;display:flex;gap:16px;flex-wrap:wrap">
+    <a href="/terms/" class="btn btn-s" style="font-size:13px">Terms of Service</a>
+    <a href="/about/" class="btn btn-s" style="font-size:13px">About Us</a>
+  </div>
+
+</div>
+{% endblock %}

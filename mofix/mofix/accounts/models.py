@@ -96,3 +96,14 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.plan} - {self.status}"
+
+
+class RevenueDashboard(Payment):
+    """
+    Proxy model that surfaces a read-only revenue dashboard in the Django admin.
+    No extra database table is created — it reuses the Payment table.
+    """
+    class Meta:
+        proxy = True
+        verbose_name = 'Revenue Dashboard'
+        verbose_name_plural = 'Revenue Dashboard'
