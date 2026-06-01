@@ -1,0 +1,72 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}Weekly Tips{% endblock %}
+{% block page_title %}Weekly Tips{% endblock %}
+{% block nav_tips %}active{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="section-title">Weekly Tips</div>
+    <div class="section-sub">{{ tips|length }} tip{{ tips|length|pluralize }} total</div>
+  </div>
+  <a href="/panel/tips/create/" class="btn btn-admin">+ Create Tip</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th>Competition</th>
+          <th>Tip</th>
+          <th>Confidence</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Result</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tip in tips %}
+        <tr>
+          <td>
+            <div style="font-weight:600;font-size:13px">{{ tip.home_team }} vs {{ tip.away_team }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ tip.title|truncatechars:40 }}</div>
+          </td>
+          <td style="font-size:12px;color:var(--text2)">{{ tip.competition }}</td>
+          <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tip.tip }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="width:40px;height:6px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden">
+                <div style="height:100%;border-radius:6px;width:{{ tip.confidence }}%;background:{% if tip.confidence >= 80 %}var(--green){% elif tip.confidence >= 60 %}var(--gold){% else %}var(--red){% endif %}"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:{% if tip.confidence >= 80 %}var(--green){% elif tip.confidence >= 60 %}var(--gold){% else %}var(--red){% endif %}">{{ tip.confidence }}%</span>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--muted)">{{ tip.match_date|date:"M d, Y" }}</td>
+          <td>
+            {% if tip.is_published %}<span class="badge badge-active">Published</span>{% else %}<span class="badge badge-inactive">Draft</span>{% endif %}
+            {% if tip.is_pro_only %}<span class="badge badge-pro" style="margin-left:4px">Pro</span>{% endif %}
+          </td>
+          <td>
+            {% if tip.result == 'win' %}<span class="badge badge-win">Win</span>
+            {% elif tip.result == 'loss' %}<span class="badge badge-inactive">Loss</span>
+            {% elif tip.result == 'void' %}<span class="badge badge-pending">Void</span>
+            {% else %}<span style="font-size:12px;color:var(--muted)">Pending</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="/panel/tips/{{ tip.pk }}/edit/" class="btn btn-s btn-sm">Edit</a>
+              <a href="/panel/tips/{{ tip.pk }}/delete/" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">No tips yet. <a href="/panel/tips/create/" style="color:var(--accent)">Create one →</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

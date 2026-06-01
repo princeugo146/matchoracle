@@ -1,0 +1,128 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="section-title">Users</div>
+    <div class="section-sub">{{ total_count }} user{{ total_count|pluralize }} found</div>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:20px">
+  <form method="get" class="search-bar">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by email or name…" style="max-width:280px">
+    <select name="plan">
+      <option value="">All Plans</option>
+      <option value="free" {% if plan_filter == 'free' %}selected{% endif %}>Free</option>
+      <option value="basic" {% if plan_filter == 'basic' %}selected{% endif %}>Basic</option>
+      <option value="pro" {% if plan_filter == 'pro' %}selected{% endif %}>Pro</option>
+    </select>
+    <select name="status">
+      <option value="">All Status</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+      <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+    </select>
+    <button type="submit" class="btn btn-p btn-sm">Filter</button>
+    <a href="/panel/users/" class="btn btn-s btn-sm">Clear</a>
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Predictions</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <div style="font-weight:600;font-size:13px">{{ u.first_name|default:u.email }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ u.email }}</div>
+          </td>
+          <td>
+            <span class="badge badge-{{ u.plan }}">{{ u.plan|upper }}</span>
+          </td>
+          <td style="color:var(--text2)">{{ u.pred_count }}</td>
+          <td style="color:var(--muted);font-size:12px">{{ u.date_joined|date:"M d, Y" }}</td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge badge-active">Active</span>
+            {% else %}
+              <span class="badge badge-inactive">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <a href="/panel/users/{{ u.pk }}/" class="btn btn-s btn-sm">View</a>
+              <form method="post" action="/panel/users/{{ u.pk }}/toggle/" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn {% if u.is_active %}btn-danger{% else %}btn-p{% endif %} btn-sm"
+                  onclick="return confirm('{% if u.is_active %}Deactivate{% else %}Activate{% endif %} {{ u.email }}?')">
+                  {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                </button>
+              </form>
+              <button onclick="showPlanModal({{ u.pk }}, '{{ u.email }}', '{{ u.plan }}')" class="btn btn-s btn-sm">Plan</button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">No users found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Plan Change Modal -->
+<div id="planModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+  <div class="card" style="width:100%;max-width:400px;margin:20px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px">Change User Plan</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px" id="planModalEmail"></div>
+    <form method="post" id="planForm">
+      {% csrf_token %}
+      <div class="field">
+        <label>New Plan</label>
+        <select name="plan" id="planSelect">
+          <option value="free">Free</option>
+          <option value="basic">Basic (NGN 2,000/month)</option>
+          <option value="pro">Pro (NGN 15,000/year)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="btn btn-admin">Update Plan</button>
+        <button type="button" onclick="closePlanModal()" class="btn btn-s">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showPlanModal(userId, email, currentPlan) {
+  document.getElementById('planModal').style.display = 'flex';
+  document.getElementById('planModalEmail').textContent = email;
+  document.getElementById('planForm').action = '/panel/users/' + userId + '/plan/';
+  document.getElementById('planSelect').value = currentPlan;
+}
+function closePlanModal() {
+  document.getElementById('planModal').style.display = 'none';
+}
+document.getElementById('planModal').addEventListener('click', function(e) {
+  if(e.target === this) closePlanModal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}Privacy Policy{% endblock %}
+{% block extra_css %}
+<style>
+.legal-wrap{max-width:820px;margin:0 auto;padding:48px 20px 80px;}
+.legal-hero{text-align:center;margin-bottom:48px;}
+.legal-hero h1{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;margin-bottom:12px;}
+.legal-hero p{color:var(--text2);font-size:14px;}
+.legal-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+.legal-toc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:36px;}
+.legal-toc h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;font-weight:600;}
+.legal-toc ol{padding-left:18px;display:flex;flex-direction:column;gap:6px;}
+.legal-toc li a{color:var(--accent);text-decoration:none;font-size:13px;}
+.legal-toc li a:hover{text-decoration:underline;}
+.legal-section{margin-bottom:40px;}
+.legal-section h2{font-size:18px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.legal-section h2 .num{background:rgba(0,212,255,.12);color:var(--accent);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.legal-section p{color:var(--text2);font-size:14px;line-height:1.8;margin-bottom:12px;}
+.legal-section ul,.legal-section ol{color:var(--text2);font-size:14px;line-height:1.8;padding-left:20px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;}
+.legal-section li{padding-left:4px;}
+.legal-section strong{color:var(--text);font-weight:600;}
+.legal-highlight{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:14px 18px;margin-bottom:16px;}
+.legal-highlight p{margin-bottom:0;color:var(--text);}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;margin-top:40px;}
+.contact-card h3{font-size:16px;font-weight:700;margin-bottom:8px;}
+.contact-card p{color:var(--text2);font-size:13px;margin-bottom:16px;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="legal-wrap">
+  <div class="legal-hero">
+    <div class="legal-badge">🔒 Privacy Policy</div>
+    <h1>Your Privacy Matters</h1>
+    <p>Last updated: {{ last_updated|date:"F j, Y" }} &nbsp;·&nbsp; Version {{ version }}</p>
+  </div>
+
+  <div class="legal-highlight">
+    <p><strong>Summary:</strong> MatchOracle collects only the data necessary to provide our football prediction service. We do not sell your personal data to third parties. You have full control over your information and can request deletion at any time.</p>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="legal-toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#collection">Information We Collect</a></li>
+      <li><a href="#use">How We Use Your Data</a></li>
+      <li><a href="#sharing">Data Sharing & Third Parties</a></li>
+      <li><a href="#security">Data Security</a></li>
+      <li><a href="#retention">Data Retention</a></li>
+      <li><a href="#rights">Your Rights</a></li>
+      <li><a href="#cookies">Cookies & Tracking</a></li>
+      <li><a href="#children">Children's Privacy</a></li>
+      <li><a href="#changes">Changes to This Policy</a></li>
+      <li><a href="#contact">Contact Us</a></li>
+    </ol>
+  </div>
+
+  <!-- Section 1 -->
+  <div class="legal-section" id="collection">
+    <h2><span class="num">1</span> Information We Collect</h2>
+    <p>We collect information you provide directly to us and information generated through your use of our service.</p>
+    <p><strong>Account Information:</strong></p>
+    <ul>
+      <li>Email address (required for account creation and login)</li>
+      <li>First name (optional, used for personalisation)</li>
+      <li>Phone number (optional)</li>
+      <li>Password (stored as a secure hash — we never store plain-text passwords)</li>
+    </ul>
+    <p><strong>Usage Data:</strong></p>
+    <ul>
+      <li>Prediction history — the teams, engines, and results of your predictions</li>
+      <li>Session data — pages visited, features used, time spent</li>
+      <li>Device and browser information (user agent, screen resolution)</li>
+      <li>IP address (used for security and fraud prevention)</li>
+    </ul>
+    <p><strong>Payment Information:</strong></p>
+    <ul>
+      <li>Subscription plan and payment status</li>
+      <li>Payment reference numbers from Paystack</li>
+      <li><strong>We do not store card numbers, CVV, or bank account details.</strong> All payment processing is handled by Paystack, a PCI-DSS compliant payment processor.</li>
+    </ul>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="legal-section" id="use">
+    <h2><span class="num">2</span> How We Use Your Data</h2>
+    <p>We use the information we collect to:</p>
+    <ul>
+      <li><strong>Provide the service</strong> — process predictions, display results, manage your account and subscription</li>
+      <li><strong>Improve accuracy</strong> — our self-learning system uses anonymised prediction outcomes to improve future predictions</li>
+      <li><strong>Personalise your experience</strong> — remember your preferences, show relevant tips, track your prediction history</li>
+      <li><strong>Process payments</strong> — verify subscription payments and activate your plan</li>
+      <li><strong>Send service communications</strong> — account confirmations, subscription reminders, important updates (no marketing spam)</li>
+      <li><strong>Ensure security</strong> — detect and prevent fraud, abuse, and unauthorised access</li>
+      <li><strong>Comply with legal obligations</strong> — respond to lawful requests from authorities where required</li>
+    </ul>
+    <p>We do <strong>not</strong> use your data for targeted advertising or sell it to data brokers.</p>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="legal-section" id="sharing">
+    <h2><span class="num">3</span> Data Sharing &amp; Third Parties</h2>
+    <p>We share your data only in the following limited circumstances:</p>
+    <ul>
+      <li><strong>Paystack</strong> — payment processing. Your payment details are governed by <a href="https://paystack.com/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Paystack's Privacy Policy</a>.</li>
+      <li><strong>Anthropic (Claude AI)</strong> — natural language prediction queries are processed by Claude AI. Queries are not linked to your personal identity.</li>
+      <li><strong>Railway (Hosting)</strong> — our infrastructure provider. Data is stored on Railway's servers in accordance with their data processing agreement.</li>
+      <li><strong>Legal requirements</strong> — we may disclose your information if required by law, court order, or to protect the rights and safety of MatchOracle and its users.</li>
+    </ul>
+    <p>We do <strong>not</strong> sell, rent, or trade your personal information to any third party for commercial purposes.</p>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="legal-section" id="security">
+    <h2><span class="num">4</span> Data Security</h2>
+    <p>We implement industry-standard security measures to protect your data:</p>
+    <ul>
+      <li><strong>Encryption in transit</strong> — all data transmitted between your browser and our servers is encrypted using TLS/HTTPS</li>
+      <li><strong>Password hashing</strong> — passwords are hashed using Django's PBKDF2 algorithm with a SHA-256 hash</li>
+      <li><strong>API key security</strong> — API keys are generated using cryptographically secure random tokens</li>
+      <li><strong>Access controls</strong> — only authorised staff can access user data, and all admin actions are logged</li>
+      <li><strong>Regular updates</strong> — we keep our software dependencies up to date to patch security vulnerabilities</li>
+    </ul>
+    <p>While we take security seriously, no system is 100% secure. If you discover a security vulnerability, please contact us immediately at <strong>security@matchoracle.com</strong>.</p>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="legal-section" id="retention">
+    <h2><span class="num">5</span> Data Retention</h2>
+    <p>We retain your data for as long as your account is active or as needed to provide services:</p>
+    <ul>
+      <li><strong>Account data</strong> — retained while your account is active and for 90 days after deletion</li>
+      <li><strong>Prediction history</strong> — retained for 2 years to power the self-learning accuracy system</li>
+      <li><strong>Payment records</strong> — retained for 7 years for financial and legal compliance</li>
+      <li><strong>Session logs</strong> — retained for 30 days for security monitoring</li>
+    </ul>
+    <p>You may request deletion of your account and associated data at any time (see Your Rights below). Payment records may be retained longer where required by law.</p>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="legal-section" id="rights">
+    <h2><span class="num">6</span> Your Rights</h2>
+    <p>You have the following rights regarding your personal data:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of the personal data we hold about you</li>
+      <li><strong>Correction</strong> — request correction of inaccurate or incomplete data</li>
+      <li><strong>Deletion</strong> — request deletion of your account and personal data ("right to be forgotten")</li>
+      <li><strong>Portability</strong> — request your data in a machine-readable format</li>
+      <li><strong>Objection</strong> — object to processing of your data for certain purposes</li>
+      <li><strong>Restriction</strong> — request restriction of processing in certain circumstances</li>
+    </ul>
+    <p>To exercise any of these rights, contact us at <strong>privacy@matchoracle.com</strong>. We will respond within 30 days. Some requests may be subject to identity verification.</p>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="legal-section" id="cookies">
+    <h2><span class="num">7</span> Cookies &amp; Tracking</h2>
+    <p>We use the following types of cookies:</p>
+    <ul>
+      <li><strong>Session cookies</strong> — essential for keeping you logged in. These expire when you close your browser or after 30 days.</li>
+      <li><strong>CSRF tokens</strong> — security cookies that protect against cross-site request forgery attacks</li>
+      <li><strong>Preference cookies</strong> — remember your settings (e.g. dismissed install banners)</li>
+    </ul>
+    <p>We do <strong>not</strong> use advertising cookies, third-party tracking pixels, or analytics services that profile your behaviour across other websites.</p>
+    <p>You can control cookies through your browser settings. Disabling session cookies will prevent you from logging in.</p>
+  </div>
+
+  <!-- Section 8 -->
+  <div class="legal-section" id="children">
+    <h2><span class="num">8</span> Children's Privacy</h2>
+    <p>MatchOracle is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided us with personal information, please contact us immediately and we will delete it.</p>
+    <p>Users between 13 and 18 should use the service only with parental consent.</p>
+  </div>
+
+  <!-- Section 9 -->
+  <div class="legal-section" id="changes">
+    <h2><span class="num">9</span> Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. When we make significant changes, we will:</p>
+    <ul>
+      <li>Update the "Last updated" date at the top of this page</li>
+      <li>Notify registered users via email for material changes</li>
+      <li>Display a notice on the platform</li>
+    </ul>
+    <p>Your continued use of MatchOracle after changes are posted constitutes your acceptance of the updated policy. We encourage you to review this policy periodically.</p>
+  </div>
+
+  <!-- Section 10 -->
+  <div class="legal-section" id="contact">
+    <h2><span class="num">10</span> Contact Us</h2>
+    <p>If you have questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact us:</p>
+    <ul>
+      <li><strong>Email:</strong> privacy@matchoracle.com</li>
+      <li><strong>Security issues:</strong> security@matchoracle.com</li>
+      <li><strong>General support:</strong> support@matchoracle.com</li>
+    </ul>
+    <p>We aim to respond to all privacy-related enquiries within 5 business days.</p>
+  </div>
+
+  <div class="contact-card">
+    <h3>Questions about your privacy?</h3>
+    <p>We're committed to transparency. Reach out and we'll respond within 5 business days.</p>
+    <a href="mailto:privacy@matchoracle.com" class="btn btn-p">Contact Privacy Team</a>
+  </div>
+
+  <div style="text-align:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+    <a href="/terms/" style="color:var(--accent);text-decoration:none;font-size:13px">Terms of Service →</a>
+  </div>
+</div>
+{% endblock %}

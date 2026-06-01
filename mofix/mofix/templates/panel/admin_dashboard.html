@@ -1,0 +1,147 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="g4" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--accent)">{{ total_users }}</div>
+    <div class="stat-label">Total Users</div>
+    <div class="stat-sub">+{{ new_users_week }} this week</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--green)">{{ total_predictions }}</div>
+    <div class="stat-label">Total Predictions</div>
+    <div class="stat-sub">+{{ predictions_week }} this week</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--gold)">NGN {{ total_revenue|floatformat:0 }}</div>
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-sub">NGN {{ revenue_month|floatformat:0 }} this month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--accent2)">{{ avg_accuracy }}%</div>
+    <div class="stat-label">Avg Accuracy</div>
+    <div class="stat-sub">{{ active_users }} active users</div>
+  </div>
+</div>
+
+<div class="g2" style="margin-bottom:24px">
+  <!-- Plan Breakdown -->
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Plan Breakdown</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600">Free</span>
+          <span style="font-size:13px;color:var(--text2)">{{ plan_counts.free }} users</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+          <div style="height:100%;background:var(--muted);border-radius:8px;width:{% if total_users %}{% widthratio plan_counts.free total_users 100 %}{% else %}0{% endif %}%"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600;color:var(--accent)">Basic</span>
+          <span style="font-size:13px;color:var(--text2)">{{ plan_counts.basic }} users</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+          <div style="height:100%;background:var(--accent);border-radius:8px;width:{% if total_users %}{% widthratio plan_counts.basic total_users 100 %}{% else %}0{% endif %}%"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:600;color:#a78bfa">Pro</span>
+          <span style="font-size:13px;color:var(--text2)">{{ plan_counts.pro }} users</span>
+        </div>
+        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+          <div style="height:100%;background:#a78bfa;border-radius:8px;width:{% if total_users %}{% widthratio plan_counts.pro total_users 100 %}{% else %}0{% endif %}%"></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <a href="/panel/users/" class="btn btn-s btn-sm">Manage Users</a>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Quick Stats</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text2)">New Users (Month)</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent)">{{ new_users_month }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text2)">Active Users (7d)</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">{{ active_users }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text2)">Published Tips</span>
+        <span style="font-size:13px;font-weight:700;color:var(--gold)">{{ published_tips }} / {{ total_tips }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-size:13px;color:var(--text2)">Revenue (30d)</span>
+        <span style="font-size:13px;font-weight:700;color:var(--gold)">NGN {{ revenue_month|floatformat:0 }}</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <a href="/panel/revenue/" class="btn btn-s btn-sm">Revenue Details</a>
+      <a href="/panel/tips/create/" class="btn btn-admin btn-sm">+ New Tip</a>
+    </div>
+  </div>
+</div>
+
+<div class="g2">
+  <!-- Recent Transactions -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600">Recent Transactions</div>
+      <a href="/panel/revenue/" style="font-size:12px;color:var(--accent);text-decoration:none">View all →</a>
+    </div>
+    {% if recent_payments %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Plan</th><th>Amount</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+          <tr>
+            <td style="color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.user.email }}</td>
+            <td><span class="badge badge-{{ p.plan }}">{{ p.plan }}</span></td>
+            <td style="color:var(--gold);font-weight:600">NGN {{ p.amount|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No transactions yet</div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Admin Activity -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600">Recent Admin Activity</div>
+      <a href="/panel/logs/" style="font-size:12px;color:var(--accent);text-decoration:none">View all →</a>
+    </div>
+    {% if recent_logs %}
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for log in recent_logs %}
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
+        <span style="font-size:16px">{% if log.action == 'create' %}✅{% elif log.action == 'delete' %}🗑️{% elif log.action == 'update' %}✏️{% elif log.action == 'activate' %}🟢{% elif log.action == 'deactivate' %}🔴{% else %}📋{% endif %}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ log.action|upper }}: {{ log.object_repr|truncatechars:40 }}</div>
+          <div style="font-size:11px;color:var(--muted)">{{ log.admin.email|default:"System" }} · {{ log.created_at|timesince }} ago</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No admin activity yet</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
