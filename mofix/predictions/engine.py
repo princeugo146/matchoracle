@@ -1,4 +1,4 @@
-import math, random, json, re, time, requests, logging
+import math, os, random, json, re, time, requests, logging
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -250,15 +250,25 @@ def extract_upcoming_matches(search_results, team_name):
 
 def detect_intent(question):
     """
-    Classify the user's question into one of four intents:
+    Classify the user's question into one of five intents:
       'match_prediction' – asking who will win a match
       'player_comparison' – asking about one or two players
       'simulation'        – asking to simulate a match
+      'greeting'          – greetings and casual conversation
       'general'           – general football question
 
     Returns a dict: {intent, teams, players, confidence}
     """
-    q = question.lower()
+    q = question.lower().strip()
+
+    # Greeting / casual conversation keywords — check before anything else
+    greeting_keywords = [
+        'hello', 'hi ', 'hey', 'good morning', 'good afternoon', 'good evening',
+        'good night', 'how are you', 'how r you', 'how do you do', 'what\'s up',
+        'whats up', 'sup ', 'greetings', 'howdy', 'yo ', 'hiya',
+    ]
+    if any(k in q for k in greeting_keywords) or q in ('hi', 'hey', 'yo', 'sup'):
+        return {'intent': 'greeting', 'teams': [], 'players': [], 'confidence': 95}
 
     # Simulation keywords
     sim_keywords = ['simulat', 'run a sim', 'monte carlo', 'simulate']
@@ -279,8 +289,8 @@ def detect_intent(question):
                       'predict', 'who will', 'score', 'result', 'fixture']
     if any(k in q for k in match_keywords):
         teams = _extract_team_names(q)
-        if teams:
-            return {'intent': 'match_prediction', 'teams': teams, 'players': [], 'confidence': 85}
+        # Return match_prediction even without teams so the caller can prompt for them
+        return {'intent': 'match_prediction', 'teams': teams, 'players': [], 'confidence': 85}
 
     # Default: general
     return {'intent': 'general', 'teams': [], 'players': [], 'confidence': 60}
@@ -382,7 +392,7 @@ def parse_form(s):
     return total/wtotal if wtotal else 0.5
 
 def call_ai(system, user_msg, max_tokens=700):
-    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY','')
+    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
     if not key: return None
     try:
         resp = requests.post(
@@ -515,6 +525,8 @@ def engine_a(data):
         f"Based on ALL the above data, provide your expert assessment. Consider form, injuries, head-to-head record, tactical matchup, and xG.\n"
         f'Return JSON: {{"homeWin":0.50,"draw":0.25,"awayWin":0.25,"insight":"3-4 sentence expert tactical analysis explaining WHY one team has the edge, referencing form, injuries, and head-to-head","predicted_score":"{predicted_score}","tactical_note":"one sentence on the key tactical battle that will decide this match"}}'
     )
+    logger.info(f"AI key available: {bool(settings.MATCHORACLE.get('ANTHROPIC_API_KEY') or os.environ.get('ANTHROPIC_API_KEY'))}")
+    logger.info(f"Engine A AI result: {bool(ai)}")
 
     if ai and 'homeWin' in ai:
         fh=v1h*0.55+float(ai['homeWin'])*0.45
