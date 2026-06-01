@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Admin layout ─────────────────────────────────────────────────────────── */
+.adm-wrap{max-width:1300px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+
+/* ── Stat cards ───────────────────────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;inset:0;opacity:.04;border-radius:14px;}
+.stat-card.blue::before{background:var(--accent);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.purple::before{background:#a78bfa;}
+.stat-card.gold::before{background:var(--gold);}
+.stat-icon{font-size:28px;margin-bottom:10px;}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:700;line-height:1;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:1px;text-transform:uppercase;}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:6px;}
+
+/* ── Section cards ────────────────────────────────────────────────────────── */
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+.sec-title{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);}
+.sec-link{font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;}
+.sec-link:hover{text-decoration:underline;}
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:9px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-table tr:hover td{background:rgba(255,255,255,.02);}
+
+/* ── Plan badges ──────────────────────────────────────────────────────────── */
+.plan-free{background:rgba(100,116,139,.15);color:var(--text2);border:1px solid var(--border2);}
+.plan-basic{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.plan-pro{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);}
+
+/* ── Revenue bars ─────────────────────────────────────────────────────────── */
+.rev-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.rev-label{width:70px;font-size:12px;font-weight:600;text-transform:uppercase;}
+.rev-bar-wrap{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;}
+.rev-bar{height:100%;border-radius:10px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.rev-val{width:110px;text-align:right;font-size:12px;font-weight:700;color:var(--text2);}
+
+/* ── Action badge ─────────────────────────────────────────────────────────── */
+.act-create{color:var(--green);}
+.act-update{color:var(--accent);}
+.act-delete{color:var(--red);}
+.act-view{color:var(--muted);}
+.act-login{color:var(--gold);}
+.act-other{color:var(--text2);}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:540px){.stat-grid{grid-template-columns:1fr 1fr;}.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <!-- Header -->
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">⚙ Admin Panel</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">MatchOracle Staff Dashboard</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}" class="active">Dashboard</a>
+      <a href="{% url 'admin_users' %}">Users</a>
+      <a href="{% url 'admin_tips' %}">Tips</a>
+      <a href="{% url 'admin_revenue' %}">Revenue</a>
+      <a href="{% url 'admin_logs' %}">Logs</a>
+      <a href="/admin/" style="border-color:rgba(124,58,237,.4);color:#a78bfa;">Django Admin</a>
+    </nav>
+  </div>
+
+  <!-- Stat Cards Row 1: Users -->
+  <div class="stat-grid">
+    <div class="stat-card blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-val" style="color:var(--accent)">{{ total_users }}</div>
+      <div class="stat-lbl">Total Users</div>
+      <div class="stat-sub">+{{ new_this_week }} this week</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-val" style="color:var(--green)">{{ active_users }}</div>
+      <div class="stat-lbl">Active (30d)</div>
+      <div class="stat-sub">{{ staff_count }} staff member{{ staff_count|pluralize }}</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-val" style="color:#a78bfa">{{ total_predictions }}</div>
+      <div class="stat-lbl">Total Predictions</div>
+      <div class="stat-sub">{{ predictions_today }} today · {{ predictions_week }} this week</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-icon">💰</div>
+      <div class="stat-val" style="color:var(--gold)">
+        {% if total_revenue >= 1000000 %}
+          {{ total_revenue|floatformat:0 }}
+        {% else %}
+          {{ total_revenue|floatformat:0 }}
+        {% endif %}
+      </div>
+      <div class="stat-lbl">Total Revenue (NGN)</div>
+      <div class="stat-sub">Verified payments only</div>
+    </div>
+  </div>
+
+  <!-- Two-column layout -->
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- Plan Distribution -->
+      <div class="sec">
+        <div class="sec-head">
+          <span class="sec-title">Plan Distribution</span>
+          <a href="{% url 'admin_users' %}" class="sec-link">Manage Users →</a>
+        </div>
+        {% for pc in plan_counts %}
+        <div class="rev-row">
+          <span class="rev-label">{{ pc.plan|upper }}</span>
+          <div class="rev-bar-wrap">
+            <div class="rev-bar"
+              style="width:{% if total_users %}{% widthratio pc.count total_users 100 %}{% else %}0{% endif %}%;
+                     background:{% if pc.plan == 'free' %}var(--muted){% elif pc.plan == 'basic' %}var(--accent){% else %}#a78bfa{% endif %}">
+            </div>
+          </div>
+          <span class="rev-val">{{ pc.count }} user{{ pc.count|pluralize }}</span>
+        </div>
+        {% empty %}
+        <p style="color:var(--muted);font-size:13px">No users yet.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Revenue Breakdown -->
+      <div class="sec">
+        <div class="sec-head">
+          <span class="sec-title">Revenue by Plan</span>
+          <a href="{% url 'admin_revenue' %}" class="sec-link">Full Report →</a>
+        </div>
+        {% for plan_key, plan_data in revenue_breakdown.items %}
+        {% if plan_key != 'free' %}
+        <div class="rev-row">
+          <span class="rev-label">{{ plan_data.name }}</span>
+          <div class="rev-bar-wrap">
+            <div class="rev-bar"
+              style="width:{% if total_revenue > 0 %}{% widthratio plan_data.revenue total_revenue 100 %}{% else %}0{% endif %}%;
+                     background:{% if plan_key == 'basic' %}var(--accent){% else %}#a78bfa{% endif %}">
+            </div>
+          </div>
+          <span class="rev-val">NGN {{ plan_data.revenue|floatformat:0 }}</span>
+        </div>
+        {% endif %}
+        {% endfor %}
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--muted)">Total Revenue</span>
+          <span style="font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--gold)">NGN {{ total_revenue|floatformat:0 }}</span>
+        </div>
+      </div>
+
+      <!-- Recent Tips -->
+      <div class="sec">
+        <div class="sec-head">
+          <span class="sec-title">Weekly Tips</span>
+          <div style="display:flex;gap:8px">
+            <a href="{% url 'admin_tip_create' %}" class="sec-link" style="background:rgba(0,212,255,.08);padding:5px 12px;border-radius:7px;border:1px solid rgba(0,212,255,.2)">+ Add Tip</a>
+            <a href="{% url 'admin_tips' %}" class="sec-link">Manage All →</a>
+          </div>
+        </div>
+        {% if tips %}
+        <div style="overflow-x:auto">
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th>Match</th>
+                <th>Tip</th>
+                <th>Conf.</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tip in tips %}
+              <tr>
+                <td>
+                  <div style="font-weight:600;font-size:13px">{{ tip.home_team }} vs {{ tip.away_team }}</div>
+                  <div style="font-size:11px;color:var(--muted)">{{ tip.competition }}</div>
+                </td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tip.tip }}</td>
+                <td>
+                  <span style="font-weight:700;color:{% if tip.confidence >= 75 %}var(--green){% elif tip.confidence >= 60 %}var(--gold){% else %}var(--red){% endif %}">
+                    {{ tip.confidence }}%
+                  </span>
+                </td>
+                <td style="color:var(--muted);font-size:12px">{{ tip.match_date|date:"d M Y" }}</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <a href="{% url 'admin_tip_edit' tip.pk %}" style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(0,212,255,.2);border-radius:5px">Edit</a>
+                    <form method="post" action="{% url 'admin_tip_delete' tip.pk %}" onsubmit="return confirm('Delete this tip?')">
+                      {% csrf_token %}
+                      <button type="submit" style="font-size:11px;color:var(--red);background:none;border:1px solid rgba(239,68,68,.2);border-radius:5px;padding:3px 8px;cursor:pointer">Del</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">No tips yet. <a href="{% url 'admin_tip_create' %}" style="color:var(--accent)">Add the first one →</a></p>
+        {% endif %}
+      </div>
+
+    </div><!-- /LEFT -->
+
+    <!-- RIGHT COLUMN -->
+    <div>
+
+      <!-- Quick Actions -->
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">Quick Actions</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="{% url 'admin_tip_create' %}" class="btn btn-p" style="font-size:13px;padding:10px 16px;justify-content:flex-start;gap:10px">
+            <span>➕</span> Add Weekly Tip
+          </a>
+          <a href="{% url 'admin_users' %}" class="btn btn-s" style="font-size:13px;padding:10px 16px;justify-content:flex-start;gap:10px">
+            <span>👥</span> Manage Users
+          </a>
+          <a href="{% url 'admin_revenue' %}" class="btn btn-s" style="font-size:13px;padding:10px 16px;justify-content:flex-start;gap:10px">
+            <span>📊</span> Revenue Report
+          </a>
+          <a href="{% url 'admin_logs' %}" class="btn btn-s" style="font-size:13px;padding:10px 16px;justify-content:flex-start;gap:10px">
+            <span>📋</span> View Audit Logs
+          </a>
+          <a href="/admin/" class="btn btn-s" style="font-size:13px;padding:10px 16px;justify-content:flex-start;gap:10px;border-color:rgba(124,58,237,.3);color:#a78bfa">
+            <span>⚙</span> Django Admin
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Admin Logs -->
+      <div class="sec">
+        <div class="sec-head">
+          <span class="sec-title">Recent Activity</span>
+          <a href="{% url 'admin_logs' %}" class="sec-link">All Logs →</a>
+        </div>
+        {% for log in recent_logs %}
+        <div style="padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);{% if forloop.last %}border-bottom:none{% endif %}">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span class="act-{{ log.action }}" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">{{ log.get_action_display }}</span>
+            {% if log.object_type %}
+            <span style="font-size:10px;color:var(--muted)">· {{ log.object_type }}</span>
+            {% endif %}
+          </div>
+          <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.description }}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">
+            {{ log.admin_user.email|default:"unknown" }} · {{ log.created_at|timesince }} ago
+          </div>
+        </div>
+        {% empty %}
+        <p style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0">No activity yet.</p>
+        {% endfor %}
+      </div>
+
+    </div><!-- /RIGHT -->
+  </div><!-- /grid -->
+
+</div><!-- /adm-wrap -->
+{% endblock %}

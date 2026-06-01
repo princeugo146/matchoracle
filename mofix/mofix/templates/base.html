@@ -145,6 +145,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <a href="/dashboard/" class="nl">Dashboard</a>
         <a href="/dashboard/tips/" class="nl">Tips</a>
         <a href="/accounts/profile/" class="nl">Profile</a>
+        {% if user.is_staff %}<a href="/panel/dashboard/" class="nl" style="color:#a78bfa">⚙ Admin</a>{% endif %}
         <a href="/accounts/logout/" class="btn-n btn-gh">Logout</a>
       {% else %}
         <a href="/accounts/login/" class="btn-n btn-gh">Login</a>

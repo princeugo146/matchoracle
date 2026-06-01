@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Admin — Audit Logs{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:1200px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.filter-bar .field{margin:0;flex:1;min-width:140px;}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:9px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.adm-table tr:hover td{background:rgba(255,255,255,.02);}
+.act-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.act-create{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.act-update{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.act-delete{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.act-view{background:rgba(100,116,139,.12);color:var(--muted);border:1px solid var(--border2);}
+.act-login{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2);}
+.act-other{background:rgba(100,116,139,.12);color:var(--text2);border:1px solid var(--border2);}
+@media(max-width:768px){.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">📋 Audit Logs</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">All admin actions are recorded here</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_users' %}">Users</a>
+      <a href="{% url 'admin_tips' %}">Tips</a>
+      <a href="{% url 'admin_revenue' %}">Revenue</a>
+      <a href="{% url 'admin_logs' %}" class="active">Logs</a>
+    </nav>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="filter-bar">
+    <div class="field">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Description, email, object type…">
+    </div>
+    <div class="field" style="min-width:130px;max-width:180px">
+      <label>Action</label>
+      <select name="action">
+        <option value="">All Actions</option>
+        {% for val, label in action_choices %}
+        <option value="{{ val }}" {% if action_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end">
+      <button type="submit" class="btn btn-p" style="padding:10px 18px;font-size:13px">Filter</button>
+      <a href="{% url 'admin_logs' %}" class="btn btn-s" style="padding:10px 14px;font-size:13px">Clear</a>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="sec">
+    <div style="overflow-x:auto">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Admin</th>
+            <th>Action</th>
+            <th>Object</th>
+            <th>Description</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td style="color:var(--muted);font-size:12px;white-space:nowrap">
+              {{ log.created_at|date:"d M Y" }}<br>
+              <span style="font-size:10px">{{ log.created_at|time:"H:i:s" }}</span>
+            </td>
+            <td style="font-size:12px;font-weight:600">{{ log.admin_user.email|default:"unknown" }}</td>
+            <td>
+              <span class="act-badge act-{{ log.action }}">{{ log.get_action_display }}</span>
+            </td>
+            <td style="font-size:12px;color:var(--text2)">
+              {% if log.object_type %}
+                {{ log.object_type }}
+                {% if log.object_id %}<span style="color:var(--muted)">#{{ log.object_id }}</span>{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td style="font-size:12px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              {{ log.description }}
+            </td>
+            <td style="font-family:monospace;font-size:11px;color:var(--muted)">{{ log.ip_address|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No log entries found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

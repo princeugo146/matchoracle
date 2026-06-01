@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Admin — {{ target_user.email }}{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:1100px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
+.info-row:last-child{border-bottom:none;}
+.info-key{color:var(--muted);font-size:12px;}
+.info-val{font-weight:600;}
+.adm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.adm-table th{padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.adm-table td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.adm-table tr:last-child td{border-bottom:none;}
+.badge-sm{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.plan-free{background:rgba(100,116,139,.15);color:var(--text2);border:1px solid var(--border2);}
+.plan-basic{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.plan-pro{background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.25);}
+.status-active{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.status-inactive{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+@media(max-width:768px){.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">👤 User Detail</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">{{ target_user.email }}</div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_users' %}" class="active">Users</a>
+      <a href="{% url 'admin_tips' %}">Tips</a>
+      <a href="{% url 'admin_revenue' %}">Revenue</a>
+      <a href="{% url 'admin_logs' %}">Logs</a>
+    </nav>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
+
+    <!-- LEFT: Info + History -->
+    <div>
+
+      <!-- Profile Info -->
+      <div class="sec">
+        <div class="sec-title">Profile Information</div>
+        <div class="info-row"><span class="info-key">Email</span><span class="info-val">{{ target_user.email }}</span></div>
+        <div class="info-row"><span class="info-key">Name</span><span class="info-val">{{ target_user.first_name }} {{ target_user.last_name }}</span></div>
+        <div class="info-row"><span class="info-key">Username</span><span class="info-val">{{ target_user.username }}</span></div>
+        <div class="info-row"><span class="info-key">Phone</span><span class="info-val">{{ target_user.phone|default:"—" }}</span></div>
+        <div class="info-row">
+          <span class="info-key">Plan</span>
+          <span class="badge-sm plan-{{ target_user.plan }}">{{ target_user.plan|upper }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Status</span>
+          <span class="badge-sm {% if target_user.is_active %}status-active{% else %}status-inactive{% endif %}">
+            {% if target_user.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </div>
+        <div class="info-row"><span class="info-key">Staff</span><span class="info-val">{% if target_user.is_staff %}Yes{% else %}No{% endif %}</span></div>
+        <div class="info-row"><span class="info-key">Joined</span><span class="info-val">{{ target_user.date_joined|date:"d M Y H:i" }}</span></div>
+        <div class="info-row"><span class="info-key">Last Login</span><span class="info-val">{% if target_user.last_login %}{{ target_user.last_login|date:"d M Y H:i" }}{% else %}Never{% endif %}</span></div>
+        <div class="info-row"><span class="info-key">Subscription End</span><span class="info-val">{{ target_user.subscription_end|date:"d M Y"|default:"—" }}</span></div>
+        <div class="info-row"><span class="info-key">Referral Code</span><span class="info-val" style="font-family:monospace">{{ target_user.referral_code }}</span></div>
+        <div class="info-row"><span class="info-key">Total Predictions</span><span class="info-val" style="color:var(--accent)">{{ target_user.total_predictions }}</span></div>
+        <div class="info-row"><span class="info-key">Accuracy</span><span class="info-val" style="color:var(--green)">{{ target_user.accuracy_rate }}%</span></div>
+      </div>
+
+      <!-- Recent Predictions -->
+      <div class="sec">
+        <div class="sec-title">Recent Predictions</div>
+        {% if predictions %}
+        <div style="overflow-x:auto">
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th>Match</th>
+                <th>Engine</th>
+                <th>Result</th>
+                <th>Conf.</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in predictions %}
+              <tr>
+                <td>
+                  {% if p.home_team %}{{ p.home_team }} vs {{ p.away_team }}
+                  {% else %}<span style="color:var(--muted)">—</span>{% endif %}
+                </td>
+                <td><span style="font-size:11px;color:var(--accent);font-weight:700">{{ p.get_engine_display }}</span></td>
+                <td style="font-size:12px">{{ p.predicted_result|default:"—" }}</td>
+                <td style="color:{% if p.confidence >= 75 %}var(--green){% elif p.confidence >= 55 %}var(--gold){% else %}var(--red){% endif %}">{{ p.confidence }}%</td>
+                <td style="color:var(--muted);font-size:12px">{{ p.created_at|date:"d M Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0">No predictions yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Payment History -->
+      <div class="sec">
+        <div class="sec-title">Payment History</div>
+        {% if payments %}
+        <div style="overflow-x:auto">
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Reference</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pay in payments %}
+              <tr>
+                <td><span class="badge-sm plan-{{ pay.plan }}">{{ pay.plan|upper }}</span></td>
+                <td style="font-weight:600">{{ pay.currency }} {{ pay.amount|floatformat:0 }}</td>
+                <td>
+                  <span style="font-size:11px;font-weight:700;color:{% if pay.status == 'success' %}var(--green){% elif pay.status == 'pending' %}var(--gold){% else %}var(--red){% endif %}">
+                    {{ pay.status|upper }}
+                  </span>
+                </td>
+                <td style="font-family:monospace;font-size:11px;color:var(--muted)">{{ pay.reference|truncatechars:20 }}</td>
+                <td style="color:var(--muted);font-size:12px">{{ pay.created_at|date:"d M Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0">No payments yet.</p>
+        {% endif %}
+      </div>
+
+    </div><!-- /LEFT -->
+
+    <!-- RIGHT: Actions -->
+    <div>
+      <div class="sec">
+        <div class="sec-title">Admin Actions</div>
+
+        <!-- Toggle Active -->
+        <form method="post" style="margin-bottom:12px" onsubmit="return confirm('Toggle active status for {{ target_user.email }}?')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="toggle_active">
+          <button type="submit" class="btn {% if target_user.is_active %}btn-s{% else %}btn-p{% endif %} btn-full" style="font-size:13px;padding:10px">
+            {% if target_user.is_active %}🚫 Deactivate Account{% else %}✅ Activate Account{% endif %}
+          </button>
+        </form>
+
+        <!-- Change Plan -->
+        <form method="post" onsubmit="return confirm('Change plan for {{ target_user.email }}?')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="change_plan">
+          <div class="field" style="margin-bottom:10px">
+            <label>Change Plan</label>
+            <select name="plan">
+              <option value="free"  {% if target_user.plan == 'free'  %}selected{% endif %}>Free</option>
+              <option value="basic" {% if target_user.plan == 'basic' %}selected{% endif %}>Basic</option>
+              <option value="pro"   {% if target_user.plan == 'pro'   %}selected{% endif %}>Pro</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-p btn-full" style="font-size:13px;padding:10px">
+            💳 Update Plan
+          </button>
+        </form>
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <a href="{% url 'admin_users' %}" class="btn btn-s btn-full" style="font-size:13px;padding:10px">
+            ← Back to Users
+          </a>
+        </div>
+      </div>
+    </div><!-- /RIGHT -->
+
+  </div><!-- /grid -->
+
+</div>
+{% endblock %}

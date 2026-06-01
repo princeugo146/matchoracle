@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Admin — {{ action }} Tip{% endblock %}
+{% block extra_css %}
+<style>
+.adm-wrap{max-width:700px;margin:0 auto;padding:28px 20px;}
+.adm-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
+.adm-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.adm-nav{display:flex;gap:8px;flex-wrap:wrap;}
+.adm-nav a{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--border2);color:var(--text2);transition:all .2s;}
+.adm-nav a:hover,.adm-nav a.active{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent);}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.toggle-wrap{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:9px;}
+.toggle-wrap label{font-size:13px;color:var(--text2);cursor:pointer;flex:1;}
+input[type="checkbox"]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
+@media(max-width:600px){.g2{grid-template-columns:1fr;}.adm-wrap{padding:16px 12px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-wrap">
+
+  <div class="adm-header">
+    <div>
+      <div class="adm-title">⚽ {{ action }} Tip</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">
+        {% if tip %}Editing: {{ tip.home_team }} vs {{ tip.away_team }}{% else %}Create a new weekly tip{% endif %}
+      </div>
+    </div>
+    <nav class="adm-nav">
+      <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+      <a href="{% url 'admin_tips' %}" class="active">Tips</a>
+    </nav>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">Tip Details</div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="g2">
+        <div class="field">
+          <label>Home Team *</label>
+          <input type="text" name="home_team" value="{{ tip.home_team|default:'' }}" placeholder="e.g. Arsenal" required>
+        </div>
+        <div class="field">
+          <label>Away Team *</label>
+          <input type="text" name="away_team" value="{{ tip.away_team|default:'' }}" placeholder="e.g. Chelsea" required>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="field">
+          <label>Competition *</label>
+          <input type="text" name="competition" value="{{ tip.competition|default:'' }}" placeholder="e.g. Premier League" required>
+        </div>
+        <div class="field">
+          <label>Match Date &amp; Time *</label>
+          <input type="datetime-local" name="match_date"
+            value="{% if tip %}{{ tip.match_date|date:'Y-m-d' }}T{{ tip.match_date|time:'H:i' }}{% endif %}"
+            required>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Tip / Prediction *</label>
+        <input type="text" name="tip" value="{{ tip.tip|default:'' }}"
+          placeholder="e.g. Arsenal to win — Both teams to score" required>
+      </div>
+
+      <div class="g2">
+        <div class="field">
+          <label>Confidence % (1–100) *</label>
+          <input type="number" name="confidence" value="{{ tip.confidence|default:70 }}"
+            min="1" max="100" required>
+        </div>
+        <div class="field" style="justify-content:flex-end;padding-top:20px">
+          <div class="toggle-wrap">
+            <input type="checkbox" id="is_pro_only" name="is_pro_only"
+              {% if tip.is_pro_only %}checked{% endif %}>
+            <label for="is_pro_only">Pro subscribers only</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-p" style="flex:1;padding:12px">
+          {% if tip %}💾 Save Changes{% else %}➕ Create Tip{% endif %}
+        </button>
+        <a href="{% url 'admin_tips' %}" class="btn btn-s" style="padding:12px 20px">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
