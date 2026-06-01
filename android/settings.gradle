@@ -1,0 +1,24 @@
+/**
+ * MatchOracle Android — Settings file
+ *
+ * Declares the root project name and includes all sub-modules:
+ *  :app              — the MatchOracle application module
+ *  :capacitor-android — Capacitor core bridge (local AAR)
+ *  :capacitor-splash-screen — Splash screen plugin
+ *  :capacitor-status-bar    — Status bar plugin
+ */
+
+rootProject.name = 'MatchOracle'
+
+include ':app'
+
+// ─── Capacitor core ───────────────────────────────────────────────────────
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
+
+// ─── Capacitor plugins ────────────────────────────────────────────────────
+include ':capacitor-splash-screen'
+project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
+
+include ':capacitor-status-bar'
+project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')

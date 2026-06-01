@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Splash screen drawable for MatchOracle.
+  Displays the brand background colour with the app icon centred.
+  Shown while the WebView loads the remote server URL.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background: MatchOracle dark navy -->
+    <item>
+        <color android:color="@color/splashBackground" />
+    </item>
+
+    <!-- Centred app icon (ic_launcher_foreground vector or PNG) -->
+    <item
+        android:gravity="center"
+        android:width="200dp"
+        android:height="200dp">
+        <bitmap
+            android:src="@mipmap/ic_launcher"
+            android:gravity="center"
+            android:tileMode="disabled" />
+    </item>
+
+</layer-list>
