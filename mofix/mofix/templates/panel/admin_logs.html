@@ -1,0 +1,65 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}Audit Logs{% endblock %}
+{% block page_title %}Audit Logs{% endblock %}
+{% block nav_logs %}active{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <div class="section-title">Audit Logs</div>
+    <div class="section-sub">Admin action history</div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px">
+  <form method="get" class="search-bar">
+    <select name="action">
+      <option value="">All Actions</option>
+      {% for val, label in action_choices %}
+      <option value="{{ val }}" {% if action_filter == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="admin" value="{{ admin_filter }}" placeholder="Filter by admin email…" style="max-width:240px">
+    <button type="submit" class="btn btn-p btn-sm">Filter</button>
+    <a href="/panel/logs/" class="btn btn-s btn-sm">Clear</a>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Admin</th>
+          <th>Model</th>
+          <th>Object</th>
+          <th>Details</th>
+          <th>IP</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>
+            <span class="badge {% if log.action == 'create' %}badge-active{% elif log.action == 'delete' %}badge-inactive{% elif log.action in 'activate' %}badge-active{% elif log.action == 'deactivate' %}badge-inactive{% else %}badge-basic{% endif %}">
+              {{ log.action|upper }}
+            </span>
+          </td>
+          <td style="font-size:12px;color:var(--text2)">{{ log.admin.email|default:"System" }}</td>
+          <td style="font-size:12px;color:var(--muted)">{{ log.model_name|default:"—" }}</td>
+          <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.object_repr|default:"—" }}</td>
+          <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.details|default:"—" }}</td>
+          <td style="font-size:11px;color:var(--muted);font-family:monospace">{{ log.ip_address|default:"—" }}</td>
+          <td style="font-size:11px;color:var(--muted)">{{ log.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">No logs yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

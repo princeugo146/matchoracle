@@ -19,6 +19,8 @@ INSTALLED_APPS = [
     'core',
     'predictions',
     'api',
+    'panel',
+    'legal',
 ]
 
 MIDDLEWARE = [

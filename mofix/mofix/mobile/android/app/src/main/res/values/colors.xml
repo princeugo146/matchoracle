@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- MatchOracle brand colours -->
+    <color name="background">#030508</color>
+    <color name="accent">#00d4ff</color>
+    <color name="accent_dark">#0099cc</color>
+    <color name="purple">#7c3aed</color>
+    <color name="notification_color">#00d4ff</color>
+    <color name="splash_background">#030508</color>
+    <color name="status_bar">#030508</color>
+</resources>

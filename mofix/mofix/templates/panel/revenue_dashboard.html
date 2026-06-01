@@ -1,0 +1,123 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}Revenue{% endblock %}
+{% block page_title %}Revenue Dashboard{% endblock %}
+{% block nav_revenue %}active{% endblock %}
+
+{% block content %}
+<!-- Revenue Stats -->
+<div class="g4" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--gold)">NGN {{ total_revenue|floatformat:0 }}</div>
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-sub">All time</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--green)">NGN {{ mrr|floatformat:0 }}</div>
+    <div class="stat-label">MRR (30 days)</div>
+    <div class="stat-sub">Monthly recurring</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:var(--accent)">{{ sub_counts.basic }}</div>
+    <div class="stat-label">Basic Subscribers</div>
+    <div class="stat-sub">NGN {{ revenue_by_plan.basic|floatformat:0 }} total</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" style="color:#a78bfa">{{ sub_counts.pro }}</div>
+    <div class="stat-label">Pro Subscribers</div>
+    <div class="stat-sub">NGN {{ revenue_by_plan.pro|floatformat:0 }} total</div>
+  </div>
+</div>
+
+<div class="g2" style="margin-bottom:24px">
+  <!-- Monthly Revenue -->
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Monthly Revenue (Last 3 Months)</div>
+    {% for month in monthly_revenue %}
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:600">{{ month.label }}</span>
+        <span style="font-size:13px;color:var(--gold);font-weight:700">NGN {{ month.amount|floatformat:0 }}</span>
+      </div>
+      {% if total_revenue %}
+      <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));border-radius:8px;width:{% widthratio month.amount total_revenue 100 %}%"></div>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No revenue data yet</div>
+    {% endfor %}
+  </div>
+
+  <!-- Revenue by Plan -->
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Revenue by Plan</div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:600;color:var(--accent)">Basic Plan</span>
+        <span style="font-size:13px;color:var(--text2)">NGN {{ revenue_by_plan.basic|floatformat:0 }}</span>
+      </div>
+      {% if total_revenue %}
+      <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+        <div style="height:100%;background:var(--accent);border-radius:8px;width:{% widthratio revenue_by_plan.basic total_revenue 100 %}%"></div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:600;color:#a78bfa">Pro Plan</span>
+        <span style="font-size:13px;color:var(--text2)">NGN {{ revenue_by_plan.pro|floatformat:0 }}</span>
+      </div>
+      {% if total_revenue %}
+      <div style="height:8px;background:rgba(255,255,255,.06);border-radius:8px;overflow:hidden">
+        <div style="height:100%;background:#a78bfa;border-radius:8px;width:{% widthratio revenue_by_plan.pro total_revenue 100 %}%"></div>
+      </div>
+      {% endif %}
+    </div>
+    <div style="padding-top:14px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--text2)">Pending Payments</span>
+        <span style="font-size:13px;font-weight:700;color:var(--gold)">{{ pending_count }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Failed Payments</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red)">{{ failed_count }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+  <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Recent Transactions</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Amount</th>
+          <th>Reference</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in recent_transactions %}
+        <tr>
+          <td>
+            <div style="font-size:13px;font-weight:600">{{ p.user.first_name|default:p.user.email }}</div>
+            <div style="font-size:11px;color:var(--muted)">{{ p.user.email }}</div>
+          </td>
+          <td><span class="badge badge-{{ p.plan }}">{{ p.plan|upper }}</span></td>
+          <td style="color:var(--gold);font-weight:700;font-size:14px">NGN {{ p.amount|floatformat:0 }}</td>
+          <td style="font-size:11px;color:var(--muted);font-family:monospace">{{ p.reference|truncatechars:20 }}</td>
+          <td style="font-size:12px;color:var(--text2)">{{ p.verified_at|date:"M d, Y H:i"|default:p.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted)">No transactions yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

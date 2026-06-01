@@ -1,0 +1,118 @@
+{% extends 'panel/admin_base.html' %}
+{% block title %}User: {{ target_user.email }}{% endblock %}
+{% block page_title %}User Detail{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:16px">
+  <a href="/panel/users/" class="btn btn-s btn-sm">← Back to Users</a>
+</div>
+
+<div class="g2" style="margin-bottom:20px">
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">User Info</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      {% for label, value in forloop.parentloop.counter0|yesno:"," %}{% endfor %}
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Email</span>
+        <span style="font-size:13px;font-weight:600">{{ target_user.email }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Name</span>
+        <span style="font-size:13px">{{ target_user.get_full_name|default:"—" }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Plan</span>
+        <span class="badge badge-{{ target_user.plan }}">{{ target_user.plan|upper }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Status</span>
+        {% if target_user.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-inactive">Inactive</span>{% endif %}
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Joined</span>
+        <span style="font-size:13px;color:var(--text2)">{{ target_user.date_joined|date:"M d, Y" }}</span>
+      </div>
+      {% if target_user.subscription_end %}
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Sub Expires</span>
+        <span style="font-size:13px;color:var(--gold)">{{ target_user.subscription_end|date:"M d, Y" }}</span>
+      </div>
+      {% endif %}
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Total Predictions</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent)">{{ target_user.total_predictions }}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:8px">
+        <span style="font-size:12px;color:var(--text2)">Accuracy</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">{{ target_user.accuracy_rate }}%</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <form method="post" action="/panel/users/{{ target_user.pk }}/toggle/">
+        {% csrf_token %}
+        <button type="submit" class="btn {% if target_user.is_active %}btn-danger{% else %}btn-p{% endif %} btn-sm"
+          onclick="return confirm('{% if target_user.is_active %}Deactivate{% else %}Activate{% endif %} this user?')">
+          {% if target_user.is_active %}Deactivate{% else %}Activate{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Payment History</div>
+    {% if payments %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td><span class="badge badge-{{ p.plan }}">{{ p.plan }}</span></td>
+            <td style="color:var(--gold);font-weight:600">NGN {{ p.amount|floatformat:0 }}</td>
+            <td>
+              {% if p.status == 'success' %}<span class="badge badge-active">Paid</span>
+              {% elif p.status == 'pending' %}<span class="badge badge-pending">Pending</span>
+              {% else %}<span class="badge badge-inactive">Failed</span>{% endif %}
+            </td>
+            <td style="font-size:12px;color:var(--muted)">{{ p.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No payments</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Recent Predictions -->
+<div class="card">
+  <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;font-weight:600">Recent Predictions</div>
+  {% if predictions %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Engine</th><th>Match</th><th>Result</th><th>Correct</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for pred in predictions %}
+        <tr>
+          <td><span class="badge badge-basic">{{ pred.get_engine_display }}</span></td>
+          <td style="font-size:12px">{{ pred.home_team|default:"—" }} vs {{ pred.away_team|default:"—" }}</td>
+          <td style="font-size:12px;color:var(--text2)">{{ pred.predicted_result|default:"—" }}</td>
+          <td>
+            {% if pred.was_correct is None %}<span style="color:var(--muted);font-size:12px">Pending</span>
+            {% elif pred.was_correct %}<span class="badge badge-active">✓</span>
+            {% else %}<span class="badge badge-inactive">✗</span>{% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--muted)">{{ pred.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No predictions yet</div>
+  {% endif %}
+</div>
+{% endblock %}

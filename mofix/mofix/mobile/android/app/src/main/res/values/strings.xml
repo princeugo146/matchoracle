@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MatchOracle</string>
+    <string name="web_app_url">https://matchoracle-production.up.railway.app</string>
+    <string name="notification_channel_name">MatchOracle</string>
+    <string name="notification_channel_description">MatchOracle predictions and tips notifications</string>
+</resources>
