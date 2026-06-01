@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name shown on the launcher and in the task switcher -->
+    <string name="app_name">MatchOracle</string>
+    <string name="title_activity_main">MatchOracle</string>
+    <string name="package_name">com.matchoracle.app</string>
+    <string name="custom_url_scheme">matchoracle</string>
+</resources>

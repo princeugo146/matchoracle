@@ -1,0 +1,27 @@
+# ─── MatchOracle Keystore Signing Configuration ───────────────────────────
+#
+# Copy this file to signing-config.properties and fill in your values.
+# NEVER commit signing-config.properties to version control.
+# Add it to .gitignore (already done).
+#
+# Generate a keystore with:
+#   keytool -genkey -v \
+#     -keystore matchoracle.keystore \
+#     -keyalg RSA \
+#     -keysize 2048 \
+#     -validity 10000 \
+#     -alias matchoracle
+#
+# ─────────────────────────────────────────────────────────────────────────
+
+# Absolute path to the keystore file
+storeFile=/path/to/matchoracle.keystore
+
+# Password set when the keystore was created
+storePassword=your_keystore_password
+
+# Alias chosen during keytool -genkey
+keyAlias=matchoracle
+
+# Password for the key (often the same as storePassword)
+keyPassword=your_key_password

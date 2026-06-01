@@ -1,0 +1,27 @@
+/**
+ * MatchOracle Android — Top-level Gradle build file
+ *
+ * Defines repositories and classpath dependencies shared across all
+ * sub-projects / modules.  Do not put application-specific code here.
+ */
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

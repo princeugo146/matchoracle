@@ -5,3 +5,28 @@ __pycache__/
 .DS_Store
 staticfiles/
 media/
+
+# ─── Node / Capacitor ─────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+.npm
+
+# ─── Android ──────────────────────────────────────────────────────────────
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+
+# Signing — NEVER commit these
+android/app/signing-config.properties
+android/app/*.keystore
+android/app/*.jks
+*.keystore
+*.jks
+
+# Android Studio
+.idea/
+*.iml
+

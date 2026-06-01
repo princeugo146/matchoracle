@@ -1,0 +1,115 @@
+/**
+ * MatchOracle Android — App-level Gradle build file
+ *
+ * Handles:
+ *  - SDK versions
+ *  - Version code / name (bump versionCode for every Play Store upload)
+ *  - Signing configuration (reads from signing-config.properties)
+ *  - Capacitor & AndroidX dependencies
+ */
+
+apply plugin: 'com.android.application'
+
+// ─── Load signing properties ───────────────────────────────────────────────
+// Create android/app/signing-config.properties (never commit it) with:
+//   storeFile=<absolute path to matchoracle.keystore>
+//   storePassword=<keystore password>
+//   keyAlias=matchoracle
+//   keyPassword=<key password>
+def signingPropsFile = rootProject.file("app/signing-config.properties")
+def signingProps = new Properties()
+if (signingPropsFile.exists()) {
+    signingPropsFile.withInputStream { signingProps.load(it) }
+}
+
+android {
+    compileSdkVersion 34
+    defaultConfig {
+        applicationId "com.matchoracle.app"
+        minSdkVersion 22          // Android 5.1+ (~98 % of active devices)
+        targetSdkVersion 34
+        versionCode 1             // Increment for every Play Store release
+        versionName "2.0.0"       // Matches MATCHORACLE['VERSION'] in settings.py
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+            // Keep Capacitor bridge assets
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+
+    // ─── Signing ────────────────────────────────────────────────────────
+    signingConfigs {
+        release {
+            if (signingPropsFile.exists()) {
+                storeFile     file(signingProps['storeFile'])
+                storePassword signingProps['storePassword']
+                keyAlias      signingProps['keyAlias']
+                keyPassword   signingProps['keyPassword']
+            } else if (System.getenv("KEYSTORE_PATH")) {
+                // CI/CD: read from environment variables
+                storeFile     file(System.getenv("KEYSTORE_PATH"))
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias      System.getenv("KEY_ALIAS")
+                keyPassword   System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    // ─── Build types ────────────────────────────────────────────────────
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (signingPropsFile.exists() || System.getenv("KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            debuggable true
+        }
+    }
+
+    // ─── Java compatibility ─────────────────────────────────────────────
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // ─── Lint ───────────────────────────────────────────────────────────
+    lintOptions {
+        abortOnError false
+    }
+
+    // ─── Namespace ──────────────────────────────────────────────────────
+    namespace "com.matchoracle.app"
+}
+
+// ─── Dependencies ──────────────────────────────────────────────────────────
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    // Capacitor core bridge
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "com.getcapacitor:core:5.7.0"
+
+    // AndroidX essentials
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"
+    implementation "com.google.android.material:material:1.11.0"
+
+    // Capacitor official plugins bundled in the app
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-splash-screen')
+    implementation project(':capacitor-status-bar')
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

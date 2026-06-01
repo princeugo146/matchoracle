@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider paths used by Capacitor for sharing files (e.g. downloaded
+  predictions, screenshots) from the app's private storage.
+-->
+<paths>
+    <external-path name="my_images" path="." />
+    <cache-path name="my_cache_images" path="." />
+    <external-cache-path name="my_external_cache" path="." />
+    <files-path name="my_files" path="." />
+</paths>

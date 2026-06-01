@@ -1,0 +1,29 @@
+{
+  "appId": "com.matchoracle.app",
+  "appName": "MatchOracle",
+  "webDir": "public",
+  "server": {
+    "url": "https://matchoracle-production.up.railway.app",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "backgroundColor": "#0a0e27",
+      "showSpinner": true,
+      "spinnerColor": "#00d4ff",
+      "androidSplashResourceName": "splash",
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "Dark",
+      "backgroundColor": "#0a0e27"
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}
