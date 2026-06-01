@@ -1,4 +1,4 @@
-import json, requests, re, logging
+import json, os, requests, re, logging
 from django.conf import settings
 from .engine import (
     search_web, extract_match_data, extract_player_data,
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def call_ai(system, user_msg, max_tokens=800):
-    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')
+    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '') or os.environ.get('ANTHROPIC_API_KEY', '')
     if not key:
         return None
     try:
@@ -408,20 +408,70 @@ def smart_predict(question):
                 'data_sources': data_sources,
             }
 
-    # ── 6. General football question (Claude only) ──────────────────────────
-    ai = call_ai(
-        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
-        f'Football question: "{question}"\n'
-        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-        max_tokens=500,
-    )
+    # ── 6. Match prediction requested but no teams found ────────────────────
+    if intent == 'match_prediction':
+        return {
+            'success': False,
+            'intent': intent,
+            'home_team': None,
+            'away_team': None,
+            'answer': 'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"',
+            'verdict': '',
+            'key_factors': [],
+            'match_prediction': None,
+            'simulation': None,
+            'confidence': 0,
+            'data_sources': data_sources,
+        }
+
+    # ── 7. General / conversational (greetings, questions, anything else) ───
+    # Determine the right system prompt based on whether this looks like a
+    # greeting/casual message or a genuine football question.
+    q_lower = question.lower().strip()
+    greeting_words = ['hello', 'hi', 'hey', 'good morning', 'good afternoon',
+                      'good evening', 'how are you', "what's up", 'sup', 'greetings']
+    is_greeting = any(q_lower.startswith(g) or q_lower == g for g in greeting_words)
+
+    if is_greeting:
+        system_prompt = (
+            'You are MatchOracle AI, a friendly and knowledgeable football assistant. '
+            'Respond warmly and conversationally to greetings and casual messages. '
+            'Keep your reply brief and friendly, and invite the user to ask a football question. '
+            'Return ONLY valid JSON.'
+        )
+        user_prompt = (
+            f'The user said: "{question}"\n'
+            f'Respond in a friendly, conversational way. '
+            f'Return: {{"answer":"your warm conversational reply","key_factors":[],"verdict":""}}'
+        )
+    else:
+        system_prompt = (
+            'You are MatchOracle AI, an expert football assistant. '
+            'Answer football questions with insight and expertise. '
+            'Return ONLY valid JSON.'
+        )
+        user_prompt = (
+            f'Football question: "{question}"\n'
+            f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}'
+        )
+
+    ai = call_ai(system_prompt, user_prompt, max_tokens=500)
+
+    # Fallback message if Claude is unavailable — only prompt for teams if
+    # the question genuinely looks like a prediction request.
+    prediction_words = ['win', 'beat', 'predict', 'score', 'result', 'who will', 'vs', 'versus']
+    looks_like_prediction = any(w in q_lower for w in prediction_words)
+    if looks_like_prediction:
+        fallback_answer = 'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"'
+    else:
+        fallback_answer = "Hello! I'm MatchOracle AI, your football intelligence assistant. Ask me about match predictions, player comparisons, or any football question!"
+
     return {
         'success': True,
         'intent': intent,
         'home_team': None,
         'away_team': None,
-        'answer': (ai or {}).get('answer',
-            'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"'),
+        'answer': (ai or {}).get('answer', fallback_answer),
         'verdict': (ai or {}).get('verdict', ''),
         'key_factors': (ai or {}).get('key_factors', []),
         'match_prediction': None,
