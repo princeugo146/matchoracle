@@ -1,0 +1,263 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}MatchOracle Admin Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  .mo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .mo-card {
+    background: #1a2332;
+    border: 1px solid #243044;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+  .mo-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .mo-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #00d4ff;
+  }
+  .mo-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .mo-section {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin: 24px 0 12px;
+    font-weight: 600;
+  }
+  .mo-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a2332;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .mo-table th {
+    background: #243044;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+  }
+  .mo-table td {
+    padding: 10px 16px;
+    border-top: 1px solid #243044;
+    color: #f0f6ff;
+    font-size: 13px;
+  }
+  .mo-table tr:hover td { background: rgba(0,212,255,.04); }
+  .badge-free  { background: rgba(100,116,139,.2); color: #94a3b8; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-basic { background: rgba(0,212,255,.15); color: #00d4ff; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-pro   { background: rgba(124,58,237,.2); color: #a78bfa; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-ok    { background: rgba(16,185,129,.15); color: #10b981; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-fail  { background: rgba(239,68,68,.15); color: #ef4444; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .api-box {
+    background: #0d1117;
+    border: 1px solid #243044;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .api-box code {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #00d4ff;
+    margin: 4px 0;
+  }
+  .api-box .method { color: #10b981; font-weight: 700; }
+  .api-box .path   { color: #f0f6ff; }
+  .api-box .desc   { color: #64748b; font-size: 11px; margin-left: 8px; }
+</style>
+
+<h1 style="font-size:20px;font-weight:700;margin-bottom:6px;">📊 MatchOracle Admin Dashboard</h1>
+<p style="color:#64748b;font-size:13px;margin-bottom:24px;">
+  All admin data is also available via the <strong>/admin-api/</strong> JSON API (superuser only).
+</p>
+
+<!-- KPI Cards -->
+<p class="mo-section">📈 Platform Overview</p>
+<div class="mo-grid">
+  <div class="mo-card">
+    <div class="mo-label">Total Users</div>
+    <div class="mo-value">{{ total_users }}</div>
+    <div class="mo-sub">{{ paid_users }} paid · {{ free_users }} free</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">Total Revenue</div>
+    <div class="mo-value">{{ total_revenue_display }}</div>
+    <div class="mo-sub">{{ transaction_count }} transactions</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">Total Predictions</div>
+    <div class="mo-value">{{ total_predictions }}</div>
+    <div class="mo-sub">{{ overall_accuracy }}% accuracy</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">Weekly Tips</div>
+    <div class="mo-value">{{ total_tips }}</div>
+    <div class="mo-sub">{{ pro_tips }} pro · {{ free_tips }} free</div>
+  </div>
+</div>
+
+<!-- Last 7 Days -->
+<p class="mo-section">🗓️ Last 7 Days</p>
+<div class="mo-grid">
+  <div class="mo-card">
+    <div class="mo-label">New Users</div>
+    <div class="mo-value">{{ new_users_week }}</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">New Payments</div>
+    <div class="mo-value">{{ new_payments_week }}</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">Revenue</div>
+    <div class="mo-value">{{ revenue_week_display }}</div>
+  </div>
+  <div class="mo-card">
+    <div class="mo-label">Conversion Rate</div>
+    <div class="mo-value">{{ conversion_rate }}%</div>
+    <div class="mo-sub">paid / total users</div>
+  </div>
+</div>
+
+<!-- Plan Breakdown -->
+{% if plan_breakdown %}
+<p class="mo-section">💳 Revenue by Plan</p>
+<table class="mo-table">
+  <thead>
+    <tr>
+      <th>Plan</th>
+      <th>Transactions</th>
+      <th>Revenue (NGN)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in plan_breakdown %}
+    <tr>
+      <td>
+        {% if row.plan == 'pro' %}<span class="badge-pro">PRO</span>
+        {% elif row.plan == 'basic' %}<span class="badge-basic">BASIC</span>
+        {% else %}<span class="badge-free">FREE</span>{% endif %}
+      </td>
+      <td>{{ row.count }}</td>
+      <td>{{ row.revenue }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- Recent Payments -->
+{% if recent_payments %}
+<p class="mo-section">🧾 Recent Transactions</p>
+<table class="mo-table">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Plan</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in recent_payments %}
+    <tr>
+      <td>{{ p.user.email }}</td>
+      <td>
+        {% if p.plan == 'pro' %}<span class="badge-pro">PRO</span>
+        {% elif p.plan == 'basic' %}<span class="badge-basic">BASIC</span>
+        {% else %}<span class="badge-free">FREE</span>{% endif %}
+      </td>
+      <td>{{ p.currency }} {{ p.amount }}</td>
+      <td>
+        {% if p.status == 'success' %}<span class="badge-ok">✓ Success</span>
+        {% else %}<span class="badge-fail">{{ p.status }}</span>{% endif %}
+      </td>
+      <td>{{ p.created_at|date:"d M Y H:i" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- Recent Sign-ups -->
+{% if recent_signups %}
+<p class="mo-section">👤 Recent Sign-ups</p>
+<table class="mo-table">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Plan</th>
+      <th>Predictions</th>
+      <th>Joined</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in recent_signups %}
+    <tr>
+      <td>{{ u.email }}</td>
+      <td>
+        {% if u.plan == 'pro' %}<span class="badge-pro">PRO</span>
+        {% elif u.plan == 'basic' %}<span class="badge-basic">BASIC</span>
+        {% else %}<span class="badge-free">FREE</span>{% endif %}
+      </td>
+      <td>{{ u.total_predictions }}</td>
+      <td>{{ u.date_joined|date:"d M Y" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- Admin API Reference -->
+<p class="mo-section">🔌 Admin API Endpoints</p>
+<div class="api-box">
+  <p style="color:#94a3b8;font-size:12px;margin-bottom:12px;">
+    All endpoints require a logged-in superuser session (or session cookie).
+    Responses are JSON. Base URL: <code style="display:inline;color:#f59e0b">/admin-api/</code>
+  </p>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/</span> <span class="desc">— Platform overview stats</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/users/</span> <span class="desc">— List users (search, filter, paginate)</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/users/&lt;id&gt;/</span> <span class="desc">— User detail + payment history</span></code>
+  <code><span class="method">PATCH</span> <span class="path">/admin-api/users/&lt;id&gt;/</span> <span class="desc">— Update user fields</span></code>
+  <code><span class="method">POST</span> <span class="path">/admin-api/users/&lt;id&gt;/action/</span> <span class="desc">— activate | deactivate | reset_plan | change_plan</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/revenue/</span> <span class="desc">— Revenue stats + transaction log</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/tips/</span> <span class="desc">— List weekly tips</span></code>
+  <code><span class="method">POST</span> <span class="path">/admin-api/tips/</span> <span class="desc">— Create a new tip</span></code>
+  <code><span class="method">PATCH</span> <span class="path">/admin-api/tips/&lt;id&gt;/</span> <span class="desc">— Update tip</span></code>
+  <code><span class="method">DELETE</span> <span class="path">/admin-api/tips/&lt;id&gt;/</span> <span class="desc">— Delete tip</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/forecasts/</span> <span class="desc">— List weekly forecasts</span></code>
+  <code><span class="method">POST</span> <span class="path">/admin-api/forecasts/</span> <span class="desc">— Create forecast</span></code>
+  <code><span class="method">PATCH</span> <span class="path">/admin-api/tips/&lt;id&gt;/</span> <span class="desc">— Update forecast</span></code>
+  <code><span class="method">DELETE</span> <span class="path">/admin-api/forecasts/&lt;id&gt;/</span> <span class="desc">— Delete forecast</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/analytics/</span> <span class="desc">— Aggregated analytics data</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/predictions/</span> <span class="desc">— All predictions (filterable)</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/activity/</span> <span class="desc">— Recent activity log</span></code>
+  <code><span class="method">GET</span>  <span class="path">/admin-api/settings/</span> <span class="desc">— Platform configuration</span></code>
+</div>
+
+{% endblock %}
