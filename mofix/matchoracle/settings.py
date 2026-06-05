@@ -107,6 +107,15 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
+# ─── Authentication Backends ──────────────────────────────────────────────────
+# EmailOrUsernameBackend lets admin staff log in with either their email
+# address or their username (useful when a superuser was created via
+# createsuperuser which sets a username rather than an email).
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth_backend.EmailOrUsernameBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 MATCHORACLE = {
     'CURRENCY': 'NGN',
     'CURRENCY_SYMBOL': 'NGN',
