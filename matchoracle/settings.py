@@ -4,7 +4,16 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'matchoracle-secret-key-2024-change-me')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'matchoracle-production.up.railway.app',
+    '*.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
+
+RAILWAY_PUBLIC_DOMAIN_HOST = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+if RAILWAY_PUBLIC_DOMAIN_HOST and RAILWAY_PUBLIC_DOMAIN_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN_HOST)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -70,8 +79,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 2592000
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 CSRF_TRUSTED_ORIGINS = [
     'https://matchoracle-production.up.railway.app',
