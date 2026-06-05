@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+  {% if form.errors %}
+  <p class="errornote">
+    {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+  </p>
+  {% endif %}
+
+  {% if user_error %}
+  <p class="errornote">{{ user_error }}</p>
+  {% endif %}
+
+  <div id="login-form">
+    <form action="{{ app_path }}" method="post" id="login-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <div class="form-row">
+        {{ form.username.errors }}
+        <label for="id_username">{% trans "Username or Email" %}:</label>
+        {{ form.username }}
+      </div>
+
+      <div class="form-row">
+        {{ form.password.errors }}
+        <label for="id_password">{% trans "Password" %}:</label>
+        {{ form.password }}
+      </div>
+
+      {% url 'admin:password_change' as password_change_url %}
+      <div class="submit-row">
+        <label>{% trans "Log in" %}</label>
+        <input type="submit" value="{% trans 'Log in' %}">
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
