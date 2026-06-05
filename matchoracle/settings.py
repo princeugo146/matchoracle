@@ -3,7 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'matchoracle-secret-key-2024-change-me')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = True  # TEMPORARY: hardcoded for diagnosing 500 on /admin/login/ — revert after fix
 ALLOWED_HOSTS = [
     'matchoracle-production.up.railway.app',
     '*.railway.app',
