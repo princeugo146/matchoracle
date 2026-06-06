@@ -101,57 +101,6 @@ class TeamProfile(models.Model):
         }
 
 
-class EngineAccuracy(models.Model):
-    """
-    Tracks prediction accuracy per engine, match type, and tactical matchup.
-    Only updated when sample_size > 10 to avoid noise.
-    """
-    ENGINE_CHOICES = [('A', 'Match'), ('B', 'Player'), ('D', 'Simulation'), ('NL', 'AI')]
-    MATCH_TYPE_CHOICES = [
-        ('league', 'League'), ('cup', 'Cup'), ('champions', 'Champions League'),
-        ('friendly', 'Friendly'), ('knockout', 'Knockout'), ('final', 'Final'),
-    ]
-
-    engine = models.CharField(max_length=2, choices=ENGINE_CHOICES, db_index=True)
-    match_type = models.CharField(max_length=20, choices=MATCH_TYPE_CHOICES, default='league')
-
-    # Overall accuracy for this engine + match_type combination
-    accuracy_pct = models.FloatField(default=0.0)
-
-    # Tactical matchup accuracy — JSON dict keyed by "style_vs_style"
-    tactical_matchup_accuracy = models.JSONField(default=dict)
-
-    # Home/away/draw breakdown
-    home_accuracy = models.FloatField(default=0.0)
-    away_accuracy = models.FloatField(default=0.0)
-    draw_accuracy = models.FloatField(default=0.0)
-
-    # Weight adjustment factor derived from accuracy (1.0 = no adjustment)
-    weight_adjustment = models.FloatField(default=1.0)
-
-    # Only update stats when we have enough data
-    sample_size = models.IntegerField(default=0)
-
-    updated_at = models.DateTimeField(auto_now=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['engine', 'match_type']
-        ordering = ['engine', 'match_type']
-
-    def __str__(self):
-        return f"EngineAccuracy({self.engine}, {self.match_type}, {self.accuracy_pct:.1f}%)"
-
-    def get_weight_adjustment(self):
-        """
-        Returns the confidence multiplier for this engine.
-        Only meaningful when sample_size > 10.
-        """
-        if self.sample_size < 10:
-            return 1.0
-        return self.weight_adjustment
-
-
 class PredictionResult(models.Model):
     """
     Links a saved Prediction to its real-world outcome.
@@ -229,7 +178,7 @@ class WeightAdjustment(models.Model):
     class Meta:
         ordering = ['-applied_at']
         indexes = [
-            models.Index(fields=['engine', 'parameter'], name='predictions_wa_engine_param_idx'),
+            models.Index(fields=['engine', 'parameter'], name='pred_wa_eng_param_idx'),
         ]
 
     def __str__(self):
