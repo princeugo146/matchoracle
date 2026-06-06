@@ -229,7 +229,7 @@ class WeightAdjustment(models.Model):
     class Meta:
         ordering = ['-applied_at']
         indexes = [
-            models.Index(fields=['engine', 'parameter'], name='predictions_wa_engine_param_idx'),
+            models.Index(fields=['engine', 'parameter'], name='pred_wa_eng_param_idx'),
         ]
 
     def __str__(self):
