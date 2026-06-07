@@ -165,6 +165,22 @@
 
 /* ── Misc ─────────────────────────────────────────────────── */
 .section-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
+
+/* ── Smart AI Chat ────────────────────────────────────────── */
+#smart-ai-chat:empty::before{
+  content:'Ask Smart AI anything about football — it searches the web in real-time';
+  display:block;text-align:center;padding:24px 16px;
+  color:var(--muted);font-size:12px;line-height:1.7;
+}
+#smart-ai-chat{scrollbar-width:thin;scrollbar-color:rgba(0,212,255,.2) transparent;}
+#smart-ai-chat::-webkit-scrollbar{width:4px;}
+#smart-ai-chat::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:4px;}
+
+/* ── Live Match Table ─────────────────────────────────────── */
+#live-match-table-section table tr:hover{background:rgba(255,255,255,.02);}
+
+/* ── News Section ─────────────────────────────────────────── */
+#news-section .sec-hd button:hover{opacity:.7;}
 </style>
 {% endblock %}
 
@@ -630,16 +646,185 @@
           <div class="res card" id="rd" style="border-top:3px solid var(--orange)"><div class="ct">SIMULATION RESULT</div><div id="doutput"></div><div class="ai-box"><div class="ai-lbl">AI MATCH ANALYSIS</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="dinsight"></div></div></div>
         </div>
 
-        <!-- ENGINE NL -->
+        <!-- ENGINE NL — Smart AI Chat -->
         <div class="panel" id="pnl">
-          <div class="card" style="margin-bottom:12px"><div class="ct">Ask the AI Anything About Football</div>
-            <div class="field"><label>Your Question</label><textarea id="nlq" placeholder="e.g. Who will win Arsenal vs Chelsea this weekend? Salah is injured..." style="height:90px;resize:vertical"></textarea></div>
-            <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#f472b6,#db2777);color:white" onclick="run('NL')">ASK AI ENGINE</button>
+          <!-- Status bar -->
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(244,114,182,.05);border:1px solid rgba(244,114,182,.15);border-radius:12px;margin-bottom:12px">
+            <div style="width:8px;height:8px;border-radius:50%;background:{% if has_anthropic_key %}#10b981{% else %}#ef4444{% endif %};flex-shrink:0"></div>
+            <div style="font-size:11px;color:var(--text2)">
+              Anthropic Claude:
+              <strong style="color:{% if has_anthropic_key %}var(--green){% else %}var(--red){% endif %}">
+                {% if has_anthropic_key %}CONNECTED{% else %}NO API KEY{% endif %}
+              </strong>
+              &nbsp;&middot;&nbsp;
+              Sportmonks:
+              <strong style="color:{% if has_sportmonks_key %}var(--green){% else %}var(--muted){% endif %}">
+                {% if has_sportmonks_key %}CONNECTED{% else %}NOT SET{% endif %}
+              </strong>
+              &nbsp;&middot;&nbsp;
+              Web Search: <strong style="color:var(--green)">ACTIVE</strong>
+            </div>
           </div>
-          <div class="ld" id="lnl"><div class="spin" style="border-top-color:#f472b6"></div><div style="color:var(--text2)">AI is thinking...</div></div>
-          <div class="res card" id="rnl" style="border-top:3px solid #f472b6"><div class="ct">AI RESPONSE</div><div id="nloutput"></div></div>
+
+          <!-- Chat history -->
+          <div id="smart-ai-chat" style="min-height:120px;max-height:420px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
+
+          <!-- Input -->
+          <div class="card" style="margin-bottom:0">
+            <div class="ct" style="display:flex;align-items:center;gap:8px">
+              <span>&#129302;</span> Smart AI — Live Internet Access
+              <span style="margin-left:auto;font-size:9px;letter-spacing:1.5px;color:#f472b6;font-weight:700;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.2);padding:2px 8px;border-radius:8px">CLAUDE</span>
+            </div>
+            <div class="field" style="margin-bottom:10px">
+              <label>Ask anything — Smart AI searches the web in real-time</label>
+              <textarea id="nlq" placeholder="e.g. Who will win Arsenal vs Chelsea this weekend? What's the latest injury news?" style="height:80px;resize:vertical"></textarea>
+            </div>
+            <!-- Suggested questions -->
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+              <button onclick="setSuggest('Who will win the Premier League this season?')" style="padding:5px 10px;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:8px;font-size:11px;color:#f472b6;cursor:pointer">&#127942; PL Winner?</button>
+              <button onclick="setSuggest('What are the latest injury news today?')" style="padding:5px 10px;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:8px;font-size:11px;color:#f472b6;cursor:pointer">&#129657; Injury News</button>
+              <button onclick="setSuggest('Who are the top scorers in Europe right now?')" style="padding:5px 10px;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:8px;font-size:11px;color:#f472b6;cursor:pointer">&#9917; Top Scorers</button>
+            </div>
+            <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#f472b6,#db2777);color:white" onclick="runSmartAI()">
+              &#129302; ASK SMART AI — LIVE DATA
+            </button>
+          </div>
+          <div class="ld" id="lnl"><div class="spin" style="border-top-color:#f472b6"></div><div style="color:var(--text2)">Smart AI searching the web &amp; running engines...</div></div>
+          <div class="res card" id="rnl" style="border-top:3px solid #f472b6;display:none"><div class="ct">SMART AI RESPONSE</div><div id="nloutput"></div></div>
         </div>
       </div><!-- /engines-section -->
+
+      <!-- ── SMART AI PREDICTION TABLE ──────────────────────── -->
+      {% if smart_ai_predictions %}
+      <div class="section-card" id="smart-ai-pred-table">
+        <div class="sec-hd">
+          <div class="sec-title">&#129302; Smart AI Predictions</div>
+          <a href="/dashboard/history/" class="sec-link">View All &#8594;</a>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:500px">
+            <thead>
+              <tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:8px 10px">Match</th>
+                <th style="text-align:left;padding:8px 10px">Prediction</th>
+                <th style="text-align:center;padding:8px 10px">Confidence</th>
+                <th style="text-align:left;padding:8px 10px">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in smart_ai_predictions %}
+              <tr style="border-top:1px solid rgba(255,255,255,.04)">
+                <td style="padding:9px 10px;color:var(--text2)">
+                  {% if p.home_team %}
+                    <strong style="color:var(--text)">{{ p.home_team }}</strong>
+                    <span style="color:var(--muted)"> vs </span>
+                    <strong style="color:var(--text)">{{ p.away_team }}</strong>
+                  {% else %}
+                    <span style="color:var(--muted)">{{ p.input_data.question|default:"—"|truncatechars:40 }}</span>
+                  {% endif %}
+                </td>
+                <td style="padding:9px 10px;font-weight:600;color:#f472b6">{{ p.predicted_result|default:"—"|truncatechars:30 }}</td>
+                <td style="padding:9px 10px;text-align:center">
+                  <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;
+                    {% if p.confidence >= 70 %}background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)
+                    {% elif p.confidence >= 50 %}background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2)
+                    {% else %}background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2){% endif %}">
+                    {{ p.confidence }}%
+                  </span>
+                </td>
+                <td style="padding:9px 10px;color:var(--muted)">{{ p.created_at|date:"d M, H:i" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── LIVE MATCH TABLE ────────────────────────────────── -->
+      <div class="section-card" id="live-match-table-section">
+        <div class="sec-hd">
+          <div class="sec-title">&#128308; Today's Matches</div>
+          <button onclick="refreshLiveMatches()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0">&#8635; Refresh</button>
+        </div>
+        <div id="live-match-table-body">
+          {% if live_match_table %}
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:480px">
+              <thead>
+                <tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">
+                  <th style="text-align:left;padding:8px 10px">Home</th>
+                  <th style="text-align:center;padding:8px 6px">Score</th>
+                  <th style="text-align:right;padding:8px 10px">Away</th>
+                  <th style="text-align:center;padding:8px 6px">Status</th>
+                  <th style="text-align:left;padding:8px 10px">Competition</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for m in live_match_table %}
+                <tr style="border-top:1px solid rgba(255,255,255,.04)">
+                  <td style="padding:9px 10px;font-weight:600">{{ m.home_team|default:m.home }}</td>
+                  <td style="padding:9px 6px;text-align:center;font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;
+                    {% if m.status == 'LIVE' or m.minute %}color:var(--red){% else %}color:var(--text){% endif %}">
+                    {% if m.home_score is not None %}{{ m.home_score }}&ndash;{{ m.away_score }}{% else %}vs{% endif %}
+                  </td>
+                  <td style="padding:9px 10px;text-align:right;font-weight:600">{{ m.away_team|default:m.away }}</td>
+                  <td style="padding:9px 6px;text-align:center">
+                    {% if m.status == 'LIVE' or m.minute %}
+                      <span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 6px">
+                        <span style="width:5px;height:5px;border-radius:50%;background:#ef4444;animation:lp 1.2s infinite;display:inline-block"></span>
+                        {% if m.minute %}{{ m.minute }}'{% else %}LIVE{% endif %}
+                      </span>
+                    {% elif m.status == 'FINISHED' or m.status == 'FT' %}
+                      <span style="font-size:9px;font-weight:700;color:var(--muted)">FT</span>
+                    {% else %}
+                      <span style="font-size:9px;color:var(--muted)">{{ m.status|default:"SCH" }}</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:9px 10px;font-size:11px;color:var(--muted)">{{ m.competition|default:m.league|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">
+            {% if has_sportmonks_key %}
+              &#128308; No live matches right now — check back later
+            {% else %}
+              &#128274; Add <code style="color:var(--accent)">SPORTMONKS_API_KEY</code> to see live matches
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── CURRENT NEWS ────────────────────────────────────── -->
+      <div class="section-card" id="news-section">
+        <div class="sec-hd">
+          <div class="sec-title">&#128240; Current Football News</div>
+          <button onclick="refreshNews()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0">&#8635; Refresh</button>
+        </div>
+        <div id="news-body">
+          {% if dashboard_news %}
+            {% for n in dashboard_news %}
+            <div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
+              {% if n.title %}
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.4">{{ n.title|truncatechars:80 }}</div>
+              {% endif %}
+              <div style="font-size:11px;color:var(--text2);line-height:1.6">{{ n.snippet|truncatechars:140 }}</div>
+              {% if n.url %}
+              <a href="https://{{ n.url }}" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block">Read more &#8599;</a>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
+            &#128240; News loads when you use Smart AI
+          </div>
+          {% endif %}
+        </div>
+      </div>
 
       <!-- Recent Predictions Table -->
       {% if recent %}
@@ -939,7 +1124,7 @@ async function run(eng){
   };
   else if(eng==='B')data={name:g('bname'),position:g('bpos'),goals:g('bgoals'),assists:g('bassists'),games:g('bgames'),pass_accuracy:g('bpass'),shots_on_target:g('bshot'),dribble_success:g('bdrib'),tackle_success:g('btackle'),aerial_duels:g('baerial'),distance_covered:g('bdist'),injury_status:g('binj')};
   else if(eng==='D')data={home:{name:g('dhn'),attack:g('dhatk'),defence:g('dhdef'),elo:g('dhelo'),injuries:g('dhinj')},away:{name:g('dan'),attack:g('daatk'),defence:g('dadef'),elo:g('daelo'),injuries:g('dainj')},simulations:g('dsims'),competition:g('dcomp'),weather:g('dwx')};
-  else if(eng==='NL')data={question:g('nlq')};
+  else if(eng==='NL'){runSmartAI();return;}
   try{
     const resp=await fetch('/dashboard/engine/'+eng+'/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(data)});
     const d=await resp.json();
@@ -1134,6 +1319,247 @@ function renderRankings(r){
 const ph=sessionStorage.getItem('ph'),pa=sessionStorage.getItem('pa');
 if(ph){const e=document.getElementById('ahn');if(e)e.value=ph;sessionStorage.removeItem('ph');}
 if(pa){const e=document.getElementById('aan');if(e)e.value=pa;sessionStorage.removeItem('pa');}
+
+/* ── Bottom nav active state ─────────────────────────────── */
+document.querySelectorAll('.bn-item').forEach(function(item){
+  item.addEventListener('click',function(){
+    if(this.id==='bn-analyze')return;
+    document.querySelectorAll('.bn-item').forEach(function(i){i.classList.remove('active');});
+    this.classList.add('active');
+  });
+});
+
+/* ── Smart AI helpers ────────────────────────────────────── */
+function setSuggest(q){
+  const el=document.getElementById('nlq');
+  if(el){el.value=q;el.focus();}
+  // Switch to NL tab
+  document.querySelectorAll('.et').forEach(function(b){b.classList.remove('a-on','b-on','c-on','d-on','nl-on');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  const nlBtn=document.querySelector('.et[onclick*="nl"]');
+  if(nlBtn)nlBtn.classList.add('nl-on');
+  const nlPanel=document.getElementById('pnl');
+  if(nlPanel)nlPanel.classList.add('show');
+}
+
+function appendChatBubble(role,html){
+  const chat=document.getElementById('smart-ai-chat');
+  if(!chat)return;
+  const isUser=(role==='user');
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;'+(isUser?'justify-content:flex-end':'justify-content:flex-start');
+  const bubble=document.createElement('div');
+  bubble.style.cssText='max-width:85%;padding:10px 14px;border-radius:'+(isUser?'16px 16px 4px 16px':'16px 16px 16px 4px')+';font-size:13px;line-height:1.7;'
+    +(isUser?'background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);color:var(--text)':'background:rgba(244,114,182,.06);border:1px solid rgba(244,114,182,.15);color:var(--text2)');
+  bubble.innerHTML=html;
+  wrap.appendChild(bubble);
+  chat.appendChild(wrap);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+function renderSmartAIResult(r){
+  const cc=r.confidence>=70?'var(--green)':r.confidence>=50?'var(--gold)':'var(--red)';
+  let html='';
+
+  // Main answer
+  if(r.answer){
+    html+='<div style="font-size:13px;line-height:1.9;color:var(--text2);margin-bottom:12px">'+r.answer+'</div>';
+  }
+
+  // Prediction box (match prediction)
+  if(r.home_team&&r.away_team&&r.verdict){
+    html+='<div style="padding:12px;background:rgba(244,114,182,.05);border:1px solid rgba(244,114,182,.15);border-radius:12px;margin-bottom:12px">'
+      +'<div style="font-size:11px;letter-spacing:1.5px;color:#f472b6;font-weight:700;margin-bottom:8px">&#129302; SMART AI PREDICTION</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px">'+r.home_team+' <span style="color:var(--muted)">vs</span> '+r.away_team+'</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#f472b6;margin-bottom:8px">&#127919; '+r.verdict+' to Win</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text2)">'
+      +(r.predicted_score?'<span>Score: <strong style="color:var(--text)">'+r.predicted_score+'</strong></span>':'')
+      +(r.confidence?'<span>Confidence: <strong style="color:'+cc+'">'+r.confidence+'%</strong></span>':'')
+      +(r.competition?'<span>&#127942; '+r.competition+'</span>':'')
+      +(r.is_today?'<span style="color:var(--green)">&#128308; Today\'s Match</span>':'')
+      +'</div>'
+      +(r.betting_insight?'<div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px;color:var(--gold)">&#128161; '+r.betting_insight+'</div>':'')
+      +'</div>';
+  }
+
+  // Probability bars
+  if(r.home_win!==undefined&&r.draw!==undefined&&r.away_win!==undefined){
+    html+='<div style="margin-bottom:12px">'
+      +pbar((r.home_team||'Home')+' Win',r.home_win,'linear-gradient(90deg,#f472b6,#db2777)')
+      +pbar('Draw',r.draw,'linear-gradient(90deg,#f59e0b,#d97706)')
+      +pbar((r.away_team||'Away')+' Win',r.away_win,'linear-gradient(90deg,#ef4444,#b91c1c)')
+      +'</div>';
+    setTimeout(function(){document.querySelectorAll('[data-t]').forEach(function(e){e.style.width=e.dataset.t+'%';});},80);
+  }
+
+  // Key factors
+  if(r.key_factors&&r.key_factors.length){
+    html+='<div style="margin-bottom:12px"><div style="font-size:10px;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin-bottom:6px">KEY FACTORS</div>';
+    r.key_factors.forEach(function(f){
+      html+='<div style="padding:5px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-size:12px;margin-bottom:4px;color:var(--text2)">&#8226; '+f+'</div>';
+    });
+    html+='</div>';
+  }
+
+  // Data sources
+  if(r.data_sources&&r.data_sources.length){
+    html+='<div style="font-size:10px;color:var(--muted);margin-top:8px">Sources: '+r.data_sources.join(' &middot; ')+'</div>';
+  }
+
+  document.getElementById('nloutput').innerHTML=html;
+  const rnl=document.getElementById('rnl');
+  if(rnl)rnl.style.display='block';
+}
+
+function renderLiveMatchTable(matches){
+  const body=document.getElementById('live-match-table-body');
+  if(!body)return;
+  if(!matches||!matches.length){
+    body.innerHTML='<div style="text-align:center;padding:28px;color:var(--muted);font-size:13px">&#128308; No live matches right now</div>';
+    return;
+  }
+  let rows='';
+  matches.forEach(function(m){
+    const isLive=(m.status==='LIVE'||m.minute);
+    const scoreColor=isLive?'color:var(--red)':'color:var(--text)';
+    const score=(m.home_score!==null&&m.home_score!==undefined)?m.home_score+'&ndash;'+m.away_score:'vs';
+    let statusHtml='';
+    if(isLive){
+      statusHtml='<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 6px">'
+        +'<span style="width:5px;height:5px;border-radius:50%;background:#ef4444;animation:lp 1.2s infinite;display:inline-block"></span>'
+        +(m.minute?m.minute+"'":'LIVE')+'</span>';
+    }else if(m.status==='FINISHED'||m.status==='FT'){
+      statusHtml='<span style="font-size:9px;font-weight:700;color:var(--muted)">FT</span>';
+    }else{
+      statusHtml='<span style="font-size:9px;color:var(--muted)">'+(m.status||'SCH')+'</span>';
+    }
+    rows+='<tr style="border-top:1px solid rgba(255,255,255,.04)">'
+      +'<td style="padding:9px 10px;font-weight:600">'+(m.home_team||m.home||'')+'</td>'
+      +'<td style="padding:9px 6px;text-align:center;font-family:\'Orbitron\',sans-serif;font-weight:700;font-size:14px;'+scoreColor+'">'+score+'</td>'
+      +'<td style="padding:9px 10px;text-align:right;font-weight:600">'+(m.away_team||m.away||'')+'</td>'
+      +'<td style="padding:9px 6px;text-align:center">'+statusHtml+'</td>'
+      +'<td style="padding:9px 10px;font-size:11px;color:var(--muted)">'+(m.competition||m.league||'—')+'</td>'
+      +'</tr>';
+  });
+  body.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:480px">'
+    +'<thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border)">'
+    +'<th style="text-align:left;padding:8px 10px">Home</th>'
+    +'<th style="text-align:center;padding:8px 6px">Score</th>'
+    +'<th style="text-align:right;padding:8px 10px">Away</th>'
+    +'<th style="text-align:center;padding:8px 6px">Status</th>'
+    +'<th style="text-align:left;padding:8px 10px">Competition</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function renderNewsSection(news){
+  const body=document.getElementById('news-body');
+  if(!body)return;
+  if(!news||!news.length){
+    body.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">&#128240; No news available right now</div>';
+    return;
+  }
+  let html='';
+  news.forEach(function(n){
+    html+='<div style="padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">';
+    if(n.title)html+='<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.4">'+n.title.substring(0,80)+'</div>';
+    if(n.snippet)html+='<div style="font-size:11px;color:var(--text2);line-height:1.6">'+n.snippet.substring(0,140)+'</div>';
+    if(n.url)html+='<a href="https://'+n.url+'" target="_blank" rel="noopener" style="font-size:10px;color:var(--accent);text-decoration:none;margin-top:4px;display:inline-block">Read more &#8599;</a>';
+    html+='</div>';
+  });
+  body.innerHTML=html;
+}
+
+async function runSmartAI(){
+  const question=g('nlq').trim();
+  if(!question){alert('Please enter a question.');return;}
+
+  // Add user bubble to chat
+  appendChatBubble('user',question);
+  document.getElementById('nlq').value='';
+
+  // Show loading
+  document.getElementById('lnl').classList.add('show');
+  const rnl=document.getElementById('rnl');
+  if(rnl)rnl.style.display='none';
+
+  try{
+    const resp=await fetch('/dashboard/smart-ai/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify({question:question})
+    });
+    const d=await resp.json();
+    document.getElementById('lnl').classList.remove('show');
+
+    if(d.success){
+      const r=d.result;
+      renderSmartAIResult(r);
+
+      // Build AI bubble summary
+      let bubbleHtml='<strong style="color:#f472b6">&#129302; Smart AI</strong><br>';
+      if(r.answer)bubbleHtml+=r.answer.substring(0,200)+(r.answer.length>200?'…':'');
+      if(r.verdict&&r.home_team)bubbleHtml+='<br><strong style="color:#f472b6">&#127919; '+r.verdict+' to Win</strong>';
+      appendChatBubble('ai',bubbleHtml);
+
+      // Update live match table if data returned
+      if(d.live_matches&&d.live_matches.length)renderLiveMatchTable(d.live_matches);
+      // Update news section
+      if(d.current_news&&d.current_news.length)renderNewsSection(d.current_news);
+
+      if(d.predictions_left===0){
+        appendChatBubble('ai','&#9888; Daily prediction limit reached. <a href="/pricing/" style="color:var(--accent)">Upgrade for more &#8594;</a>');
+      }
+    }else if(d.error==='daily_limit_reached'){
+      document.getElementById('lnl').classList.remove('show');
+      appendChatBubble('ai','&#9888; '+( d.message||'Daily limit reached. Upgrade for more predictions!'));
+    }else{
+      appendChatBubble('ai','&#10060; '+(d.error||'Something went wrong. Please try again.'));
+    }
+  }catch(err){
+    document.getElementById('lnl').classList.remove('show');
+    appendChatBubble('ai','&#10060; Network error. Please check your connection and try again.');
+  }
+}
+
+/* Allow Enter key (without Shift) to submit Smart AI */
+(function(){
+  const ta=document.getElementById('nlq');
+  if(ta){
+    ta.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        runSmartAI();
+      }
+    });
+  }
+})();
+
+async function refreshLiveMatches(){
+  const body=document.getElementById('live-match-table-body');
+  if(body)body.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><div class="spin" style="width:24px;height:24px;margin:0 auto 8px"></div>Fetching live matches...</div>';
+  try{
+    const resp=await fetch('/dashboard/live-matches/',{headers:{'X-CSRFToken':CSRF}});
+    const d=await resp.json();
+    if(d.success){
+      renderLiveMatchTable(d.live_matches);
+      if(d.current_news&&d.current_news.length)renderNewsSection(d.current_news);
+    }
+  }catch(e){
+    if(body)body.innerHTML='<div style="text-align:center;padding:20px;color:var(--red)">&#10060; Failed to refresh</div>';
+  }
+}
+
+async function refreshNews(){
+  const body=document.getElementById('news-body');
+  if(body)body.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)"><div class="spin" style="width:24px;height:24px;margin:0 auto 8px"></div>Fetching news...</div>';
+  try{
+    const resp=await fetch('/dashboard/live-matches/',{headers:{'X-CSRFToken':CSRF}});
+    const d=await resp.json();
+    if(d.success&&d.current_news)renderNewsSection(d.current_news);
+  }catch(e){
+    if(body)body.innerHTML='<div style="text-align:center;padding:20px;color:var(--red)">&#10060; Failed to refresh</div>';
+  }
+}
 
 /* ── Bottom nav active state ─────────────────────────────── */
 document.querySelectorAll('.bn-item').forEach(function(item){
