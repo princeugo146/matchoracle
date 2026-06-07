@@ -165,6 +165,189 @@
 
 /* ── Misc ─────────────────────────────────────────────────── */
 .section-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
+
+/* ── Smart AI Result Card ─────────────────────────────────── */
+.smart-ai-result{
+  background:linear-gradient(135deg,#030d1a 0%,#0a1628 40%,#12103a 100%);
+  border:1px solid rgba(0,212,255,.3);
+  border-radius:20px;
+  padding:22px 20px;
+  margin-top:16px;
+  position:relative;
+  overflow:hidden;
+  animation:fu .4s ease;
+}
+.smart-ai-result::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.smart-ai-result::after{
+  content:'';position:absolute;bottom:-40px;left:20%;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,58,237,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.smart-ai-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid rgba(0,212,255,.12);
+}
+.smart-ai-badge{
+  font-size:9px;letter-spacing:2px;font-weight:800;text-transform:uppercase;
+  padding:4px 10px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(124,58,237,.2));
+  border:1px solid rgba(0,212,255,.3);
+  color:#00d4ff;
+}
+.ai-verdict-box{
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(124,58,237,.08));
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:16px;
+  padding:18px 20px;
+  margin-bottom:16px;
+  text-align:center;
+  position:relative;
+}
+.ai-verdict-label{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(0,212,255,.7);font-weight:700;margin-bottom:8px;
+}
+.ai-verdict-text{
+  font-family:'Orbitron',sans-serif;
+  font-size:22px;font-weight:900;
+  background:linear-gradient(135deg,#00d4ff,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  line-height:1.2;margin-bottom:6px;
+}
+.ai-verdict-score{
+  font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;
+  color:#f59e0b;margin-bottom:4px;
+}
+.ai-verdict-conf{
+  font-size:13px;color:rgba(255,255,255,.6);
+}
+.ai-verdict-conf strong{color:#10b981;font-size:15px;}
+.best-outcome-crown{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#f59e0b,#d97706);
+  color:#030508;font-size:9px;font-weight:800;letter-spacing:2px;
+  padding:3px 14px;border-radius:20px;white-space:nowrap;
+}
+.engine-comparison{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-bottom:16px;
+}
+@media(max-width:480px){.engine-comparison{grid-template-columns:1fr;}}
+.engine-col{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:14px 12px;
+  text-align:center;
+  transition:border-color .2s,background .2s;
+}
+.engine-col.winner{
+  background:rgba(16,185,129,.06);
+  border-color:rgba(16,185,129,.3);
+}
+.engine-col.claude-col{border-color:rgba(0,212,255,.2);}
+.engine-col.engine-a-col{border-color:rgba(124,58,237,.2);}
+.engine-col.engine-d-col{border-color:rgba(251,146,60,.2);}
+.engine-col-label{
+  font-size:8px;letter-spacing:2px;font-weight:800;text-transform:uppercase;
+  margin-bottom:8px;
+}
+.engine-col.claude-col .engine-col-label{color:#00d4ff;}
+.engine-col.engine-a-col .engine-col-label{color:#a78bfa;}
+.engine-col.engine-d-col .engine-col-label{color:#fb923c;}
+.engine-col-verdict{
+  font-size:12px;font-weight:700;color:#fff;
+  margin-bottom:6px;line-height:1.3;
+}
+.engine-col-conf{
+  font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;
+  margin-bottom:4px;
+}
+.engine-col.claude-col .engine-col-conf{color:#00d4ff;}
+.engine-col.engine-a-col .engine-col-conf{color:#a78bfa;}
+.engine-col.engine-d-col .engine-col-conf{color:#fb923c;}
+.engine-col-score{
+  font-size:11px;color:rgba(255,255,255,.5);
+  background:rgba(255,255,255,.04);
+  border-radius:6px;padding:3px 8px;
+  display:inline-block;
+}
+.engine-col-agree{font-size:14px;margin-top:6px;}
+.agreement-bar{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 16px;
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;
+  flex-wrap:wrap;
+}
+.agreement-icon{font-size:20px;flex-shrink:0;}
+.agreement-text{font-size:13px;color:rgba(255,255,255,.8);flex:1;}
+.agreement-count{
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
+  padding:4px 12px;border-radius:20px;
+  background:rgba(16,185,129,.15);color:#10b981;
+  border:1px solid rgba(16,185,129,.25);
+}
+.agreement-count.warn{
+  background:rgba(245,158,11,.12);color:#f59e0b;
+  border-color:rgba(245,158,11,.2);
+}
+.reasoning-box{
+  background:rgba(0,212,255,.04);
+  border:1px solid rgba(0,212,255,.1);
+  border-radius:12px;padding:14px 16px;
+  margin-bottom:12px;
+}
+.reasoning-label{
+  font-size:9px;letter-spacing:2px;font-weight:700;
+  color:rgba(0,212,255,.7);text-transform:uppercase;
+  margin-bottom:8px;
+}
+.reasoning-text{
+  font-size:13px;color:rgba(255,255,255,.75);
+  line-height:1.8;
+}
+.betting-box{
+  background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(5,150,105,.05));
+  border:1px solid rgba(16,185,129,.2);
+  border-radius:12px;padding:12px 16px;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.betting-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.betting-text{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;}
+.betting-text strong{color:#10b981;}
+.smart-ai-sources{
+  margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.source-chip{
+  font-size:9px;letter-spacing:1px;font-weight:700;text-transform:uppercase;
+  padding:3px 8px;border-radius:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.4);
+}
+/* Smart AI input card */
+.smart-ai-card{
+  background:linear-gradient(135deg,#0a1628,#12103a);
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:18px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.smart-ai-card::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+
 </style>
 {% endblock %}
 
@@ -273,6 +456,39 @@
       </div>
       {% endwith %}
       {% endif %}
+
+      <!-- ── SMART AI PREDICTION ────────────────────────────── -->
+      <div class="smart-ai-card" id="smart-ai-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;letter-spacing:1px">
+              &#129302; Smart AI Prediction
+            </div>
+            <div style="font-size:11px;color:rgba(0,212,255,.7);margin-top:3px">Claude + Engine A + Engine D — 3-way comparison</div>
+          </div>
+          <span class="smart-ai-badge">&#9889; POWERED BY CLAUDE</span>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label style="color:rgba(255,255,255,.6);font-size:11px">Ask anything about a match</label>
+          <textarea id="sai-question"
+            placeholder="e.g. Who will win Arsenal vs Chelsea this weekend? Salah is injured..."
+            style="height:80px;resize:vertical;background:rgba(0,0,0,.3);border-color:rgba(0,212,255,.2);color:#fff;font-size:13px"></textarea>
+        </div>
+        <button onclick="runSmartAI()"
+          style="width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;
+                 background:linear-gradient(135deg,#00d4ff,#7c3aed);
+                 color:#030508;font-family:'Orbitron',sans-serif;font-size:11px;
+                 font-weight:800;letter-spacing:2px;transition:opacity .2s;"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          &#129302; RUN SMART AI ANALYSIS &#8594;
+        </button>
+        <div id="sai-loading" style="display:none;text-align:center;padding:24px">
+          <div class="spin" style="width:36px;height:36px;margin:0 auto 10px;border-top-color:#00d4ff"></div>
+          <div style="font-size:12px;color:rgba(0,212,255,.8)">Claude + Engine A + Engine D running...</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:4px">Comparing 3 predictions for best outcome</div>
+        </div>
+        <div id="sai-result"></div>
+      </div>
 
       <!-- Quick Analyze -->
       <div class="qa-card">
@@ -1143,5 +1359,186 @@ document.querySelectorAll('.bn-item').forEach(function(item){
     this.classList.add('active');
   });
 });
+
+/* ── Smart AI ─────────────────────────────────────────────── */
+async function runSmartAI(){
+  const q=document.getElementById('sai-question').value.trim();
+  if(!q){alert('Please enter a football question.');return;}
+  document.getElementById('sai-loading').style.display='block';
+  document.getElementById('sai-result').innerHTML='';
+  try{
+    const resp=await fetch('/dashboard/smart-ai/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify({question:q})
+    });
+    const d=await resp.json();
+    document.getElementById('sai-loading').style.display='none';
+    if(d.success){
+      renderSmartAI(d.result);
+    }else if(d.error==='daily_limit_reached'){
+      document.getElementById('sai-result').innerHTML=
+        '<div style="margin-top:14px;padding:14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center">'+
+        '<div style="font-size:16px;margin-bottom:6px">&#9888;</div>'+
+        '<div style="font-size:13px;color:#f59e0b;font-weight:600">Daily limit reached</div>'+
+        '<a href="/pricing/" style="display:inline-block;margin-top:8px;padding:8px 18px;background:linear-gradient(135deg,#00d4ff,#7c3aed);color:#030508;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">Upgrade for more &#8594;</a>'+
+        '</div>';
+    }else{
+      document.getElementById('sai-result').innerHTML=
+        '<div style="margin-top:14px;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;font-size:13px;color:#ef4444">'+
+        '&#10060; '+(d.error||'Something went wrong. Please try again.')+'</div>';
+    }
+  }catch(err){
+    document.getElementById('sai-loading').style.display='none';
+    document.getElementById('sai-result').innerHTML=
+      '<div style="margin-top:14px;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;font-size:13px;color:#ef4444">&#10060; Network error. Please try again.</div>';
+  }
+}
+
+function renderSmartAI(r){
+  const el=document.getElementById('sai-result');
+  const intent=r.intent||'general';
+
+  // Non-match intents: simple display
+  if(intent!=='match_prediction'||!r.home_team){
+    const cc=r.confidence>=70?'#10b981':r.confidence>=50?'#f59e0b':'#ef4444';
+    let html='<div class="smart-ai-result">';
+    html+='<div class="smart-ai-header">';
+    html+='<span style="font-size:20px">&#129302;</span>';
+    html+='<div style="flex:1"><div style="font-family:\'Orbitron\',sans-serif;font-size:12px;font-weight:700;color:#fff">SMART AI RESPONSE</div></div>';
+    html+='<span class="smart-ai-badge">&#9889; CLAUDE</span>';
+    html+='</div>';
+    if(r.verdict){
+      html+='<div class="ai-verdict-box" style="margin-bottom:14px">';
+      html+='<div class="ai-verdict-label">&#127919; VERDICT</div>';
+      html+='<div class="ai-verdict-text">'+escHtml(r.verdict)+'</div>';
+      if(r.confidence){html+='<div class="ai-verdict-conf">Confidence: <strong>'+r.confidence+'%</strong></div>';}
+      html+='</div>';
+    }
+    if(r.answer){html+='<div class="reasoning-box"><div class="reasoning-label">&#128161; Analysis</div><div class="reasoning-text">'+escHtml(r.answer)+'</div></div>';}
+    if(r.key_factors&&r.key_factors.length){
+      html+='<div style="margin-bottom:12px">';
+      r.key_factors.forEach(function(f){
+        html+='<div style="padding:6px 10px;background:rgba(255,255,255,.03);border-radius:8px;font-size:12px;color:rgba(255,255,255,.65);margin-bottom:5px">&#8226; '+escHtml(f)+'</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    el.innerHTML=html;
+    return;
+  }
+
+  // ── Full match prediction with 3-way comparison ──────────────
+  const cp=r.claude_prediction||{};
+  const ea=r.engine_a_result||{};
+  const ed=r.engine_d_result||{};
+  const best=r.best_outcome||r.verdict||'—';
+  const bestScore=r.best_score||r.predicted_score||'—';
+  const conf=r.confidence||0;
+  const agreeCount=r.agreement_count||1;
+  const reasoning=r.reasoning||r.answer||'';
+  const betting=r.betting_insight||'';
+  const sources=r.data_sources||[];
+
+  const confColor=conf>=75?'#10b981':conf>=55?'#f59e0b':'#ef4444';
+  const agreeGood=agreeCount>=2;
+
+  // Determine which columns are "winners" (agree with best outcome)
+  const claudeWins=(cp.verdict&&cp.verdict===best);
+  const eaWins=(ea.verdict&&ea.verdict===best);
+  const edWins=(ed.verdict&&ed.verdict===best);
+
+  let html='<div class="smart-ai-result">';
+
+  // Header
+  html+='<div class="smart-ai-header">';
+  html+='<span style="font-size:22px">&#129302;</span>';
+  html+='<div style="flex:1">';
+  html+='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;font-weight:900;color:#fff">SMART AI PREDICTION</div>';
+  html+='<div style="font-size:11px;color:rgba(0,212,255,.6);margin-top:2px">'+escHtml(r.home_team)+' vs '+escHtml(r.away_team)+(r.competition?' · '+escHtml(r.competition):'')+(r.is_today?' · <span style="color:#ef4444;font-weight:700">TODAY</span>':'')+'</div>';
+  html+='</div>';
+  html+='<span class="smart-ai-badge">&#9889; CLAUDE</span>';
+  html+='</div>';
+
+  // Best outcome verdict box
+  html+='<div class="ai-verdict-box">';
+  html+='<div class="best-outcome-crown">&#127942; BEST OUTCOME</div>';
+  html+='<div class="ai-verdict-label" style="margin-top:8px">&#127919; PREDICTED WINNER</div>';
+  html+='<div class="ai-verdict-text">'+escHtml(best)+'</div>';
+  html+='<div class="ai-verdict-score">'+escHtml(bestScore)+'</div>';
+  html+='<div class="ai-verdict-conf">Confidence: <strong style="color:'+confColor+'">'+conf+'%</strong></div>';
+  html+='</div>';
+
+  // 3-column engine comparison
+  html+='<div class="engine-comparison">';
+
+  // Claude column
+  html+='<div class="engine-col claude-col'+(claudeWins?' winner':'')+'">'+
+    '<div class="engine-col-label">&#129302; Claude AI</div>'+
+    '<div class="engine-col-verdict">'+escHtml(cp.verdict||'—')+'</div>'+
+    '<div class="engine-col-conf">'+(cp.confidence||'—')+'<span style="font-size:11px;color:rgba(255,255,255,.4)">%</span></div>'+
+    '<div class="engine-col-score">'+escHtml(cp.score||'—')+'</div>'+
+    '<div class="engine-col-agree">'+(claudeWins?'&#9989;':'&#9888;&#65039;')+'</div>'+
+  '</div>';
+
+  // Engine A column
+  html+='<div class="engine-col engine-a-col'+(eaWins?' winner':'')+'">'+
+    '<div class="engine-col-label">&#127919; Engine A</div>'+
+    '<div class="engine-col-verdict">'+escHtml(ea.verdict||'—')+'</div>'+
+    '<div class="engine-col-conf">'+(ea.confidence||'—')+'<span style="font-size:11px;color:rgba(255,255,255,.4)">%</span></div>'+
+    '<div class="engine-col-score">'+escHtml(ea.score||'—')+'</div>'+
+    '<div class="engine-col-agree">'+(eaWins?'&#9989;':'&#9888;&#65039;')+'</div>'+
+  '</div>';
+
+  // Engine D column
+  html+='<div class="engine-col engine-d-col'+(edWins?' winner':'')+'">'+
+    '<div class="engine-col-label">&#127918; Engine D</div>'+
+    '<div class="engine-col-verdict">'+escHtml(ed.verdict||'—')+'</div>'+
+    '<div class="engine-col-conf">'+(ed.confidence||'—')+'<span style="font-size:11px;color:rgba(255,255,255,.4)">%</span></div>'+
+    '<div class="engine-col-score">'+escHtml(ed.score||'—')+'</div>'+
+    '<div class="engine-col-agree">'+(edWins?'&#9989;':'&#9888;&#65039;')+'</div>'+
+  '</div>';
+
+  html+='</div>'; // /engine-comparison
+
+  // Agreement indicator
+  html+='<div class="agreement-bar">';
+  html+='<span class="agreement-icon">'+(agreeGood?'&#9989;':'&#9888;&#65039;')+'</span>';
+  html+='<span class="agreement-text">'+(agreeGood?'<strong>CONSENSUS:</strong> '+agreeCount+' out of 3 engines agree on <strong>'+escHtml(best)+'</strong>':'<strong>MIXED SIGNALS:</strong> Engines disagree — proceed with caution')+'</span>';
+  html+='<span class="agreement-count'+(agreeGood?'':' warn')+'">'+agreeCount+'/3 AGREE</span>';
+  html+='</div>';
+
+  // Reasoning
+  if(reasoning){
+    html+='<div class="reasoning-box">';
+    html+='<div class="reasoning-label">&#128161; Expert Reasoning</div>';
+    html+='<div class="reasoning-text">'+escHtml(reasoning)+'</div>';
+    html+='</div>';
+  }
+
+  // Betting insight
+  if(betting){
+    html+='<div class="betting-box">';
+    html+='<span class="betting-icon">&#127919;</span>';
+    html+='<div class="betting-text"><strong>Bet Insight:</strong> '+escHtml(betting)+'</div>';
+    html+='</div>';
+  }
+
+  // Data sources
+  if(sources.length){
+    html+='<div class="smart-ai-sources">';
+    html+='<span style="font-size:10px;color:rgba(255,255,255,.3)">Sources:</span>';
+    sources.forEach(function(s){html+='<span class="source-chip">'+escHtml(s)+'</span>';});
+    html+='</div>';
+  }
+
+  html+='</div>'; // /smart-ai-result
+  el.innerHTML=html;
+}
+
+function escHtml(s){
+  if(!s&&s!==0)return'';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 </script>
 {% endblock %}
