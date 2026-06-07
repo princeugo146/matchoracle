@@ -7,6 +7,7 @@ from .engine import (
     search_web, extract_match_data, extract_player_data,
     extract_upcoming_matches, detect_intent,
     _build_match_engine_input, _build_sim_engine_input,
+    _build_consensus,
     engine_a, engine_b, engine_d, get_confidence_badge,
 )
 
@@ -111,12 +112,12 @@ def get_todays_match(home_team, away_team):
 
 def smart_predict(question):
     """
-    Main function: takes a natural language question and returns a full
-    prediction by detecting intent, searching the web for real data,
-    trying Sportmonks if available, and routing to the right engine.
+    Smart AI Orchestrator — takes a natural language question and returns a full
+    prediction by detecting intent, fetching live internet data, running ALL
+    prediction engines, comparing results, and compiling a consensus.
 
     Intent routing:
-      match_prediction  → Engine A + Engine D (simulation)
+      match_prediction  → Engine A + Engine D + consensus comparison
       player_comparison → Engine B (per player) + comparison narrative
       simulation        → Engine D
       general           → Claude AI only
@@ -125,7 +126,7 @@ def smart_predict(question):
         return {
             'success': False,
             'answer': 'Please ask a football question, e.g. "Who will win Arsenal vs Chelsea today?"',
-            'prediction': None,
+            'verdict': None,
             'data_sources': [],
         }
 
@@ -146,14 +147,16 @@ def smart_predict(question):
                 teams = [ht, at]
                 intent = 'match_prediction'
 
-    # ── 3. Match prediction ─────────────────────────────────────────────────
+    # ── 3. Match prediction: run Engine A + Engine D, build consensus ────────
     if intent == 'match_prediction' and len(teams) >= 2:
         home_team, away_team = teams[0], teams[1]
 
+        # Check if match is today via Sportmonks
         todays_match = get_todays_match(home_team, away_team)
         competition = 'League'
 
-        search_q = f"{home_team} vs {away_team} prediction form injuries stats 2024"
+        # Fetch live internet data
+        search_q = f"{home_team} vs {away_team} prediction form injuries stats 2025"
         web_results = search_web(search_q)
         if web_results:
             data_sources.append('web_search')
@@ -169,12 +172,14 @@ def smart_predict(question):
         engine_data = _build_match_engine_input(home_team, away_team, web_data)
         sim_data = _build_sim_engine_input(home_team, away_team, web_data)
 
+        # Run Engine A
         try:
             match_result = engine_a(engine_data)
         except Exception as e:
             logger.error(f"Engine A error in smart_predict: {e}")
             match_result = None
 
+        # Run Engine D
         try:
             sim_result = engine_d(sim_data)
         except Exception as e:
@@ -190,23 +195,40 @@ def smart_predict(question):
                 'data_sources': data_sources,
             }
 
+        # Build consensus from Engine A + Engine D
+        consensus = _build_consensus(home_team, away_team, match_result, sim_result)
+        final_verdict = consensus['final_verdict']
+        consensus_confidence = consensus['confidence']
+        agreement_text = (
+            f"Both Engine A and Engine D agree: {final_verdict} to win."
+            if consensus['agreement']
+            else (
+                f"Engine A predicts {consensus['engine_a_verdict']} but Engine D leans "
+                f"{consensus['engine_d_verdict']} — mixed signals."
+            )
+        )
+
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
         ai_answer = call_ai(
-            'You are MatchOracle AI, a football intelligence assistant. Give expert predictions. Return ONLY valid JSON.',
+            'You are MatchOracle Smart AI, a football intelligence orchestrator. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
             f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Web data snippets: {snippets_text[:300]}\n'
-            f'Engine A: Home {match_result["home_win"]}% Draw {match_result["draw"]}% Away {match_result["away_win"]}%\n'
-            f'Predicted score: {match_result.get("predicted_score","1-1")}\n'
-            f'Simulation (10,000 runs): Most likely score {sim_result["likely_score"] if sim_result else "N/A"}\n'
-            f'Confidence: {match_result["confidence"]}%\n'
+            f'Live web data: {snippets_text[:300]}\n'
+            f'Engine A (match prediction): Home {match_result["home_win"]}% '
+            f'Draw {match_result["draw"]}% Away {match_result["away_win"]}% '
+            f'→ Verdict: {consensus["engine_a_verdict"]} | Score: {match_result.get("predicted_score","1-1")}\n'
+            f'Engine D (Monte Carlo 10,000 sims): Home {sim_result["home_win"] if sim_result else "N/A"}% '
+            f'Draw {sim_result["draw"] if sim_result else "N/A"}% '
+            f'Away {sim_result["away_win"] if sim_result else "N/A"}% '
+            f'→ Verdict: {consensus["engine_d_verdict"]} | Score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
+            f'Consensus: {agreement_text}\n'
+            f'Final confidence: {consensus_confidence}%\n'
             f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-4 sentence expert analysis mentioning percentages and predicted score",'
-            f'"verdict":"{match_result["verdict"]}",'
+            f'Return JSON: {{"answer":"3-5 sentence expert analysis mentioning both engines, percentages, and consensus",'
             f'"key_factors":["factor1","factor2","factor3"],'
-            f'"betting_insight":"one sentence about most likely outcome"}}',
-            max_tokens=600,
+            f'"betting_insight":"one sentence about the best bet"}}',
+            max_tokens=700,
         )
 
         if ai_answer:
@@ -215,14 +237,23 @@ def smart_predict(question):
             betting_insight = ai_answer.get('betting_insight', '')
         else:
             final_answer = (
-                f"Based on web data and V1 analysis, {match_result['verdict']} is predicted to win "
+                f"Based on live internet data, Engine A predicts {consensus['engine_a_verdict']} "
                 f"({match_result['home_win']}% home / {match_result['draw']}% draw / "
                 f"{match_result['away_win']}% away). "
-                f"Predicted score: {match_result.get('predicted_score','1-1')}. "
-                f"Simulation most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}."
+                f"Engine D ({sim_result['simulations'] if sim_result else 10000} simulations) "
+                f"most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}. "
+                f"{agreement_text}"
             )
-            key_factors = []
-            betting_insight = ''
+            key_factors = [
+                f"Engine A: {consensus['engine_a_verdict']} ({match_result['home_win']}% home win)",
+                f"Engine D: {consensus['engine_d_verdict']} ({sim_result['home_win'] if sim_result else 'N/A'}% home win)",
+                f"Consensus: {'Both engines agree' if consensus['agreement'] else 'Engines disagree — caution advised'}",
+            ]
+            betting_insight = (
+                f"Strong consensus for {final_verdict} — both engines agree."
+                if consensus['agreement']
+                else "Mixed signals from engines — consider smaller stake or avoid."
+            )
 
         return {
             'success': True,
@@ -234,11 +265,12 @@ def smart_predict(question):
             'match_prediction': match_result,
             'simulation': sim_result,
             'answer': final_answer,
-            'verdict': match_result['verdict'],
+            'verdict': final_verdict,
             'predicted_score': match_result.get('predicted_score', '1-1'),
             'likely_score': sim_result['likely_score'] if sim_result else 'N/A',
-            'confidence': match_result['confidence'],
-            'confidence_badge': get_confidence_badge(match_result['confidence']),
+            'confidence': consensus_confidence,
+            'confidence_badge': get_confidence_badge(consensus_confidence),
+            'consensus': consensus,
             'key_factors': key_factors,
             'betting_insight': betting_insight,
             'home_win': match_result['home_win'],

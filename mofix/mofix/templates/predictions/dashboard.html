@@ -461,6 +461,35 @@ async function runSmartAI(){
         if(r.is_today){
           html+=`<div style="margin-top:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green)">&#9989; This match is scheduled for TODAY!</div>`;
         }
+        // Consensus box — shows Engine A vs Engine D agreement
+        if(r.consensus){
+          const c=r.consensus;
+          const agreeColor=c.agreement?'rgba(16,185,129,0.08)':'rgba(245,158,11,0.08)';
+          const agreeBorder=c.agreement?'rgba(16,185,129,0.2)':'rgba(245,158,11,0.2)';
+          const agreeIcon=c.agreement?'✅':'⚠️';
+          const agreeLabel=c.agreement?'ENGINES AGREE':'ENGINES DISAGREE';
+          const agreeTextColor=c.agreement?'var(--green)':'var(--gold)';
+          html+=`<div style="margin-top:12px;background:${agreeColor};border:1px solid ${agreeBorder};border-radius:10px;padding:12px 14px">`;
+          html+=`<div style="font-size:10px;color:${agreeTextColor};font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">${agreeIcon} ENGINE CONSENSUS — ${agreeLabel}</div>`;
+          html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">`;
+          html+=`<div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.12);border-radius:8px;padding:8px 10px">`;
+          html+=`<div style="font-size:9px;color:var(--accent);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">ENGINE A</div>`;
+          html+=`<div style="font-size:13px;font-weight:700;color:var(--text)">${c.engine_a_verdict||'—'}</div>`;
+          html+=`<div style="font-size:10px;color:var(--muted);margin-top:2px">${c.engine_a_probs?.home||0}% / ${c.engine_a_probs?.draw||0}% / ${c.engine_a_probs?.away||0}%</div>`;
+          html+=`</div>`;
+          html+=`<div style="background:rgba(251,146,60,0.06);border:1px solid rgba(251,146,60,0.12);border-radius:8px;padding:8px 10px">`;
+          html+=`<div style="font-size:9px;color:var(--orange);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">ENGINE D</div>`;
+          html+=`<div style="font-size:13px;font-weight:700;color:var(--text)">${c.engine_d_verdict||'—'}</div>`;
+          html+=`<div style="font-size:10px;color:var(--muted);margin-top:2px">${c.engine_d_probs?.home||0}% / ${c.engine_d_probs?.draw||0}% / ${c.engine_d_probs?.away||0}%</div>`;
+          html+=`</div>`;
+          html+=`</div>`;
+          html+=`<div style="font-size:12px;font-weight:700;color:${agreeTextColor}">${agreeIcon} Final verdict: ${c.final_verdict}</div>`;
+          html+=`</div>`;
+        }
+        // Data sources badge
+        if(r.data_sources && r.data_sources.length){
+          html+=`<div style="margin-top:8px;font-size:10px;color:var(--muted)">&#127760; Data: ${r.data_sources.join(', ')}</div>`;
+        }
       }
       html+=`<div style="margin-top:12px;font-size:11px;color:var(--muted)">Predictions left today: ${d.predictions_left}</div>`;
       addChatMessage('ai', html);
