@@ -158,8 +158,17 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 300          # 5 minutes max per task
-CELERY_TASK_SOFT_TIME_LIMIT = 240     # soft limit triggers SoftTimeLimitExceeded
+CELERY_TASK_TIME_LIMIT = 30 * 60      # 30 minutes max per task
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60 # soft limit triggers SoftTimeLimitExceeded
+
+# Broker connection resilience — prevents crash-looping when Redis is briefly unavailable
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_RETRY = True
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
+
+# Graceful shutdown — limit prefetch so in-flight tasks finish cleanly on SIGTERM
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
 
 # Periodic task schedule (requires celery beat)
 # Wrapped in try/except so the web process starts cleanly even without celery installed.
