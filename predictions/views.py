@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from .models import Prediction, TeamRanking, WeeklyTip
 from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language, simulate_penalty_shootout
+from .smart_ai import smart_predict
 
 logger = logging.getLogger(__name__)
 
@@ -154,4 +155,80 @@ def tips(request):
     return render(request, 'predictions/tips.html', {
         'free_tips': free_tips, 'pro_tips': pro_tips,
         'is_pro': request.user.plan == 'pro',
+    })
+
+
+@login_required
+def smart_ai_view(request):
+    """
+    Smart AI endpoint — receives a natural language question, runs all engines,
+    builds consensus, and returns a rich JSON response for the chat interface.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+
+    user = request.user
+
+    # Reset daily counter if new day
+    today = timezone.now().date()
+    if user.predictions_date != today:
+        user.predictions_today = 0
+        user.predictions_date = today
+        user.save(update_fields=['predictions_today', 'predictions_date'])
+
+    if not user.can_predict:
+        plan_info = settings.MATCHORACLE['PLANS'].get(user.plan, {})
+        limit = plan_info.get('predictions_per_day', 3)
+        return JsonResponse({
+            'error': 'daily_limit_reached',
+            'message': f'You have used all {limit} predictions for today. Upgrade for more!',
+        }, status=429)
+
+    try:
+        body = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    question = body.get('question', '').strip()
+    if not question:
+        return JsonResponse({'error': 'No question provided'}, status=400)
+
+    try:
+        result = smart_predict(question)
+    except Exception as e:
+        logger.error(f"Smart AI error: {e}", exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)
+
+    if not result.get('success'):
+        return JsonResponse({
+            'success': False,
+            'error': result.get('answer', 'Prediction failed'),
+        }, status=400)
+
+    # Save prediction to history
+    try:
+        home_team = result.get('home_team') or ''
+        away_team = result.get('away_team') or ''
+        verdict = result.get('verdict') or ''
+        confidence = result.get('confidence', 0)
+        Prediction.objects.create(
+            user=user,
+            engine='NL',
+            input_data={'question': question},
+            output_data=result,
+            confidence=confidence,
+            home_team=home_team,
+            away_team=away_team,
+            predicted_result=verdict,
+        )
+        user.predictions_today += 1
+        user.total_predictions += 1
+        user.save(update_fields=['predictions_today', 'total_predictions'])
+    except Exception as e:
+        logger.warning(f"Smart AI save error: {e}")
+
+    return JsonResponse({
+        'success': True,
+        'result': result,
+        'predictions_left': user.predictions_left_today,
     })
