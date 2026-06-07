@@ -197,63 +197,122 @@ def smart_predict(question):
 
         # Build consensus from Engine A + Engine D
         consensus = _build_consensus(home_team, away_team, match_result, sim_result)
-        final_verdict = consensus['final_verdict']
-        consensus_confidence = consensus['confidence']
-        agreement_text = (
-            f"Both Engine A and Engine D agree: {final_verdict} to win."
-            if consensus['agreement']
-            else (
-                f"Engine A predicts {consensus['engine_a_verdict']} but Engine D leans "
-                f"{consensus['engine_d_verdict']} — mixed signals."
-            )
-        )
 
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
-        ai_answer = call_ai(
-            'You are MatchOracle Smart AI, a football intelligence orchestrator. Return ONLY valid JSON.',
-            f'User asked: "{question}"\n'
-            f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Live web data: {snippets_text[:300]}\n'
-            f'Engine A (match prediction): Home {match_result["home_win"]}% '
-            f'Draw {match_result["draw"]}% Away {match_result["away_win"]}% '
-            f'→ Verdict: {consensus["engine_a_verdict"]} | Score: {match_result.get("predicted_score","1-1")}\n'
-            f'Engine D (Monte Carlo 10,000 sims): Home {sim_result["home_win"] if sim_result else "N/A"}% '
-            f'Draw {sim_result["draw"] if sim_result else "N/A"}% '
-            f'Away {sim_result["away_win"] if sim_result else "N/A"}% '
-            f'→ Verdict: {consensus["engine_d_verdict"]} | Score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
-            f'Consensus: {agreement_text}\n'
-            f'Final confidence: {consensus_confidence}%\n'
-            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-5 sentence expert analysis mentioning both engines, percentages, and consensus",'
-            f'"key_factors":["factor1","factor2","factor3"],'
+
+        # ── Claude generates its OWN independent prediction ─────────────────
+        claude_raw = call_ai(
+            'You are MatchOracle AI, a world-class football analyst. Generate your own independent prediction. Return ONLY valid JSON.',
+            f'Match: {home_team} vs {away_team} ({competition}) — {match_info}\n'
+            f'Live data: {snippets_text[:300]}\n'
+            f'Based on current form, injuries, head-to-head, and tactical analysis:\n'
+            f'Return JSON: {{"verdict":"{home_team} or {away_team} or Draw",'
+            f'"confidence":85,"score":"2-1",'
+            f'"reasoning":"3-4 sentences of expert analysis",'
             f'"betting_insight":"one sentence about the best bet"}}',
-            max_tokens=700,
+            max_tokens=500,
         )
 
-        if ai_answer:
-            final_answer = ai_answer.get('answer', '')
-            key_factors = ai_answer.get('key_factors', [])
-            betting_insight = ai_answer.get('betting_insight', '')
+        # Parse Claude's prediction
+        if claude_raw:
+            claude_verdict = claude_raw.get('verdict', '').strip()
+            claude_confidence = int(claude_raw.get('confidence', 70))
+            claude_score = claude_raw.get('score', '1-1')
+            claude_reasoning = claude_raw.get('reasoning', '')
+            claude_betting = claude_raw.get('betting_insight', '')
         else:
-            final_answer = (
-                f"Based on live internet data, Engine A predicts {consensus['engine_a_verdict']} "
-                f"({match_result['home_win']}% home / {match_result['draw']}% draw / "
-                f"{match_result['away_win']}% away). "
-                f"Engine D ({sim_result['simulations'] if sim_result else 10000} simulations) "
-                f"most likely score: {sim_result['likely_score'] if sim_result else 'N/A'}. "
-                f"{agreement_text}"
+            claude_verdict = consensus['final_verdict']
+            claude_confidence = consensus['confidence']
+            claude_score = match_result.get('predicted_score', '1-1')
+            claude_reasoning = ''
+            claude_betting = ''
+
+        # ── Compare all 3: Claude + Engine A + Engine D ──────────────────────
+        engine_a_verdict = consensus['engine_a_verdict']
+        engine_d_verdict = consensus['engine_d_verdict']
+        engine_a_score = match_result.get('predicted_score', '1-1')
+        engine_a_confidence = match_result.get('confidence', 60)
+        engine_d_score = sim_result['likely_score'] if sim_result else 'N/A'
+        engine_d_confidence = int(max(
+            sim_result.get('home_win', 0),
+            sim_result.get('draw', 0),
+            sim_result.get('away_win', 0),
+        )) if sim_result else 50
+
+        # Count agreement across all 3 sources
+        all_verdicts = [v for v in [claude_verdict, engine_a_verdict, engine_d_verdict] if v]
+        if all_verdicts:
+            from collections import Counter
+            verdict_counts = Counter(all_verdicts)
+            best_verdict, best_count = verdict_counts.most_common(1)[0]
+        else:
+            best_verdict = consensus['final_verdict']
+            best_count = 1
+
+        agreement_count = best_count  # how many of the 3 agree on best_verdict
+
+        # Determine best outcome: prefer highest agreement, then highest confidence
+        if agreement_count >= 2:
+            final_verdict = best_verdict
+            agreeing_confidences = []
+            if claude_verdict == best_verdict:
+                agreeing_confidences.append(claude_confidence)
+            if engine_a_verdict == best_verdict:
+                agreeing_confidences.append(engine_a_confidence)
+            if engine_d_verdict == best_verdict:
+                agreeing_confidences.append(engine_d_confidence)
+            final_confidence = max(agreeing_confidences) if agreeing_confidences else consensus['confidence']
+        else:
+            # No majority — trust Claude + Engine A (Engine A has more data)
+            if claude_verdict == engine_a_verdict and claude_verdict:
+                final_verdict = claude_verdict
+                final_confidence = max(claude_confidence, engine_a_confidence)
+                agreement_count = 2
+            else:
+                final_verdict = claude_verdict or consensus['final_verdict']
+                final_confidence = claude_confidence or consensus['confidence']
+                agreement_count = 1
+
+        final_confidence = min(95, max(40, final_confidence))
+
+        # Best score: from the source with highest confidence
+        source_scores = [
+            (claude_confidence, claude_score, 'Claude'),
+            (engine_a_confidence, engine_a_score, 'Engine A'),
+            (engine_d_confidence, engine_d_score, 'Engine D'),
+        ]
+        best_score = max(source_scores, key=lambda x: x[0])[1]
+
+        # Build reasoning from Claude (or fallback)
+        if not claude_reasoning:
+            if agreement_count >= 2:
+                claude_reasoning = (
+                    f"{agreement_count} out of 3 prediction engines agree that {final_verdict} is the most likely outcome. "
+                    f"Engine A gives {engine_a_verdict} at {engine_a_confidence}% confidence, "
+                    f"Engine D simulation predicts {engine_d_verdict} with score {engine_d_score}. "
+                    f"The consensus strongly favours {final_verdict}."
+                )
+            else:
+                claude_reasoning = (
+                    f"Engines show mixed signals for {home_team} vs {away_team}. "
+                    f"Engine A predicts {engine_a_verdict} ({engine_a_confidence}%), "
+                    f"Engine D leans {engine_d_verdict}. "
+                    f"Claude AI independently assesses {claude_verdict} as the most likely outcome."
+                )
+
+        if not claude_betting:
+            claude_betting = (
+                f"Strong consensus for {final_verdict} — {agreement_count}/3 engines agree."
+                if agreement_count >= 2
+                else "Mixed signals — consider a smaller stake or wait for more data."
             )
-            key_factors = [
-                f"Engine A: {consensus['engine_a_verdict']} ({match_result['home_win']}% home win)",
-                f"Engine D: {consensus['engine_d_verdict']} ({sim_result['home_win'] if sim_result else 'N/A'}% home win)",
-                f"Consensus: {'Both engines agree' if consensus['agreement'] else 'Engines disagree — caution advised'}",
-            ]
-            betting_insight = (
-                f"Strong consensus for {final_verdict} — both engines agree."
-                if consensus['agreement']
-                else "Mixed signals from engines — consider smaller stake or avoid."
-            )
+
+        key_factors = [
+            f"Claude AI: {claude_verdict} ({claude_confidence}%) — Score: {claude_score}",
+            f"Engine A: {engine_a_verdict} ({engine_a_confidence}%) — Score: {engine_a_score}",
+            f"Engine D: {engine_d_verdict} ({engine_d_confidence}%) — Score: {engine_d_score}",
+        ]
 
         return {
             'success': True,
@@ -264,20 +323,47 @@ def smart_predict(question):
             'is_today': todays_match is not None,
             'match_prediction': match_result,
             'simulation': sim_result,
-            'answer': final_answer,
+            # Claude's own prediction
+            'claude_prediction': {
+                'verdict': claude_verdict,
+                'confidence': claude_confidence,
+                'score': claude_score,
+                'reasoning': claude_reasoning,
+            },
+            # Engine A result
+            'engine_a_result': {
+                'verdict': engine_a_verdict,
+                'confidence': engine_a_confidence,
+                'score': engine_a_score,
+            },
+            # Engine D result
+            'engine_d_result': {
+                'verdict': engine_d_verdict,
+                'confidence': engine_d_confidence,
+                'score': engine_d_score,
+            },
+            # Best outcome
+            'best_outcome': final_verdict,
+            'best_score': best_score,
+            'agreement_count': agreement_count,
+            'reasoning': claude_reasoning,
+            'betting_insight': claude_betting,
+            # Legacy fields for backward compatibility
+            'answer': claude_reasoning,
             'verdict': final_verdict,
-            'predicted_score': match_result.get('predicted_score', '1-1'),
-            'likely_score': sim_result['likely_score'] if sim_result else 'N/A',
-            'confidence': consensus_confidence,
-            'confidence_badge': get_confidence_badge(consensus_confidence),
+            'predicted_score': engine_a_score,
+            'likely_score': engine_d_score,
+            'confidence': final_confidence,
+            'confidence_badge': get_confidence_badge(final_confidence),
             'consensus': consensus,
             'key_factors': key_factors,
-            'betting_insight': betting_insight,
             'home_win': match_result['home_win'],
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
             'data_sources': data_sources,
         }
+
+
 
     # ── 4. Player comparison ────────────────────────────────────────────────
     if intent == 'player_comparison' and players:
