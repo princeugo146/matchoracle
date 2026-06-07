@@ -230,8 +230,9 @@ def extract_upcoming_matches(search_results, team_name):
 
 def detect_intent(question):
     """
-    Classify the user's question into one of four intents:
-      'match_prediction', 'player_comparison', 'simulation', 'general'
+    Classify the user's question into one of several intents:
+      'match_prediction', 'player_comparison', 'simulation',
+      'health_question', 'news_question', 'general_knowledge', 'general'
     Returns a dict: {intent, teams, players, confidence}
     """
     q = question.lower()
@@ -254,6 +255,33 @@ def detect_intent(question):
         teams = _extract_team_names(q)
         if teams:
             return {'intent': 'match_prediction', 'teams': teams, 'players': [], 'confidence': 85}
+
+    # Health / medical questions
+    health_keywords = [
+        'health', 'medical', 'doctor', 'disease', 'symptom', 'treatment',
+        'medicine', 'vaccine', 'covid', 'flu', 'pain', 'injury', 'diet',
+        'exercise', 'wellness', 'nutrition', 'mental health', 'anxiety',
+        'depression', 'surgery', 'hospital', 'prescription', 'drug', 'vitamin',
+    ]
+    if any(k in q for k in health_keywords):
+        return {'intent': 'health_question', 'teams': [], 'players': [], 'confidence': 90}
+
+    # News / current events questions
+    news_keywords = [
+        'news', 'happened', 'today', 'latest', 'breaking', 'current', 'recent',
+        'update', 'announcement', 'report', 'headline',
+    ]
+    if any(k in q for k in news_keywords):
+        return {'intent': 'news_question', 'teams': [], 'players': [], 'confidence': 85}
+
+    # General knowledge questions
+    general_knowledge_keywords = [
+        'what is', 'who is', 'how does', 'explain', 'tell me about',
+        'define', 'history of', 'why does', 'when did', 'where is',
+        'how many', 'how much', 'what are', 'who was', 'how do',
+    ]
+    if any(k in q for k in general_knowledge_keywords):
+        return {'intent': 'general_knowledge', 'teams': [], 'players': [], 'confidence': 80}
 
     return {'intent': 'general', 'teams': [], 'players': [], 'confidence': 60}
 

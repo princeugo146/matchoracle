@@ -471,7 +471,98 @@ def smart_predict(question):
                 'data_sources': data_sources,
             }
 
-    # ── 6. General football question (Claude only) ──────────────────────────
+    # ── 6. Health questions ─────────────────────────────────────────────────
+    if intent == 'health_question':
+        results = search_web(question)
+        if results:
+            data_sources.append('web_search')
+
+        ai_answer = call_ai(
+            'You are a helpful AI assistant. For health questions, ALWAYS include a clear disclaimer '
+            'that this is general information only and not a substitute for professional medical advice. '
+            'Return ONLY valid JSON.',
+            f'Question: "{question}"\n'
+            f'Web data: {" | ".join(r.get("snippet", "") for r in results[:3]) if results else "N/A"}\n'
+            f'Return JSON: {{"answer":"informative response with general health information",'
+            f'"disclaimer":"⚠️ DISCLAIMER: This is general information only, not medical advice. '
+            f'Always consult a qualified healthcare professional for medical concerns.",'
+            f'"key_factors":["point1","point2","point3"]}}',
+            max_tokens=600,
+        )
+
+        default_disclaimer = (
+            '⚠️ DISCLAIMER: This is general information only, not medical advice. '
+            'Always consult a qualified healthcare professional for medical concerns.'
+        )
+        return {
+            'success': True,
+            'intent': intent,
+            'answer': (ai_answer or {}).get('answer', ''),
+            'disclaimer': (ai_answer or {}).get('disclaimer', default_disclaimer),
+            'key_factors': (ai_answer or {}).get('key_factors', []),
+            'home_team': None,
+            'away_team': None,
+            'match_prediction': None,
+            'simulation': None,
+            'data_sources': data_sources,
+        }
+
+    # ── 7. News / current events questions ─────────────────────────────────
+    if intent == 'news_question':
+        results = search_web(question)
+        if results:
+            data_sources.append('web_search')
+
+        ai_answer = call_ai(
+            'You are a news analyst. Provide current, factual information based on available data. '
+            'Return ONLY valid JSON.',
+            f'Question: "{question}"\n'
+            f'Latest data: {" | ".join(r.get("snippet", "") for r in results[:3]) if results else "N/A"}\n'
+            f'Return JSON: {{"answer":"news summary with key facts","key_factors":["fact1","fact2","fact3"]}}',
+            max_tokens=600,
+        )
+
+        return {
+            'success': True,
+            'intent': intent,
+            'answer': (ai_answer or {}).get('answer', ''),
+            'key_factors': (ai_answer or {}).get('key_factors', []),
+            'home_team': None,
+            'away_team': None,
+            'match_prediction': None,
+            'simulation': None,
+            'data_sources': data_sources,
+        }
+
+    # ── 8. General knowledge questions ─────────────────────────────────────
+    if intent == 'general_knowledge':
+        results = search_web(question)
+        if results:
+            data_sources.append('web_search')
+
+        ai_answer = call_ai(
+            'You are a knowledgeable AI assistant. Provide accurate, helpful, and well-structured information. '
+            'Return ONLY valid JSON.',
+            f'Question: "{question}"\n'
+            f'Information: {" | ".join(r.get("snippet", "") for r in results[:3]) if results else "N/A"}\n'
+            f'Return JSON: {{"answer":"detailed and informative explanation",'
+            f'"key_factors":["point1","point2","point3"]}}',
+            max_tokens=600,
+        )
+
+        return {
+            'success': True,
+            'intent': intent,
+            'answer': (ai_answer or {}).get('answer', ''),
+            'key_factors': (ai_answer or {}).get('key_factors', []),
+            'home_team': None,
+            'away_team': None,
+            'match_prediction': None,
+            'simulation': None,
+            'data_sources': data_sources,
+        }
+
+    # ── 9. General football question (Claude only) ──────────────────────────
     ai = call_ai(
         'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
         f'Football question: "{question}"\n'
