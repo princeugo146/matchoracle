@@ -344,24 +344,39 @@ def parse_form(s):
     return total/wtotal if wtotal else 0.5
 
 def call_ai(system, user_msg, max_tokens=700):
-    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY','')
-    if not key: return None
+    """
+    Call Anthropic Claude API using ANTHROPIC_API_KEY from settings.
+    Returns parsed JSON dict or None on failure.
+    """
+    key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')
+    if not key:
+        logger.warning("ANTHROPIC_API_KEY not configured — AI responses disabled")
+        return None
     try:
         resp = requests.post(
             'https://api.anthropic.com/v1/messages',
-            headers={'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
-            json={'model':'claude-sonnet-4-20250514','max_tokens':max_tokens,'system':system,
-                  'messages':[{'role':'user','content':user_msg}]},
-            timeout=18
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01',
+            },
+            json={
+                'model': 'claude-sonnet-4-20250514',
+                'max_tokens': max_tokens,
+                'system': system,
+                'messages': [{'role': 'user', 'content': user_msg}],
+            },
+            timeout=22,
         )
         if resp.status_code == 200:
-            text = ''.join(b.get('text','') for b in resp.json().get('content',[]))
-            return json.loads(text.replace('```json','').replace('```','').strip())
+            text = ''.join(b.get('text', '') for b in resp.json().get('content', []))
+            return json.loads(text.replace('```json', '').replace('```', '').strip())
         else:
-            logger.error(f"Anthropic {resp.status_code}")
+            logger.error(f"Anthropic {resp.status_code}: {resp.text[:200]}")
     except Exception as e:
         logger.error(f"AI error: {e}")
     return None
+
 
 # TACTICAL STYLE ENGINE
 TACTICAL_STYLES = {
