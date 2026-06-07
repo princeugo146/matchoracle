@@ -2,7 +2,9 @@ import json
 import requests
 import re
 import logging
+from datetime import date
 from django.conf import settings
+from django.utils import timezone
 from .engine import (
     search_web, extract_match_data, extract_player_data,
     extract_upcoming_matches, detect_intent,
@@ -14,36 +16,226 @@ from .engine import (
 logger = logging.getLogger(__name__)
 
 
+# ─── Sportmonks Live Match Helpers ───────────────────────────────────────────
+
+def fetch_live_matches_from_sportmonks():
+    """
+    Fetch currently live matches from Sportmonks v3 API.
+    Falls back to today's fixtures if no live matches are found.
+    Returns a list of formatted match dicts.
+    """
+    api_key = settings.MATCHORACLE.get('FOOTBALL_API_KEY', '')
+    if not api_key:
+        return []
+
+    try:
+        # Try live in-play first
+        resp = requests.get(
+            'https://api.sportmonks.com/v3/football/livescores/inplay',
+            headers={'Authorization': api_key},
+            params={'include': 'participants;scores;state;league', 'per_page': 50},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            matches = resp.json().get('data', [])
+            if matches:
+                return _format_sportmonks_matches(matches, status_override='LIVE')
+
+        # Fall back to today's fixtures
+        today_str = date.today().strftime('%Y-%m-%d')
+        resp2 = requests.get(
+            f'https://api.sportmonks.com/v3/football/fixtures/date/{today_str}',
+            headers={'Authorization': api_key},
+            params={'include': 'participants;scores;state;league', 'per_page': 50},
+            timeout=10,
+        )
+        if resp2.status_code == 200:
+            return _format_sportmonks_matches(resp2.json().get('data', []))
+    except Exception as e:
+        logger.error(f"Sportmonks live matches error: {e}")
+
+    return []
+
+
+def _format_sportmonks_matches(matches, status_override=None):
+    """Convert raw Sportmonks fixture objects into clean dicts."""
+    formatted = []
+    for m in matches:
+        try:
+            parts = m.get('participants', [])
+            home = next(
+                (p for p in parts if p.get('meta', {}).get('location') == 'home'), {}
+            )
+            away = next(
+                (p for p in parts if p.get('meta', {}).get('location') == 'away'), {}
+            )
+            scores = m.get('scores', [])
+            hs = next(
+                (s.get('score', {}).get('goals')
+                 for s in scores
+                 if s.get('description') == 'CURRENT'
+                 and s.get('score', {}).get('participant') == 'home'),
+                None,
+            )
+            as_ = next(
+                (s.get('score', {}).get('goals')
+                 for s in scores
+                 if s.get('description') == 'CURRENT'
+                 and s.get('score', {}).get('participant') == 'away'),
+                None,
+            )
+            state = m.get('state', {})
+            raw_status = state.get('short_name', 'NS').upper()
+            if status_override:
+                status = status_override
+            elif raw_status in ('FT', 'AET', 'PEN'):
+                status = 'FINISHED'
+            elif raw_status in ('1H', '2H', 'ET', 'HT', 'LIVE'):
+                status = 'LIVE'
+            else:
+                status = 'SCHEDULED'
+
+            league = m.get('league') or {}
+            formatted.append({
+                'sportmonks_id': m.get('id'),
+                'home_team': home.get('name', 'Home'),
+                'away_team': away.get('name', 'Away'),
+                'home_logo': home.get('image_path', ''),
+                'away_logo': away.get('image_path', ''),
+                'home_score': hs,
+                'away_score': as_,
+                'minute': m.get('minute'),
+                'status': status,
+                'competition': league.get('name', ''),
+                'start_time': m.get('starting_at', ''),
+            })
+        except Exception:
+            continue
+    return formatted
+
+
+def fetch_football_news(query='football latest news today'):
+    """
+    Fetch current football news snippets via DuckDuckGo web search.
+    Returns a list of {title, snippet, url} dicts.
+    """
+    try:
+        results = search_web(query, max_results=6)
+        return results
+    except Exception as e:
+        logger.error(f"News fetch error: {e}")
+        return []
+
+
+def _upsert_live_matches(matches):
+    """
+    Persist fetched live matches to the LiveMatch model so the dashboard
+    can display them without hitting the API on every page load.
+    Silently skips if the model is unavailable (e.g. migrations not run).
+    """
+    try:
+        from .models import LiveMatch
+        from django.utils.dateparse import parse_datetime
+        for m in matches:
+            sm_id = m.get('sportmonks_id')
+            start_raw = m.get('start_time', '')
+            try:
+                start_dt = parse_datetime(start_raw) or timezone.now()
+                if start_dt.tzinfo is None:
+                    import pytz
+                    start_dt = pytz.utc.localize(start_dt)
+            except Exception:
+                start_dt = timezone.now()
+
+            defaults = {
+                'home_team': m['home_team'],
+                'away_team': m['away_team'],
+                'home_score': m.get('home_score'),
+                'away_score': m.get('away_score'),
+                'status': m.get('status', 'SCHEDULED'),
+                'minute': m.get('minute'),
+                'competition': m.get('competition', ''),
+                'start_time': start_dt,
+                'home_logo': m.get('home_logo', ''),
+                'away_logo': m.get('away_logo', ''),
+            }
+            if sm_id:
+                LiveMatch.objects.update_or_create(
+                    sportmonks_id=sm_id, defaults=defaults
+                )
+            else:
+                LiveMatch.objects.create(**defaults)
+    except Exception as e:
+        logger.warning(f"LiveMatch upsert skipped: {e}")
+
+
 def call_ai(system, user_msg, max_tokens=800):
+    """
+    Call the Anthropic Claude API and return a parsed JSON dict.
+    Tries the official `anthropic` SDK first; falls back to raw HTTP.
+    Returns None on any failure.
+    """
     key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')
     if not key:
         return None
+
+    # ── Attempt 1: official anthropic SDK ────────────────────────────────────
+    try:
+        import anthropic as _anthropic
+        client = _anthropic.Anthropic(api_key=key)
+        message = client.messages.create(
+            model='claude-sonnet-4-20250514',
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{'role': 'user', 'content': user_msg}],
+        )
+        text = ''.join(
+            block.text for block in message.content
+            if hasattr(block, 'text')
+        )
+        clean = text.replace('```json', '').replace('```', '').strip()
+        return json.loads(clean)
+    except ImportError:
+        pass  # SDK not installed — fall through to raw HTTP
+    except json.JSONDecodeError as e:
+        logger.error(f"AI JSON parse error (SDK): {e}")
+        return None
+    except Exception as e:
+        logger.error(f"AI call failed (SDK): {e}")
+        # Fall through to raw HTTP as a second attempt
+
+    # ── Attempt 2: raw HTTP ───────────────────────────────────────────────────
     try:
         resp = requests.post(
             'https://api.anthropic.com/v1/messages',
             headers={
                 'Content-Type': 'application/json',
                 'x-api-key': key,
-                'anthropic-version': '2023-06-01'
+                'anthropic-version': '2023-06-01',
             },
             json={
                 'model': 'claude-sonnet-4-20250514',
                 'max_tokens': max_tokens,
                 'system': system,
-                'messages': [{'role': 'user', 'content': user_msg}]
+                'messages': [{'role': 'user', 'content': user_msg}],
             },
-            timeout=20
+            timeout=25,
         )
         if resp.status_code == 200:
-            text = ''.join(b.get('text', '') for b in resp.json().get('content', []))
+            text = ''.join(
+                b.get('text', '') for b in resp.json().get('content', [])
+            )
             clean = text.replace('```json', '').replace('```', '').strip()
             return json.loads(clean)
         else:
-            logger.error(f"Anthropic error: {resp.status_code} - {resp.text[:200]}")
+            logger.error(
+                f"Anthropic HTTP error: {resp.status_code} - {resp.text[:200]}"
+            )
     except json.JSONDecodeError as e:
-        logger.error(f"AI JSON parse error: {e}")
+        logger.error(f"AI JSON parse error (HTTP): {e}")
     except Exception as e:
-        logger.error(f"AI call failed: {e}")
+        logger.error(f"AI call failed (HTTP): {e}")
+
     return None
 
 
@@ -87,7 +279,6 @@ def get_todays_match(home_team, away_team):
     if not api_key:
         return None
     try:
-        from datetime import date
         today = date.today().strftime('%Y-%m-%d')
         resp = requests.get(
             f'https://api.sportmonks.com/v3/football/fixtures/date/{today}',
@@ -116,6 +307,10 @@ def smart_predict(question):
     prediction by detecting intent, fetching live internet data, running ALL
     prediction engines, comparing results, and compiling a consensus.
 
+    Now also fetches:
+      • Live / today's matches from Sportmonks (persisted to LiveMatch model)
+      • Current football news via DuckDuckGo web search
+
     Intent routing:
       match_prediction  → Engine A + Engine D + consensus comparison
       player_comparison → Engine B (per player) + comparison narrative
@@ -128,7 +323,18 @@ def smart_predict(question):
             'answer': 'Please ask a football question, e.g. "Who will win Arsenal vs Chelsea today?"',
             'verdict': None,
             'data_sources': [],
+            'live_matches': [],
+            'current_news': [],
         }
+
+    # ── 0. Always fetch live matches + current news in parallel ─────────────
+    live_matches = fetch_live_matches_from_sportmonks()
+    if live_matches:
+        _upsert_live_matches(live_matches)
+
+    current_news = fetch_football_news(
+        f"{question} football news latest 2025"
+    )
 
     # ── 1. Detect intent ────────────────────────────────────────────────────
     intent_info = detect_intent(question)
@@ -136,6 +342,10 @@ def smart_predict(question):
     teams = intent_info.get('teams', [])
     players = intent_info.get('players', [])
     data_sources = []
+    if live_matches:
+        data_sources.append('sportmonks_live')
+    if current_news:
+        data_sources.append('web_news')
 
     # ── 2. If intent unclear, try AI extraction as fallback ─────────────────
     if intent in ('general', 'match_prediction') and not teams:
@@ -193,6 +403,8 @@ def smart_predict(question):
                 'home_team': home_team,
                 'away_team': away_team,
                 'data_sources': data_sources,
+                'live_matches': live_matches,
+                'current_news': current_news,
             }
 
         # Build consensus from Engine A + Engine D
@@ -210,10 +422,15 @@ def smart_predict(question):
 
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
+        news_text = ' | '.join(
+            n.get('snippet', '') for n in current_news[:3]
+        )
         ai_answer = call_ai(
-            'You are MatchOracle Smart AI, a football intelligence orchestrator. Return ONLY valid JSON.',
+            'You are MatchOracle Smart AI, a football intelligence orchestrator '
+            'with access to live web data. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
             f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
+            f'Current news: {news_text[:400]}\n'
             f'Live web data: {snippets_text[:300]}\n'
             f'Engine A (match prediction): Home {match_result["home_win"]}% '
             f'Draw {match_result["draw"]}% Away {match_result["away_win"]}% '
@@ -225,10 +442,11 @@ def smart_predict(question):
             f'Consensus: {agreement_text}\n'
             f'Final confidence: {consensus_confidence}%\n'
             f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-5 sentence expert analysis mentioning both engines, percentages, and consensus",'
+            f'Return JSON: {{"answer":"3-5 sentence expert analysis referencing current news, '
+            f'both engine percentages, and consensus",'
             f'"key_factors":["factor1","factor2","factor3"],'
             f'"betting_insight":"one sentence about the best bet"}}',
-            max_tokens=700,
+            max_tokens=800,
         )
 
         if ai_answer:
@@ -277,6 +495,8 @@ def smart_predict(question):
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
             'data_sources': data_sources,
+            'live_matches': live_matches,
+            'current_news': current_news,
         }
 
     # ── 4. Player comparison ────────────────────────────────────────────────
@@ -300,9 +520,11 @@ def smart_predict(question):
                 f"insight={r['result'].get('insight','')}"
                 for r in ratings
             )
+            news_text = ' | '.join(n.get('snippet', '') for n in current_news[:3])
             ai_answer = call_ai(
                 'You are MatchOracle AI. Compare football players expertly. Return ONLY valid JSON.',
                 f'User asked: "{question}"\n'
+                f'Current news: {news_text[:300]}\n'
                 f'Engine B player ratings:\n{comparison_text}\n'
                 f'Data sources: {", ".join(data_sources) or "defaults"}\n'
                 f'Return JSON: {{"answer":"3-4 sentence comparison with ratings",'
@@ -326,6 +548,8 @@ def smart_predict(question):
                 'match_prediction': None,
                 'simulation': None,
                 'data_sources': data_sources,
+                'live_matches': live_matches,
+                'current_news': current_news,
             }
 
     # ── 5. Simulation ───────────────────────────────────────────────────────
@@ -383,14 +607,20 @@ def smart_predict(question):
                 'match_prediction': None,
                 'simulation': sim_result,
                 'data_sources': data_sources,
+                'live_matches': live_matches,
+                'current_news': current_news,
             }
 
     # ── 6. General football question (Claude only) ──────────────────────────
+    news_text = ' | '.join(n.get('snippet', '') for n in current_news[:3])
     ai = call_ai(
-        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
+        'You are MatchOracle AI, a football expert assistant with access to live web data. '
+        'Answer football questions. Return ONLY valid JSON.',
         f'Football question: "{question}"\n'
-        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-        max_tokens=500,
+        f'Current news context: {news_text[:400]}\n'
+        f'Return: {{"answer":"3-4 sentence expert answer referencing current news where relevant",'
+        f'"key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
+        max_tokens=600,
     )
     return {
         'success': True,
@@ -405,4 +635,6 @@ def smart_predict(question):
         'simulation': None,
         'confidence': 0,
         'data_sources': data_sources,
+        'live_matches': live_matches,
+        'current_news': current_news,
     }

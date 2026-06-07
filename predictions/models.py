@@ -385,6 +385,59 @@ class PlayerProfile(models.Model):
         return round(sum(self.recent_ratings) / len(self.recent_ratings), 2)
 
 
+class LiveMatch(models.Model):
+    """
+    Cached live / scheduled match data fetched from Sportmonks.
+    Refreshed every 60 seconds by get_live_matches_cached().
+    """
+    STATUS_CHOICES = [
+        ('LIVE', 'Live'),
+        ('SCHEDULED', 'Scheduled'),
+        ('FINISHED', 'Finished'),
+        ('POSTPONED', 'Postponed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
+    home_team = models.CharField(max_length=100)
+    away_team = models.CharField(max_length=100)
+    home_score = models.IntegerField(null=True, blank=True)
+    away_score = models.IntegerField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='SCHEDULED')
+    minute = models.IntegerField(null=True, blank=True)
+    competition = models.CharField(max_length=100, blank=True)
+    start_time = models.DateTimeField()
+    sportmonks_id = models.IntegerField(null=True, blank=True, unique=True)
+    home_logo = models.URLField(blank=True, default='')
+    away_logo = models.URLField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-start_time']
+
+    def __str__(self):
+        score = (
+            f"{self.home_score}-{self.away_score}"
+            if self.home_score is not None
+            else "vs"
+        )
+        return f"LiveMatch({self.home_team} {score} {self.away_team}, {self.status})"
+
+    def to_dict(self):
+        return {
+            'id': self.pk,
+            'home_team': self.home_team,
+            'away_team': self.away_team,
+            'home_score': self.home_score,
+            'away_score': self.away_score,
+            'status': self.status,
+            'minute': self.minute,
+            'competition': self.competition,
+            'start_time': self.start_time.isoformat(),
+            'sportmonks_id': self.sportmonks_id,
+            'home_logo': self.home_logo,
+            'away_logo': self.away_logo,
+        }
+
+
 class ConversationMemory(models.Model):
     """
     Session-scoped memory for the natural language interface.

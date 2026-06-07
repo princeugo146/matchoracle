@@ -4,15 +4,15 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
-from .models import Prediction, TeamRanking, WeeklyTip
+from .models import Prediction, TeamRanking, WeeklyTip, LiveMatch
 from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language, simulate_penalty_shootout
-from .smart_ai import smart_predict
+from .smart_ai import smart_predict, fetch_live_matches_from_sportmonks, fetch_football_news
 
 logger = logging.getLogger(__name__)
 
 @login_required
 def dashboard(request):
-    from core.live_scores import get_live_scores
+    from core.live_scores import get_live_scores, get_todays_fixtures
     from core.models import WeeklyForecast
     user = request.user
     recent = Prediction.objects.filter(user=user)[:8]
@@ -27,10 +27,46 @@ def dashboard(request):
         'left_today': user.predictions_left_today,
         'limit': plan_info.get('predictions_per_day', 3),
     }
+
+    # Live match table: prefer DB cache, fall back to today's fixtures
+    try:
+        db_live = list(LiveMatch.objects.filter(
+            status__in=['LIVE', 'SCHEDULED']
+        ).order_by('-start_time')[:12])
+        live_match_table = [m.to_dict() for m in db_live] if db_live else []
+    except Exception:
+        live_match_table = []
+
+    if not live_match_table:
+        try:
+            live_match_table = get_todays_fixtures()[:12]
+        except Exception:
+            live_match_table = []
+
+    # Current football news for the dashboard sidebar
+    try:
+        dashboard_news = fetch_football_news('football news today premier league')[:5]
+    except Exception:
+        dashboard_news = []
+
+    # Recent Smart AI predictions for the prediction table
+    smart_ai_predictions = list(
+        Prediction.objects.filter(user=user, engine='NL').order_by('-created_at')[:5]
+    )
+
     return render(request, 'predictions/dashboard.html', {
-        'recent': recent, 'rankings': rankings, 'stats': stats,
-        'tips': tips, 'forecasts': forecasts, 'live_scores': live_scores,
+        'recent': recent,
+        'rankings': rankings,
+        'stats': stats,
+        'tips': tips,
+        'forecasts': forecasts,
+        'live_scores': live_scores,
         'plan_info': plan_info,
+        'live_match_table': live_match_table,
+        'dashboard_news': dashboard_news,
+        'smart_ai_predictions': smart_ai_predictions,
+        'has_anthropic_key': bool(settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')),
+        'has_sportmonks_key': bool(settings.MATCHORACLE.get('FOOTBALL_API_KEY', '')),
     })
 
 @login_required
@@ -231,4 +267,27 @@ def smart_ai_view(request):
         'success': True,
         'result': result,
         'predictions_left': user.predictions_left_today,
+        # Surface live data at the top level for easy JS access
+        'live_matches': result.get('live_matches', []),
+        'current_news': result.get('current_news', []),
     })
+
+
+@login_required
+def live_matches_view(request):
+    """
+    JSON endpoint that returns current live / today's matches and latest news.
+    Used by the dashboard to refresh the live match table without a full page reload.
+    """
+    try:
+        matches = fetch_live_matches_from_sportmonks()
+        news = fetch_football_news('football news today latest')
+        return JsonResponse({
+            'success': True,
+            'live_matches': matches,
+            'current_news': news[:6],
+            'has_sportmonks': bool(settings.MATCHORACLE.get('FOOTBALL_API_KEY', '')),
+        })
+    except Exception as e:
+        logger.error(f"live_matches_view error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
