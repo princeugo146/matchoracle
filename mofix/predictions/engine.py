@@ -388,7 +388,7 @@ def call_ai(system, user_msg, max_tokens=700):
         resp = requests.post(
             'https://api.anthropic.com/v1/messages',
             headers={'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
-            json={'model':'claude-3-sonnet-20240229','max_tokens':max_tokens,'system':system,
+            json={'model':'claude-3-5-sonnet-20241022','max_tokens':max_tokens,'system':system,
                   'messages':[{'role':'user','content':user_msg}]},
             timeout=18
         )
