@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse
 from .models import Prediction, TeamRanking, WeeklyTip
-from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language
+from .engine import engine_a, engine_b, compute_elo, engine_d, natural_language, simulate_penalty_shootout
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,19 @@ def run_engine(request, engine):
             home_team = input_data.get('home', {}).get('name', '')
             away_team = input_data.get('away', {}).get('name', '')
             predicted_result = result.get('verdict', '')
+            # Optional penalty shootout analysis
+            if input_data.get('include_penalty'):
+                pen = input_data.get('penalty', {})
+                try:
+                    ps = simulate_penalty_shootout(
+                        home_team, away_team,
+                        float(pen.get('home_comp', 5)), float(pen.get('away_comp', 5)),
+                        float(pen.get('home_gk', 72)), float(pen.get('away_gk', 68)),
+                        float(pen.get('home_conv', 78)), float(pen.get('away_conv', 75)),
+                    )
+                    result['penalty_shootout'] = ps
+                except Exception as pe:
+                    logger.warning(f"Penalty shootout error: {pe}")
         elif engine == 'B':
             result = engine_b(input_data)
             predicted_result = f"{result.get('tier','')} ({result.get('rating',0)})"
