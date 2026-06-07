@@ -348,6 +348,106 @@
   pointer-events:none;
 }
 
+/* ── Claude AI Results Card ────────────────────────────────── */
+.claude-ai-card{
+  border-radius:18px;padding:24px 22px;margin-bottom:16px;
+  position:relative;overflow:hidden;animation:fu 0.5s ease;
+}
+.claude-ai-card.conf-high{
+  background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(0,184,212,.1));
+  border:2px solid rgba(0,212,255,.4);
+}
+.claude-ai-card.conf-medium{
+  background:linear-gradient(135deg,rgba(167,139,250,.15),rgba(124,58,237,.1));
+  border:2px solid rgba(167,139,250,.4);
+}
+.claude-ai-card.conf-low{
+  background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.1));
+  border:2px solid rgba(239,68,68,.4);
+}
+.claude-ai-card::before{
+  content:'';position:absolute;top:-50px;right:-50px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.claude-ai-card::after{
+  content:'';position:absolute;bottom:-40px;left:10%;
+  width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.claude-ai-header{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:18px;padding-bottom:14px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  position:relative;z-index:1;
+}
+.claude-ai-badge{
+  font-size:9px;letter-spacing:2px;font-weight:800;text-transform:uppercase;
+  padding:5px 12px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(0,212,255,.3),rgba(124,58,237,.2));
+  border:1px solid rgba(0,212,255,.4);color:#00d4ff;
+}
+.claude-ai-verdict-box{
+  background:rgba(0,0,0,.2);border-radius:16px;
+  padding:20px 22px;margin-bottom:18px;
+  text-align:center;position:relative;z-index:1;
+}
+.claude-ai-verdict-label{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(0,212,255,.8);font-weight:700;margin-bottom:10px;
+}
+.claude-ai-verdict-text{
+  font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;
+  color:#fff;margin-bottom:12px;line-height:1.2;
+}
+.claude-ai-confidence{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;margin-bottom:18px;
+}
+.claude-ai-conf-circle{
+  width:80px;height:80px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;
+  position:relative;flex-shrink:0;
+}
+.claude-ai-conf-circle.high{
+  background:linear-gradient(135deg,#00d4ff,#0099cc);
+  color:#fff;box-shadow:0 0 30px rgba(0,212,255,.4);
+}
+.claude-ai-conf-circle.medium{
+  background:linear-gradient(135deg,#a78bfa,#7c3aed);
+  color:#fff;box-shadow:0 0 30px rgba(167,139,250,.4);
+}
+.claude-ai-conf-circle.low{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  color:#fff;box-shadow:0 0 30px rgba(239,68,68,.4);
+}
+.claude-ai-conf-label{
+  font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(255,255,255,.6);font-weight:700;
+}
+.claude-ai-score-box{
+  background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(124,58,237,.1));
+  border:1px solid rgba(0,212,255,.3);border-radius:14px;
+  padding:16px 18px;text-align:center;margin-bottom:16px;
+  position:relative;z-index:1;
+}
+.claude-ai-score-label{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(0,212,255,.7);margin-bottom:6px;font-weight:700;
+}
+.claude-ai-score-text{
+  font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#00d4ff;
+}
+.claude-ai-reasoning{
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);
+  border-radius:12px;padding:14px 16px;
+  font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;
+  position:relative;z-index:1;
+}
+
 </style>
 {% endblock %}
 
@@ -1399,35 +1499,69 @@ function renderSmartAI(r){
   const el=document.getElementById('sai-result');
   const intent=r.intent||'general';
 
-  // Non-match intents: simple display
+  // Non-match intents: beautiful Claude AI card
   if(intent!=='match_prediction'||!r.home_team){
-    const cc=r.confidence>=70?'#10b981':r.confidence>=50?'#f59e0b':'#ef4444';
-    let html='<div class="smart-ai-result">';
-    html+='<div class="smart-ai-header">';
-    html+='<span style="font-size:20px">&#129302;</span>';
-    html+='<div style="flex:1"><div style="font-family:\'Orbitron\',sans-serif;font-size:12px;font-weight:700;color:#fff">SMART AI RESPONSE</div></div>';
-    html+='<span class="smart-ai-badge">&#9889; CLAUDE</span>';
+    const cc=r.confidence||70;
+    const ccClass=cc>=70?'high':cc>=50?'medium':'low';
+    const ccColor=cc>=70?'#00d4ff':cc>=50?'#a78bfa':'#ef4444';
+    const cardClass=cc>=70?'conf-high':cc>=50?'conf-medium':'conf-low';
+
+    let html='<div class="claude-ai-card '+cardClass+'">';
+
+    // Header
+    html+='<div class="claude-ai-header">';
+    html+='<span style="font-size:22px">&#129302;</span>';
+    html+='<div style="flex:1">';
+    html+='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;font-weight:900;color:#fff">CLAUDE AI ANALYSIS</div>';
+    html+='<div style="font-size:10px;color:rgba(0,212,255,0.6);margin-top:2px">World-class AI assistant</div>';
     html+='</div>';
+    html+='<span class="claude-ai-badge">&#9889; CLAUDE</span>';
+    html+='</div>';
+
+    // Verdict box
     if(r.verdict){
-      html+='<div class="ai-verdict-box" style="margin-bottom:14px">';
-      html+='<div class="ai-verdict-label">&#127919; VERDICT</div>';
-      html+='<div class="ai-verdict-text">'+escHtml(r.verdict)+'</div>';
-      if(r.confidence){html+='<div class="ai-verdict-conf">Confidence: <strong>'+r.confidence+'%</strong></div>';}
+      html+='<div class="claude-ai-verdict-box">';
+      html+='<div class="claude-ai-verdict-label">Analysis Result</div>';
+      html+='<div class="claude-ai-verdict-text">'+escHtml(r.verdict)+'</div>';
       html+='</div>';
     }
-    if(r.answer){html+='<div class="reasoning-box"><div class="reasoning-label">&#128161; Analysis</div><div class="reasoning-text">'+escHtml(r.answer)+'</div></div>';}
+
+    // Confidence circle
+    html+='<div class="claude-ai-confidence">';
+    html+='<div class="claude-ai-conf-circle '+ccClass+'">'+cc+'<span style="font-size:14px">%</span></div>';
+    html+='<div>';
+    html+='<div class="claude-ai-conf-label">Confidence Level</div>';
+    html+='<div style="font-size:13px;color:'+ccColor+';font-weight:700;margin-top:4px">';
+    if(cc>=70) html+='🟢 HIGH CONFIDENCE';
+    else if(cc>=50) html+='🟡 MEDIUM CONFIDENCE';
+    else html+='🔴 LOW CONFIDENCE';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Reasoning / answer
+    if(r.answer){
+      html+='<div class="claude-ai-reasoning">';
+      html+='&#128161; '+escHtml(r.answer);
+      html+='</div>';
+    }
+
+    // Key factors
     if(r.key_factors&&r.key_factors.length){
-      html+='<div style="margin-bottom:12px">';
+      html+='<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;position:relative;z-index:1">';
       r.key_factors.forEach(function(f){
-        html+='<div style="padding:6px 10px;background:rgba(255,255,255,.03);border-radius:8px;font-size:12px;color:rgba(255,255,255,.65);margin-bottom:5px">&#8226; '+escHtml(f)+'</div>';
+        html+='<div style="padding:8px 12px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.12);border-radius:8px;font-size:12px;color:rgba(255,255,255,.7)">&#8226; '+escHtml(f)+'</div>';
       });
       html+='</div>';
     }
+
+    // Disclaimer
     if(r.disclaimer){
-      html+='<div style="margin-top:12px;padding:12px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;font-size:12px;color:#ef4444;line-height:1.6">';
+      html+='<div style="margin-top:14px;padding:12px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;font-size:12px;color:#ef4444;line-height:1.6;position:relative;z-index:1">';
       html+='<strong>⚠️ DISCLAIMER:</strong> '+escHtml(r.disclaimer);
       html+='</div>';
     }
+
     html+='</div>';
     el.innerHTML=html;
     return;
@@ -1505,6 +1639,61 @@ function renderSmartAI(r){
   '</div>';
 
   html+='</div>'; // /engine-comparison
+
+  // ── Claude AI Beautiful Results Card ──────────────────────────
+  if(r.claude_prediction){
+    const cp2=r.claude_prediction;
+    const cpConf=cp2.confidence||70;
+    const cpConfClass=cpConf>=70?'high':cpConf>=50?'medium':'low';
+    const cpConfColor=cpConf>=70?'#00d4ff':cpConf>=50?'#a78bfa':'#ef4444';
+    const cpCardClass=cpConf>=70?'conf-high':cpConf>=50?'conf-medium':'conf-low';
+
+    html+='<div class="claude-ai-card '+cpCardClass+'">';
+
+    // Header
+    html+='<div class="claude-ai-header">';
+    html+='<span style="font-size:24px">&#129302;</span>';
+    html+='<div style="flex:1">';
+    html+='<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;font-weight:900;color:#fff">CLAUDE AI — INDEPENDENT PREDICTION</div>';
+    html+='<div style="font-size:10px;color:rgba(0,212,255,0.7);margin-top:2px">World-class AI analysis</div>';
+    html+='</div>';
+    html+='<span class="claude-ai-badge">&#9889; CLAUDE</span>';
+    html+='</div>';
+
+    // Verdict box
+    html+='<div class="claude-ai-verdict-box">';
+    html+='<div class="claude-ai-verdict-label">Claude\'s Prediction</div>';
+    html+='<div class="claude-ai-verdict-text">'+escHtml(cp2.verdict||'—')+'</div>';
+    html+='</div>';
+
+    // Confidence circle
+    html+='<div class="claude-ai-confidence">';
+    html+='<div class="claude-ai-conf-circle '+cpConfClass+'">'+cpConf+'<span style="font-size:14px">%</span></div>';
+    html+='<div>';
+    html+='<div class="claude-ai-conf-label">Confidence Level</div>';
+    html+='<div style="font-size:13px;color:'+cpConfColor+';font-weight:700;margin-top:4px">';
+    if(cpConf>=70) html+='🟢 HIGH CONFIDENCE';
+    else if(cpConf>=50) html+='🟡 MEDIUM CONFIDENCE';
+    else html+='🔴 LOW CONFIDENCE';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Predicted score
+    html+='<div class="claude-ai-score-box">';
+    html+='<div class="claude-ai-score-label">Predicted Score</div>';
+    html+='<div class="claude-ai-score-text">'+escHtml(cp2.score||'—')+'</div>';
+    html+='</div>';
+
+    // Reasoning
+    if(cp2.reasoning){
+      html+='<div class="claude-ai-reasoning">';
+      html+='&#128161; '+escHtml(cp2.reasoning);
+      html+='</div>';
+    }
+
+    html+='</div>'; // /claude-ai-card
+  }
 
   // Agreement indicator
   html+='<div class="agreement-bar">';
