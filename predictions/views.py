@@ -231,4 +231,9 @@ def smart_ai_view(request):
         'success': True,
         'result': result,
         'predictions_left': user.predictions_left_today,
+        # Surface live data at the top level for easy JS access
+        'live_matches': result.get('live_matches', []),
+        'todays_fixtures': result.get('todays_fixtures', []),
+        'standings': result.get('standings', []),
+        'news': result.get('news', []),
     })

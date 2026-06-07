@@ -10,6 +10,11 @@ from .engine import (
     _build_consensus,
     engine_a, engine_b, engine_d, get_confidence_badge,
 )
+from .sportmonks_client import (
+    get_live_matches, get_todays_fixtures, get_league_standings,
+    get_league_id_for_question, get_team_recent_fixtures,
+)
+from .news_client import fetch_football_news, format_news_for_context
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +37,7 @@ def call_ai(system, user_msg, max_tokens=800):
                 'system': system,
                 'messages': [{'role': 'user', 'content': user_msg}]
             },
-            timeout=20
+            timeout=25
         )
         if resp.status_code == 200:
             text = ''.join(b.get('text', '') for b in resp.json().get('content', []))
@@ -45,6 +50,74 @@ def call_ai(system, user_msg, max_tokens=800):
     except Exception as e:
         logger.error(f"AI call failed: {e}")
     return None
+
+
+def _build_live_context(question, teams=None):
+    """
+    Gather live internet data: today's fixtures, live matches, league standings,
+    and current news. Returns a dict with all fetched data plus a compact
+    text summary suitable for inclusion in an AI prompt.
+    """
+    live_matches = get_live_matches()
+    todays_fixtures = get_todays_fixtures()
+    news_articles = fetch_football_news(question)
+    league_id = get_league_id_for_question(question)
+    standings = get_league_standings(league_id) if league_id else []
+
+    # Fetch team-specific recent fixtures if teams are known
+    team_fixtures = {}
+    if teams:
+        for team in teams[:2]:
+            recent = get_team_recent_fixtures(team, limit=3)
+            if recent:
+                team_fixtures[team] = recent
+
+    # Build compact text summary for the AI prompt
+    parts = []
+
+    if live_matches:
+        live_lines = [
+            f"  • {m['home']} {m.get('home_score','?')}-{m.get('away_score','?')} {m['away']}"
+            f" ({m.get('league','')}, {m.get('minute','?')}' LIVE)"
+            for m in live_matches[:6]
+        ]
+        parts.append("LIVE MATCHES RIGHT NOW:\n" + '\n'.join(live_lines))
+
+    if todays_fixtures:
+        today_lines = []
+        for f in todays_fixtures[:8]:
+            status = f.get('status', '')
+            if f.get('home_score') is not None:
+                score = f"{f['home_score']}-{f['away_score']}"
+                today_lines.append(f"  • {f['home']} {score} {f['away']} ({f.get('league','')}) [{status}]")
+            else:
+                today_lines.append(f"  • {f['home']} vs {f['away']} ({f.get('league','')}) [{status}]")
+        if today_lines:
+            parts.append("TODAY'S FIXTURES:\n" + '\n'.join(today_lines))
+
+    if standings:
+        top5 = standings[:5]
+        stand_lines = [
+            f"  {s.get('position','?')}. {s.get('team','')} — {s.get('points',0)} pts "
+            f"({s.get('won',0)}W {s.get('drawn',0)}D {s.get('lost',0)}L, GD {s.get('gd',0)})"
+            for s in top5
+        ]
+        parts.append("CURRENT LEAGUE STANDINGS (Top 5):\n" + '\n'.join(stand_lines))
+
+    if news_articles:
+        parts.append("LATEST FOOTBALL NEWS:\n" + format_news_for_context(news_articles))
+
+    context_text = '\n\n'.join(parts) if parts else 'No live data available at this moment.'
+
+    return {
+        'live_matches': live_matches,
+        'todays_fixtures': todays_fixtures,
+        'standings': standings,
+        'news': news_articles,
+        'team_fixtures': team_fixtures,
+        'context_text': context_text,
+        'has_live_data': bool(live_matches or todays_fixtures or news_articles or standings),
+    }
 
 
 def extract_teams_from_question(question):
@@ -113,14 +186,15 @@ def get_todays_match(home_team, away_team):
 def smart_predict(question):
     """
     Smart AI Orchestrator — takes a natural language question and returns a full
-    prediction by detecting intent, fetching live internet data, running ALL
-    prediction engines, comparing results, and compiling a consensus.
+    prediction by detecting intent, fetching LIVE internet data (Sportmonks +
+    NewsAPI + DuckDuckGo), running ALL prediction engines, comparing results,
+    and compiling a consensus answer grounded in current information.
 
     Intent routing:
       match_prediction  → Engine A + Engine D + consensus comparison
       player_comparison → Engine B (per player) + comparison narrative
       simulation        → Engine D
-      general           → Claude AI only
+      general           → Claude AI with live context
     """
     if not question or len(question.strip()) < 5:
         return {
@@ -147,21 +221,37 @@ def smart_predict(question):
                 teams = [ht, at]
                 intent = 'match_prediction'
 
-    # ── 3. Match prediction: run Engine A + Engine D, build consensus ────────
+    # ── 3. Fetch live internet context (runs for ALL intents) ───────────────
+    live_ctx = _build_live_context(question, teams=teams if teams else None)
+    if live_ctx['has_live_data']:
+        data_sources.append('live_data')
+    if live_ctx['news']:
+        data_sources.append('news')
+    if live_ctx['live_matches'] or live_ctx['todays_fixtures']:
+        data_sources.append('sportmonks')
+
+    # ── 4. Match prediction: run Engine A + Engine D, build consensus ────────
     if intent == 'match_prediction' and len(teams) >= 2:
         home_team, away_team = teams[0], teams[1]
 
-        # Check if match is today via Sportmonks
-        todays_match = get_todays_match(home_team, away_team)
+        # Check if match is today via today's fixtures
+        todays_match = None
+        ht_lower = home_team.lower()
+        at_lower = away_team.lower()
+        for f in live_ctx['todays_fixtures']:
+            fh = f.get('home', '').lower()
+            fa = f.get('away', '').lower()
+            if (ht_lower in fh or fh in ht_lower) and (at_lower in fa or fa in at_lower):
+                todays_match = f
+                break
+
         competition = 'League'
 
-        # Fetch live internet data
+        # Fetch web search data for engine inputs
         search_q = f"{home_team} vs {away_team} prediction form injuries stats 2025"
         web_results = search_web(search_q)
         if web_results:
             data_sources.append('web_search')
-        if todays_match:
-            data_sources.append('sportmonks')
 
         web_data = extract_match_data(web_results, home_team, away_team)
 
@@ -193,6 +283,10 @@ def smart_predict(question):
                 'home_team': home_team,
                 'away_team': away_team,
                 'data_sources': data_sources,
+                'live_matches': live_ctx['live_matches'],
+                'todays_fixtures': live_ctx['todays_fixtures'],
+                'standings': live_ctx['standings'],
+                'news': live_ctx['news'],
             }
 
         # Build consensus from Engine A + Engine D
@@ -210,11 +304,18 @@ def smart_predict(question):
 
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
+
+        # Build AI prompt enriched with live context
         ai_answer = call_ai(
-            'You are MatchOracle Smart AI, a football intelligence orchestrator. Return ONLY valid JSON.',
+            'You are MatchOracle Smart AI, a football intelligence system with access to '
+            'REAL-TIME data. You have been given live match data, current standings, and '
+            'the latest news. Use this current information to give an accurate, up-to-date '
+            'answer. Return ONLY valid JSON.',
             f'User asked: "{question}"\n'
-            f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Live web data: {snippets_text[:300]}\n'
+            f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n\n'
+            f'=== LIVE INTERNET DATA ===\n{live_ctx["context_text"][:600]}\n\n'
+            f'=== WEB SEARCH SNIPPETS ===\n{snippets_text[:300]}\n\n'
+            f'=== ENGINE RESULTS ===\n'
             f'Engine A (match prediction): Home {match_result["home_win"]}% '
             f'Draw {match_result["draw"]}% Away {match_result["away_win"]}% '
             f'→ Verdict: {consensus["engine_a_verdict"]} | Score: {match_result.get("predicted_score","1-1")}\n'
@@ -224,11 +325,12 @@ def smart_predict(question):
             f'→ Verdict: {consensus["engine_d_verdict"]} | Score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
             f'Consensus: {agreement_text}\n'
             f'Final confidence: {consensus_confidence}%\n'
-            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-5 sentence expert analysis mentioning both engines, percentages, and consensus",'
+            f'Data sources: {", ".join(data_sources) or "defaults"}\n\n'
+            f'Return JSON: {{"answer":"3-5 sentence expert analysis using the live data above, '
+            f'mentioning both engines, percentages, and current form/news",'
             f'"key_factors":["factor1","factor2","factor3"],'
-            f'"betting_insight":"one sentence about the best bet"}}',
-            max_tokens=700,
+            f'"betting_insight":"one sentence about the best bet based on current data"}}',
+            max_tokens=800,
         )
 
         if ai_answer:
@@ -277,9 +379,14 @@ def smart_predict(question):
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
             'data_sources': data_sources,
+            # Live data for UI display
+            'live_matches': live_ctx['live_matches'],
+            'todays_fixtures': live_ctx['todays_fixtures'],
+            'standings': live_ctx['standings'],
+            'news': live_ctx['news'],
         }
 
-    # ── 4. Player comparison ────────────────────────────────────────────────
+    # ── 5. Player comparison ────────────────────────────────────────────────
     if intent == 'player_comparison' and players:
         ratings = []
         for player in players:
@@ -301,11 +408,12 @@ def smart_predict(question):
                 for r in ratings
             )
             ai_answer = call_ai(
-                'You are MatchOracle AI. Compare football players expertly. Return ONLY valid JSON.',
+                'You are MatchOracle AI. Compare football players using current data. Return ONLY valid JSON.',
                 f'User asked: "{question}"\n'
-                f'Engine B player ratings:\n{comparison_text}\n'
+                f'Engine B player ratings:\n{comparison_text}\n\n'
+                f'=== LATEST NEWS ===\n{live_ctx["context_text"][:400]}\n\n'
                 f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-                f'Return JSON: {{"answer":"3-4 sentence comparison with ratings",'
+                f'Return JSON: {{"answer":"3-4 sentence comparison with ratings and current form",'
                 f'"verdict":"name of better player",'
                 f'"key_factors":["factor1","factor2","factor3"],'
                 f'"confidence":75}}',
@@ -326,9 +434,13 @@ def smart_predict(question):
                 'match_prediction': None,
                 'simulation': None,
                 'data_sources': data_sources,
+                'live_matches': live_ctx['live_matches'],
+                'todays_fixtures': live_ctx['todays_fixtures'],
+                'standings': live_ctx['standings'],
+                'news': live_ctx['news'],
             }
 
-    # ── 5. Simulation ───────────────────────────────────────────────────────
+    # ── 6. Simulation ───────────────────────────────────────────────────────
     if intent == 'simulation':
         if len(teams) >= 2:
             home_team, away_team = teams[0], teams[1]
@@ -357,12 +469,13 @@ def smart_predict(question):
 
         if sim_result:
             ai_answer = call_ai(
-                'You are MatchOracle AI. Explain simulation results. Return ONLY valid JSON.',
+                'You are MatchOracle AI. Explain simulation results using current data. Return ONLY valid JSON.',
                 f'User asked: "{question}"\n'
                 f'Simulation ({sim_result["simulations"]} runs): '
                 f'Home {sim_result["home_win"]}% Draw {sim_result["draw"]}% Away {sim_result["away_win"]}%\n'
-                f'Most likely score: {sim_result["likely_score"]}\n'
-                f'Return JSON: {{"answer":"3-4 sentence simulation analysis",'
+                f'Most likely score: {sim_result["likely_score"]}\n\n'
+                f'=== LIVE CONTEXT ===\n{live_ctx["context_text"][:400]}\n\n'
+                f'Return JSON: {{"answer":"3-4 sentence simulation analysis with current context",'
                 f'"verdict":"most likely outcome",'
                 f'"key_factors":["f1","f2","f3"],"confidence":75}}',
                 max_tokens=500,
@@ -383,14 +496,22 @@ def smart_predict(question):
                 'match_prediction': None,
                 'simulation': sim_result,
                 'data_sources': data_sources,
+                'live_matches': live_ctx['live_matches'],
+                'todays_fixtures': live_ctx['todays_fixtures'],
+                'standings': live_ctx['standings'],
+                'news': live_ctx['news'],
             }
 
-    # ── 6. General football question (Claude only) ──────────────────────────
+    # ── 7. General football question — Claude with live context ─────────────
     ai = call_ai(
-        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
-        f'Football question: "{question}"\n'
-        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-        max_tokens=500,
+        'You are MatchOracle Smart AI, a football expert with access to REAL-TIME data. '
+        'Use the live context provided to give an accurate, current answer. '
+        'Return ONLY valid JSON.',
+        f'Football question: "{question}"\n\n'
+        f'=== LIVE INTERNET DATA ===\n{live_ctx["context_text"][:700]}\n\n'
+        f'Return: {{"answer":"3-5 sentence expert answer using the live data above",'
+        f'"key_factors":["f1","f2","f3"],"verdict":"Your recommendation based on current data"}}',
+        max_tokens=600,
     )
     return {
         'success': True,
@@ -405,4 +526,8 @@ def smart_predict(question):
         'simulation': None,
         'confidence': 0,
         'data_sources': data_sources,
+        'live_matches': live_ctx['live_matches'],
+        'todays_fixtures': live_ctx['todays_fixtures'],
+        'standings': live_ctx['standings'],
+        'news': live_ctx['news'],
     }

@@ -130,6 +130,7 @@ MATCHORACLE = {
     },
     'ANTHROPIC_API_KEY': os.environ.get('ANTHROPIC_API_KEY', ''),
     'FOOTBALL_API_KEY': os.environ.get('SPORTMONKS_API_KEY', os.environ.get('FOOTBALL_API_KEY', '')),
+    'NEWSAPI_KEY': os.environ.get('NEWSAPI_KEY', ''),
     'PAYSTACK_SECRET_KEY': os.environ.get('PAYSTACK_SECRET_KEY', ''),
     'PAYSTACK_PUBLIC_KEY': os.environ.get('PAYSTACK_PUBLIC_KEY', ''),
     'VERSION': '2.0.0',

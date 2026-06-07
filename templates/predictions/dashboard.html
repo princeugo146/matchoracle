@@ -163,6 +163,95 @@
 .bn-icon{font-size:20px;line-height:1;}
 .bn-label{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
 
+/* ── Smart AI Chat ────────────────────────────────────────── */
+.smart-ai-card{
+  background:linear-gradient(135deg,#060d1a 0%,#0a1628 50%,#0d1020 100%);
+  border:1px solid rgba(0,212,255,.22);
+  border-radius:20px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.smart-ai-card::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.smart-ai-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.smart-ai-title{display:flex;align-items:center;gap:10px;}
+.smart-ai-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(0,212,255,.2),rgba(124,58,237,.2));border:1px solid rgba(0,212,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.smart-ai-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#fff;}
+.smart-ai-sub{font-size:10px;color:var(--accent);letter-spacing:1px;margin-top:1px;}
+.online-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:1.5px;background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25);}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:lp 1.2s infinite;}
+.ai-chat-area{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px;min-height:80px;max-height:320px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;}
+.ai-msg{display:flex;gap:10px;align-items:flex-start;}
+.ai-msg.user{flex-direction:row-reverse;}
+.ai-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.ai-avatar.bot{background:linear-gradient(135deg,rgba(0,212,255,.25),rgba(124,58,237,.25));border:1px solid rgba(0,212,255,.3);}
+.ai-avatar.user{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);}
+.ai-bubble{padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.7;max-width:85%;}
+.ai-bubble.bot{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.1);color:var(--text);}
+.ai-bubble.user{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.25);color:var(--text);}
+.ai-input-row{display:flex;gap:8px;align-items:flex-end;}
+.ai-input-row textarea{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(0,212,255,.2);border-radius:12px;padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:none;height:44px;min-height:44px;max-height:120px;transition:border-color .2s;line-height:1.5;}
+.ai-input-row textarea:focus{border-color:var(--accent);background:rgba(0,212,255,.03);}
+.ai-send-btn{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#0077ff);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.ai-send-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,212,255,.3);}
+.ai-send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.ai-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.ai-sug{padding:5px 11px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:20px;font-size:11px;color:var(--accent);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ai-sug:hover{background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.3);}
+
+/* ── Smart AI Result Tables ───────────────────────────────── */
+.ai-result-section{margin-top:14px;display:none;animation:fu .4s ease;}
+.ai-result-section.show{display:block;}
+.ai-result-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.ai-rtab{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s;font-family:'Inter',sans-serif;}
+.ai-rtab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:var(--accent);}
+.ai-rtab:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
+.ai-rtab-panel{display:none;}
+.ai-rtab-panel.show{display:block;}
+.ai-table{width:100%;border-collapse:collapse;font-size:12px;}
+.ai-table th{text-align:left;padding:7px 10px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+.ai-table td{padding:8px 10px;border-top:1px solid rgba(255,255,255,.04);color:var(--text2);}
+.ai-table tr:hover td{background:rgba(255,255,255,.02);}
+.ai-table .team-name{font-weight:600;color:var(--text);}
+.ai-table .pts{font-family:'Orbitron',sans-serif;font-weight:700;color:var(--accent);}
+.ai-table .live-row td{color:var(--text);}
+.ai-table .live-row .score-cell{font-family:'Orbitron',sans-serif;font-weight:900;color:var(--red);}
+.news-item{padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;margin-bottom:8px;}
+.news-item:last-child{margin-bottom:0;}
+.news-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.5;}
+.news-meta{font-size:10px;color:var(--muted);}
+.news-desc{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6;}
+.verdict-box{padding:14px 16px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:12px;margin-bottom:12px;}
+.verdict-label{font-size:9px;letter-spacing:2px;color:var(--accent);font-weight:700;text-transform:uppercase;margin-bottom:6px;}
+.verdict-text{font-size:14px;font-weight:700;color:var(--text);}
+.verdict-conf{font-size:11px;color:var(--text2);margin-top:4px;}
+.engine-compare-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.engine-box{padding:12px;border-radius:12px;text-align:center;}
+.engine-box.a{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);}
+.engine-box.d{background:rgba(251,146,60,.05);border:1px solid rgba(251,146,60,.15);}
+.engine-box-label{font-size:9px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;margin-bottom:6px;}
+.engine-box.a .engine-box-label{color:var(--accent);}
+.engine-box.d .engine-box-label{color:var(--orange);}
+.engine-box-verdict{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.engine-box-score{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;}
+.engine-box.a .engine-box-score{color:var(--accent);}
+.engine-box.d .engine-box-score{color:var(--orange);}
+.data-source-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.ds-chip{padding:3px 8px;border-radius:8px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.ds-chip.live{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.ds-chip.news{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.2);}
+.ds-chip.web{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.15);}
+.ds-chip.ai{background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.2);}
+.ai-thinking{display:flex;align-items:center;gap:8px;padding:10px 13px;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.1);border-radius:12px;font-size:12px;color:var(--text2);}
+.think-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);animation:td .8s infinite;margin:0 1px;}
+.think-dots span:nth-child(2){animation-delay:.15s;}
+.think-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes td{0%,80%,100%{transform:scale(0);opacity:.3;}40%{transform:scale(1);opacity:1;}}
+@keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
 /* ── Misc ─────────────────────────────────────────────────── */
 .section-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:16px;}
 </style>
@@ -301,6 +390,85 @@
         </button>
         <div id="qa-result" style="display:none;margin-top:12px;padding:12px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:12px;font-size:13px;"></div>
         <div id="qa-loading" style="display:none;text-align:center;padding:16px"><div class="spin" style="width:28px;height:28px;margin:0 auto 8px"></div><div style="font-size:12px;color:var(--text2)">Analyzing...</div></div>
+      </div>
+
+      <!-- ── SMART AI CHAT ─────────────────────────────────── -->
+      <div class="smart-ai-card" id="smart-ai-section">
+        <div class="smart-ai-header">
+          <div class="smart-ai-title">
+            <div class="smart-ai-icon">&#129302;</div>
+            <div>
+              <div class="smart-ai-name">SMART AI</div>
+              <div class="smart-ai-sub">LIVE INTERNET ACCESS</div>
+            </div>
+          </div>
+          <div class="online-badge">
+            <span class="online-dot"></span>
+            ONLINE
+          </div>
+        </div>
+
+        <!-- Suggestion chips -->
+        <div class="ai-suggestions">
+          <span class="ai-sug" onclick="aiSuggest(this)">Who will win Champions League?</span>
+          <span class="ai-sug" onclick="aiSuggest(this)">Arsenal vs Chelsea prediction</span>
+          <span class="ai-sug" onclick="aiSuggest(this)">Best striker right now?</span>
+          <span class="ai-sug" onclick="aiSuggest(this)">Premier League standings</span>
+        </div>
+
+        <!-- Chat messages area -->
+        <div class="ai-chat-area" id="ai-chat-area">
+          <div class="ai-msg">
+            <div class="ai-avatar bot">&#129302;</div>
+            <div class="ai-bubble bot">
+              Hello! I'm MatchOracle Smart AI with <strong style="color:var(--accent)">live internet access</strong>. I can fetch current match results, league standings, and the latest football news to answer your questions with real-time data. Ask me anything!
+            </div>
+          </div>
+        </div>
+
+        <!-- Input row -->
+        <div class="ai-input-row">
+          <textarea id="ai-question" placeholder="Ask anything... e.g. Who won the Champions League? Will Liverpool win tonight?" onkeydown="aiKeyDown(event)"></textarea>
+          <button class="ai-send-btn" id="ai-send-btn" onclick="sendSmartAI()" title="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+
+        <!-- Result section (shown after response) -->
+        <div class="ai-result-section" id="ai-result-section">
+
+          <!-- Verdict box (for match predictions) -->
+          <div class="verdict-box" id="ai-verdict-box" style="display:none">
+            <div class="verdict-label">&#127919; Smart AI Verdict</div>
+            <div class="verdict-text" id="ai-verdict-text"></div>
+            <div class="verdict-conf" id="ai-verdict-conf"></div>
+          </div>
+
+          <!-- Engine comparison (for match predictions) -->
+          <div class="engine-compare-row" id="ai-engine-compare" style="display:none">
+            <div class="engine-box a">
+              <div class="engine-box-label">Engine A</div>
+              <div class="engine-box-verdict" id="ai-eng-a-verdict"></div>
+              <div class="engine-box-score" id="ai-eng-a-score"></div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px" id="ai-eng-a-pct"></div>
+            </div>
+            <div class="engine-box d">
+              <div class="engine-box-label">Engine D</div>
+              <div class="engine-box-verdict" id="ai-eng-d-verdict"></div>
+              <div class="engine-box-score" id="ai-eng-d-score"></div>
+              <div style="font-size:10px;color:var(--muted);margin-top:4px" id="ai-eng-d-pct"></div>
+            </div>
+          </div>
+
+          <!-- Result tabs: Live Matches / Today's Fixtures / Standings / News -->
+          <div id="ai-tabs-wrap" style="display:none">
+            <div class="ai-result-tabs" id="ai-result-tabs"></div>
+            <div id="ai-tab-panels"></div>
+          </div>
+
+          <!-- Data source chips -->
+          <div class="data-source-chips" id="ai-data-sources"></div>
+        </div>
       </div>
 
       <!-- Live Matches -->
@@ -812,9 +980,9 @@
       <span class="bn-icon">&#128308;</span>
       <span class="bn-label">Live</span>
     </a>
-    <a href="#engines-section" class="bn-item" id="bn-analyze">
+    <a href="#smart-ai-section" class="bn-item" id="bn-smart-ai">
       <span class="bn-icon">&#129302;</span>
-      <span class="bn-label">Analyze</span>
+      <span class="bn-label">Smart AI</span>
     </a>
     <a href="/accounts/profile/" class="bn-item">
       <span class="bn-icon">&#128100;</span>
@@ -858,14 +1026,17 @@ function sw(id,btn,cls){
   document.getElementById('p'+id).classList.add('show');
 }
 
-/* ── Bottom Nav: scroll to engines ──────────────────────── */
-document.getElementById('bn-analyze').addEventListener('click',function(e){
-  e.preventDefault();
-  const el=document.getElementById('engines-section');
-  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-  document.querySelectorAll('.bn-item').forEach(i=>i.classList.remove('active'));
-  this.classList.add('active');
-});
+/* ── Bottom Nav: scroll to Smart AI ─────────────────────── */
+const bnSmartAi=document.getElementById('bn-smart-ai');
+if(bnSmartAi){
+  bnSmartAi.addEventListener('click',function(e){
+    e.preventDefault();
+    const el=document.getElementById('smart-ai-section');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    document.querySelectorAll('.bn-item').forEach(i=>i.classList.remove('active'));
+    this.classList.add('active');
+  });
+}
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function g(id){const e=document.getElementById(id);return e?e.value:'';}
@@ -1138,7 +1309,305 @@ if(pa){const e=document.getElementById('aan');if(e)e.value=pa;sessionStorage.rem
 /* ── Bottom nav active state ─────────────────────────────── */
 document.querySelectorAll('.bn-item').forEach(function(item){
   item.addEventListener('click',function(){
-    if(this.id==='bn-analyze')return;
+    if(this.id==='bn-smart-ai')return;
+    document.querySelectorAll('.bn-item').forEach(function(i){i.classList.remove('active');});
+    this.classList.add('active');
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   SMART AI — Live Internet Chat
+   ══════════════════════════════════════════════════════════ */
+
+function aiSuggest(el){
+  const ta=document.getElementById('ai-question');
+  if(ta){ta.value=el.textContent;ta.focus();}
+}
+
+function aiKeyDown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendSmartAI();}
+}
+
+function aiAddMsg(text,role){
+  const area=document.getElementById('ai-chat-area');
+  if(!area)return;
+  const div=document.createElement('div');
+  div.className='ai-msg'+(role==='user'?' user':'');
+  const avatar=document.createElement('div');
+  avatar.className='ai-avatar '+(role==='user'?'user':'bot');
+  avatar.textContent=role==='user'?'👤':'🤖';
+  const bubble=document.createElement('div');
+  bubble.className='ai-bubble '+(role==='user'?'user':'bot');
+  bubble.innerHTML=text;
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  area.appendChild(div);
+  area.scrollTop=area.scrollHeight;
+  return bubble;
+}
+
+function aiShowThinking(){
+  const area=document.getElementById('ai-chat-area');
+  if(!area)return null;
+  const div=document.createElement('div');
+  div.className='ai-msg';
+  div.id='ai-thinking-msg';
+  div.innerHTML='<div class="ai-avatar bot">🤖</div>'
+    +'<div class="ai-thinking"><span>Smart AI is thinking</span>'
+    +'<span class="think-dots"><span></span><span></span><span></span></span>'
+    +'<span style="font-size:10px;color:var(--accent);margin-left:4px">fetching live data...</span></div>';
+  area.appendChild(div);
+  area.scrollTop=area.scrollHeight;
+  return div;
+}
+
+function aiRemoveThinking(){
+  const el=document.getElementById('ai-thinking-msg');
+  if(el)el.remove();
+}
+
+function aiSwitchTab(tabId){
+  document.querySelectorAll('.ai-rtab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.ai-rtab-panel').forEach(function(p){p.classList.remove('show');});
+  const tab=document.querySelector('[data-tab="'+tabId+'"]');
+  const panel=document.getElementById('ai-panel-'+tabId);
+  if(tab)tab.classList.add('active');
+  if(panel)panel.classList.add('show');
+}
+
+function aiRenderResults(d){
+  const r=d.result||{};
+  const resultSection=document.getElementById('ai-result-section');
+  if(!resultSection)return;
+  resultSection.classList.add('show');
+
+  // ── Verdict box ──────────────────────────────────────────
+  const verdictBox=document.getElementById('ai-verdict-box');
+  const verdictText=document.getElementById('ai-verdict-text');
+  const verdictConf=document.getElementById('ai-verdict-conf');
+  if(r.verdict&&r.verdict!==''){
+    verdictBox.style.display='block';
+    verdictText.textContent='🎯 '+r.verdict+(r.home_team&&r.away_team?' ('+r.home_team+' vs '+r.away_team+')':'');
+    const cc=r.confidence>=70?'var(--green)':r.confidence>=50?'var(--gold)':'var(--red)';
+    verdictConf.innerHTML='Confidence: <strong style="color:'+cc+'">'+(r.confidence||0)+'%</strong>'
+      +(r.predicted_score?' &nbsp;|&nbsp; Score: <strong style="color:var(--text)">'+r.predicted_score+'</strong>':'')
+      +(r.is_today?' &nbsp;<span style="color:var(--red);font-size:10px;font-weight:700">● TODAY\'S MATCH</span>':'');
+  }else{
+    verdictBox.style.display='none';
+  }
+
+  // ── Engine comparison ────────────────────────────────────
+  const engCompare=document.getElementById('ai-engine-compare');
+  if(r.match_prediction&&r.simulation&&r.consensus){
+    engCompare.style.display='grid';
+    const mp=r.match_prediction;
+    const sim=r.simulation;
+    const con=r.consensus;
+    document.getElementById('ai-eng-a-verdict').textContent=con.engine_a_verdict||'';
+    document.getElementById('ai-eng-a-score').textContent=mp.predicted_score||'';
+    document.getElementById('ai-eng-a-pct').textContent='Home '+mp.home_win+'% / Draw '+mp.draw+'% / Away '+mp.away_win+'%';
+    document.getElementById('ai-eng-d-verdict').textContent=con.engine_d_verdict||'';
+    document.getElementById('ai-eng-d-score').textContent=sim.likely_score||'';
+    document.getElementById('ai-eng-d-pct').textContent='Home '+sim.home_win+'% / Draw '+sim.draw+'% / Away '+sim.away_win+'%';
+  }else{
+    engCompare.style.display='none';
+  }
+
+  // ── Tabs: Live / Today / Standings / News ────────────────
+  const tabsWrap=document.getElementById('ai-tabs-wrap');
+  const tabsEl=document.getElementById('ai-result-tabs');
+  const panelsEl=document.getElementById('ai-tab-panels');
+  const liveMatches=d.live_matches||[];
+  const todayFixtures=d.todays_fixtures||[];
+  const standings=d.standings||[];
+  const news=d.news||[];
+
+  const tabs=[];
+  if(liveMatches.length)tabs.push({id:'live',label:'🔴 Live ('+liveMatches.length+')'});
+  if(todayFixtures.length)tabs.push({id:'today',label:'📅 Today ('+todayFixtures.length+')'});
+  if(standings.length)tabs.push({id:'stand',label:'📊 Standings'});
+  if(news.length)tabs.push({id:'news',label:'📰 News ('+news.length+')'});
+
+  if(tabs.length){
+    tabsWrap.style.display='block';
+    tabsEl.innerHTML=tabs.map(function(t,i){
+      return '<button class="ai-rtab'+(i===0?' active':'')+'" data-tab="'+t.id+'" onclick="aiSwitchTab(\''+t.id+'\')">'+t.label+'</button>';
+    }).join('');
+
+    let panelsHtml='';
+
+    // Live matches panel
+    if(liveMatches.length){
+      let rows='';
+      liveMatches.forEach(function(m){
+        const score=(m.home_score!=null)?m.home_score+'-'+m.away_score:'vs';
+        rows+='<tr class="live-row">'
+          +'<td class="team-name">'+m.home+'</td>'
+          +'<td class="score-cell" style="text-align:center;font-family:\'Orbitron\',sans-serif;font-weight:900;color:var(--red)">'+score+'</td>'
+          +'<td class="team-name">'+m.away+'</td>'
+          +'<td style="text-align:center"><span style="font-size:9px;color:var(--red);font-weight:700">'+(m.minute?m.minute+"'":m.status)+'</span></td>'
+          +'<td style="color:var(--muted);font-size:10px">'+m.league+'</td>'
+          +'</tr>';
+      });
+      panelsHtml+='<div class="ai-rtab-panel'+(tabs[0].id==='live'?' show':'')+'" id="ai-panel-live">'
+        +'<div style="overflow-x:auto"><table class="ai-table">'
+        +'<thead><tr><th>Home</th><th style="text-align:center">Score</th><th>Away</th><th style="text-align:center">Min</th><th>League</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody></table></div></div>';
+    }
+
+    // Today's fixtures panel
+    if(todayFixtures.length){
+      let rows='';
+      todayFixtures.forEach(function(f){
+        const score=(f.home_score!=null)?f.home_score+'-'+f.away_score:'vs';
+        const statusColor=f.status==='FT'?'var(--muted)':f.status==='LIVE'?'var(--red)':'var(--accent)';
+        rows+='<tr>'
+          +'<td class="team-name">'+f.home+'</td>'
+          +'<td style="text-align:center;font-family:\'Orbitron\',sans-serif;font-weight:700">'+score+'</td>'
+          +'<td class="team-name">'+f.away+'</td>'
+          +'<td style="text-align:center"><span style="font-size:9px;font-weight:700;color:'+statusColor+'">'+f.status+'</span></td>'
+          +'<td style="color:var(--muted);font-size:10px">'+f.league+'</td>'
+          +'</tr>';
+      });
+      const isFirst=tabs[0].id==='today';
+      panelsHtml+='<div class="ai-rtab-panel'+(isFirst?' show':'')+'" id="ai-panel-today">'
+        +'<div style="overflow-x:auto"><table class="ai-table">'
+        +'<thead><tr><th>Home</th><th style="text-align:center">Score</th><th>Away</th><th style="text-align:center">Status</th><th>League</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody></table></div></div>';
+    }
+
+    // Standings panel
+    if(standings.length){
+      let rows='';
+      standings.forEach(function(s){
+        const gd=(s.gd>=0?'+':'')+s.gd;
+        rows+='<tr>'
+          +'<td style="color:var(--muted);font-weight:700;font-size:11px">'+s.position+'</td>'
+          +'<td class="team-name">'+s.team+'</td>'
+          +'<td style="text-align:center">'+s.played+'</td>'
+          +'<td style="text-align:center;color:var(--green)">'+s.won+'</td>'
+          +'<td style="text-align:center;color:var(--gold)">'+s.drawn+'</td>'
+          +'<td style="text-align:center;color:var(--red)">'+s.lost+'</td>'
+          +'<td style="text-align:center;color:'+(s.gd>=0?'var(--green)':'var(--red)')+'">'+gd+'</td>'
+          +'<td class="pts" style="text-align:center">'+s.points+'</td>'
+          +'</tr>';
+      });
+      const isFirst=tabs[0].id==='stand';
+      panelsHtml+='<div class="ai-rtab-panel'+(isFirst?' show':'')+'" id="ai-panel-stand">'
+        +'<div style="overflow-x:auto"><table class="ai-table">'
+        +'<thead><tr><th>#</th><th>Team</th><th style="text-align:center">P</th><th style="text-align:center">W</th><th style="text-align:center">D</th><th style="text-align:center">L</th><th style="text-align:center">GD</th><th style="text-align:center">Pts</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody></table></div></div>';
+    }
+
+    // News panel
+    if(news.length){
+      let newsHtml='';
+      news.forEach(function(a){
+        newsHtml+='<div class="news-item">'
+          +'<div class="news-title">'+(a.url?'<a href="'+a.url+'" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">'+a.title+'</a>':a.title)+'</div>'
+          +(a.description?'<div class="news-desc">'+a.description.slice(0,140)+'...</div>':'')
+          +'<div class="news-meta">'+(a.source?a.source+' &middot; ':'')+a.published.slice(0,10)+'</div>'
+          +'</div>';
+      });
+      const isFirst=tabs[0].id==='news';
+      panelsHtml+='<div class="ai-rtab-panel'+(isFirst?' show':'')+'" id="ai-panel-news">'+newsHtml+'</div>';
+    }
+
+    panelsEl.innerHTML=panelsHtml;
+  }else{
+    tabsWrap.style.display='none';
+  }
+
+  // ── Data source chips ────────────────────────────────────
+  const dsEl=document.getElementById('ai-data-sources');
+  const sources=r.data_sources||[];
+  let chips='';
+  if(sources.includes('sportmonks')||sources.includes('live_data'))chips+='<span class="ds-chip live">🔴 Live Data</span>';
+  if(sources.includes('news'))chips+='<span class="ds-chip news">📰 News</span>';
+  if(sources.includes('web_search'))chips+='<span class="ds-chip web">🌐 Web Search</span>';
+  chips+='<span class="ds-chip ai">🤖 Claude AI</span>';
+  dsEl.innerHTML=chips;
+}
+
+async function sendSmartAI(){
+  const ta=document.getElementById('ai-question');
+  const btn=document.getElementById('ai-send-btn');
+  if(!ta||!btn)return;
+  const question=ta.value.trim();
+  if(!question)return;
+
+  // Add user message
+  aiAddMsg(question,'user');
+  ta.value='';
+  btn.disabled=true;
+
+  // Show thinking indicator
+  const thinkEl=aiShowThinking();
+
+  // Reset result section
+  const resultSection=document.getElementById('ai-result-section');
+  if(resultSection)resultSection.classList.remove('show');
+
+  try{
+    const resp=await fetch('/dashboard/smart-ai/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify({question:question})
+    });
+    const d=await resp.json();
+    aiRemoveThinking();
+    btn.disabled=false;
+
+    if(d.success){
+      const r=d.result||{};
+      const answer=r.answer||'Analysis complete.';
+      // Format key factors if present
+      let html=answer.replace(/\n/g,'<br>');
+      if(r.key_factors&&r.key_factors.length){
+        html+='<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">';
+        r.key_factors.forEach(function(f){
+          html+='<div style="font-size:11px;padding:4px 8px;background:rgba(255,255,255,.03);border-radius:6px;color:var(--text2)">• '+f+'</div>';
+        });
+        html+='</div>';
+      }
+      if(r.betting_insight){
+        html+='<div style="margin-top:8px;padding:8px 10px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px;color:var(--gold)">💡 '+r.betting_insight+'</div>';
+      }
+      aiAddMsg(html,'bot');
+      aiRenderResults(d);
+      if(d.predictions_left===0){
+        aiAddMsg('⚠️ You\'ve used all your predictions for today. <a href="/pricing/" style="color:var(--accent)">Upgrade for more →</a>','bot');
+      }
+    }else if(d.error==='daily_limit_reached'){
+      aiAddMsg('⚠️ Daily limit reached. <a href="/pricing/" style="color:var(--accent)">Upgrade for unlimited predictions →</a>','bot');
+    }else{
+      aiAddMsg('❌ '+(d.error||'Something went wrong. Please try again.'),'bot');
+    }
+  }catch(err){
+    aiRemoveThinking();
+    btn.disabled=false;
+    aiAddMsg('❌ Network error. Please check your connection and try again.','bot');
+  }
+}
+
+/* ── Bottom nav: Smart AI shortcut ──────────────────────── */
+(function(){
+  const bnItems=document.querySelectorAll('.bn-item');
+  bnItems.forEach(function(item){
+    if(item.getAttribute('href')==='#smart-ai-section'||item.dataset.target==='smart-ai'){
+      item.addEventListener('click',function(e){
+        e.preventDefault();
+        const el=document.getElementById('smart-ai-section');
+        if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    }
+  });
+})();
+
+/* ── Bottom nav active state ─────────────────────────────── */
+document.querySelectorAll('.bn-item').forEach(function(item){
+  item.addEventListener('click',function(){
+    if(this.id==='bn-smart-ai')return;
     document.querySelectorAll('.bn-item').forEach(function(i){i.classList.remove('active');});
     this.classList.add('active');
   });
