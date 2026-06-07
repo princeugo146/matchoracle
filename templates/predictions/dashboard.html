@@ -348,6 +348,244 @@
   pointer-events:none;
 }
 
+/* ── Engine D Results Card ────────────────────────────────── */
+.engine-d-card {
+  border-radius: 18px;
+  padding: 24px 22px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: slideIn 0.5s ease;
+}
+
+/* Confidence-based backgrounds */
+.engine-d-card.conf-high {
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
+  border: 2px solid rgba(16,185,129,0.4);
+}
+
+.engine-d-card.conf-medium {
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.1));
+  border: 2px solid rgba(245,158,11,0.4);
+}
+
+.engine-d-card.conf-low {
+  background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1));
+  border: 2px solid rgba(239,68,68,0.4);
+}
+
+/* Glow effect */
+.engine-d-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251,146,60,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.engine-d-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: 10%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251,146,60,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.engine-d-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.engine-d-badge {
+  font-size: 9px;
+  letter-spacing: 2px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(251,146,60,0.3), rgba(217,119,6,0.2));
+  border: 1px solid rgba(251,146,60,0.4);
+  color: #fb923c;
+}
+
+.engine-d-verdict-box {
+  background: rgba(0,0,0,0.2);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.engine-d-verdict-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(251,146,60,0.8);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.engine-d-verdict-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.engine-d-confidence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.engine-d-conf-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  position: relative;
+}
+
+.engine-d-conf-circle.high {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(16,185,129,0.4);
+}
+
+.engine-d-conf-circle.medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(245,158,11,0.4);
+}
+
+.engine-d-conf-circle.low {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(239,68,68,0.4);
+}
+
+.engine-d-conf-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  font-weight: 700;
+}
+
+.engine-d-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+@media(max-width: 480px) {
+  .engine-d-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.engine-d-stat {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.engine-d-stat-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.engine-d-stat-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #fb923c;
+}
+
+.engine-d-score-box {
+  background: linear-gradient(135deg, rgba(251,146,60,0.2), rgba(217,119,6,0.1));
+  border: 1px solid rgba(251,146,60,0.3);
+  border-radius: 14px;
+  padding: 16px 18px;
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.engine-d-score-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(251,146,60,0.7);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.engine-d-score-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #fb923c;
+}
+
+.engine-d-insight {
+  background: rgba(251,146,60,0.08);
+  border: 1px solid rgba(251,146,60,0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 </style>
 {% endblock %}
 
@@ -1505,6 +1743,82 @@ function renderSmartAI(r){
   '</div>';
 
   html+='</div>'; // /engine-comparison
+
+  // ── Engine D Beautiful Results Card ──────────────────────
+  if(r.simulation && r.engine_d_result){
+    const ed = r.engine_d_result;
+    const edConf = ed.confidence || 50;
+    const edConfClass = edConf >= 70 ? 'high' : edConf >= 50 ? 'medium' : 'low';
+    const edConfColor = edConf >= 70 ? '#10b981' : edConf >= 50 ? '#f59e0b' : '#ef4444';
+    const edCardClass = edConf >= 70 ? 'conf-high' : edConf >= 50 ? 'conf-medium' : 'conf-low';
+
+    const sim = r.simulation;
+    const homeWin = sim.home_win || 0;
+    const draw = sim.draw || 0;
+    const awayWin = sim.away_win || 0;
+
+    html += '<div class="engine-d-card ' + edCardClass + '">';
+
+    // Header
+    html += '<div class="engine-d-header">';
+    html += '<span style="font-size:24px">&#127918;</span>';
+    html += '<div style="flex:1">';
+    html += '<div style="font-family:\'Orbitron\',sans-serif;font-size:13px;font-weight:900;color:#fff">ENGINE D — MONTE CARLO SIMULATION</div>';
+    html += '<div style="font-size:10px;color:rgba(251,146,60,0.7);margin-top:2px">10,000 simulation runs</div>';
+    html += '</div>';
+    html += '<span class="engine-d-badge">&#127918; SIMULATION</span>';
+    html += '</div>';
+
+    // Verdict box
+    html += '<div class="engine-d-verdict-box">';
+    html += '<div class="engine-d-verdict-label">Most Likely Outcome</div>';
+    html += '<div class="engine-d-verdict-text">' + escHtml(ed.verdict || '—') + '</div>';
+    html += '</div>';
+
+    // Confidence circle
+    html += '<div class="engine-d-confidence">';
+    html += '<div class="engine-d-conf-circle ' + edConfClass + '">' + edConf + '<span style="font-size:16px">%</span></div>';
+    html += '<div>';
+    html += '<div class="engine-d-conf-label">Confidence Level</div>';
+    html += '<div style="font-size:13px;color:' + edConfColor + ';font-weight:700;margin-top:4px">';
+    if(edConf >= 70) html += '🟢 HIGH CONFIDENCE';
+    else if(edConf >= 50) html += '🟡 MEDIUM CONFIDENCE';
+    else html += '🔴 LOW CONFIDENCE';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Predicted score
+    html += '<div class="engine-d-score-box">';
+    html += '<div class="engine-d-score-label">Most Likely Score</div>';
+    html += '<div class="engine-d-score-text">' + escHtml(ed.score || '—') + '</div>';
+    html += '</div>';
+
+    // Win probabilities
+    html += '<div class="engine-d-stats">';
+    html += '<div class="engine-d-stat">';
+    html += '<div class="engine-d-stat-label">Home Win</div>';
+    html += '<div class="engine-d-stat-value" style="color:#10b981">' + homeWin + '%</div>';
+    html += '</div>';
+    html += '<div class="engine-d-stat">';
+    html += '<div class="engine-d-stat-label">Draw</div>';
+    html += '<div class="engine-d-stat-value" style="color:#f59e0b">' + draw + '%</div>';
+    html += '</div>';
+    html += '<div class="engine-d-stat">';
+    html += '<div class="engine-d-stat-label">Away Win</div>';
+    html += '<div class="engine-d-stat-value" style="color:#ef4444">' + awayWin + '%</div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Insight
+    if(sim.insight){
+      html += '<div class="engine-d-insight">';
+      html += '&#128161; ' + escHtml(sim.insight);
+      html += '</div>';
+    }
+
+    html += '</div>'; // /engine-d-card
+  }
 
   // Agreement indicator
   html+='<div class="agreement-bar">';
