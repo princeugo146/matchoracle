@@ -2,6 +2,7 @@ import json
 import requests
 import re
 import logging
+from datetime import datetime
 from django.conf import settings
 from .engine import (
     search_web, extract_match_data, extract_player_data,
@@ -10,13 +11,26 @@ from .engine import (
     _build_consensus,
     engine_a, engine_b, engine_d, get_confidence_badge,
 )
+from .news import (
+    build_match_context, build_general_context,
+    fetch_team_news, fetch_recent_results,
+    fetch_competition_standings, fetch_live_matches,
+)
 
 logger = logging.getLogger(__name__)
 
+TODAY = datetime.now().strftime('%B %d, %Y')
+
 
 def call_ai(system, user_msg, max_tokens=800):
+    """
+    Call Anthropic Claude API using the ANTHROPIC_API_KEY from settings.
+    Sends the request via the Anthropic Messages REST API.
+    Returns parsed JSON dict or None on failure.
+    """
     key = settings.MATCHORACLE.get('ANTHROPIC_API_KEY', '')
     if not key:
+        logger.warning("ANTHROPIC_API_KEY not configured — AI responses disabled")
         return None
     try:
         resp = requests.post(
@@ -24,22 +38,22 @@ def call_ai(system, user_msg, max_tokens=800):
             headers={
                 'Content-Type': 'application/json',
                 'x-api-key': key,
-                'anthropic-version': '2023-06-01'
+                'anthropic-version': '2023-06-01',
             },
             json={
                 'model': 'claude-sonnet-4-20250514',
                 'max_tokens': max_tokens,
                 'system': system,
-                'messages': [{'role': 'user', 'content': user_msg}]
+                'messages': [{'role': 'user', 'content': user_msg}],
             },
-            timeout=20
+            timeout=25,
         )
         if resp.status_code == 200:
             text = ''.join(b.get('text', '') for b in resp.json().get('content', []))
             clean = text.replace('```json', '').replace('```', '').strip()
             return json.loads(clean)
         else:
-            logger.error(f"Anthropic error: {resp.status_code} - {resp.text[:200]}")
+            logger.error(f"Anthropic error: {resp.status_code} - {resp.text[:300]}")
     except json.JSONDecodeError as e:
         logger.error(f"AI JSON parse error: {e}")
     except Exception as e:
@@ -113,14 +127,15 @@ def get_todays_match(home_team, away_team):
 def smart_predict(question):
     """
     Smart AI Orchestrator — takes a natural language question and returns a full
-    prediction by detecting intent, fetching live internet data, running ALL
-    prediction engines, comparing results, and compiling a consensus.
+    prediction by detecting intent, fetching CURRENT live internet data (news,
+    standings, recent results), running ALL prediction engines, comparing results,
+    and compiling a consensus answer grounded in real-time information.
 
     Intent routing:
-      match_prediction  → Engine A + Engine D + consensus comparison
+      match_prediction  → Engine A + Engine D + consensus + current news context
       player_comparison → Engine B (per player) + comparison narrative
       simulation        → Engine D
-      general           → Claude AI only
+      general           → Claude AI + current standings/news context
     """
     if not question or len(question.strip()) < 5:
         return {
@@ -155,7 +170,7 @@ def smart_predict(question):
         todays_match = get_todays_match(home_team, away_team)
         competition = 'League'
 
-        # Fetch live internet data
+        # Fetch live internet data (web search)
         search_q = f"{home_team} vs {away_team} prediction form injuries stats 2025"
         web_results = search_web(search_q)
         if web_results:
@@ -168,6 +183,15 @@ def smart_predict(question):
         upcoming = extract_upcoming_matches(web_results, home_team)
         if upcoming:
             competition = upcoming.get('competition', 'League').title()
+
+        # ── Fetch CURRENT news and standings for both teams ──────────────────
+        try:
+            current_context = build_match_context(home_team, away_team, competition)
+            if current_context.strip():
+                data_sources.append('live_news')
+        except Exception as e:
+            logger.warning(f"News context fetch failed: {e}")
+            current_context = ''
 
         engine_data = _build_match_engine_input(home_team, away_team, web_data)
         sim_data = _build_sim_engine_input(home_team, away_team, web_data)
@@ -210,11 +234,21 @@ def smart_predict(question):
 
         match_info = "Today's match" if todays_match else "Upcoming match"
         snippets_text = ' | '.join(web_data.get('raw_snippets', []))
+
+        # Build the AI prompt with CURRENT information injected
         ai_answer = call_ai(
-            'You are MatchOracle Smart AI, a football intelligence orchestrator. Return ONLY valid JSON.',
+            (
+                f'You are MatchOracle Smart AI, a football intelligence assistant with access to '
+                f'CURRENT real-world information as of {TODAY}. '
+                f'You have been provided with live news, recent results, and standings fetched from the web. '
+                f'Use this current information to give accurate, up-to-date answers. '
+                f'Return ONLY valid JSON.'
+            ),
             f'User asked: "{question}"\n'
-            f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n'
-            f'Live web data: {snippets_text[:300]}\n'
+            f'Today\'s date: {TODAY}\n'
+            f'Match: {home_team} vs {away_team} ({competition}) - {match_info}\n\n'
+            f'{current_context[:800]}\n'
+            f'Web search snippets: {snippets_text[:300]}\n\n'
             f'Engine A (match prediction): Home {match_result["home_win"]}% '
             f'Draw {match_result["draw"]}% Away {match_result["away_win"]}% '
             f'→ Verdict: {consensus["engine_a_verdict"]} | Score: {match_result.get("predicted_score","1-1")}\n'
@@ -224,20 +258,24 @@ def smart_predict(question):
             f'→ Verdict: {consensus["engine_d_verdict"]} | Score: {sim_result["likely_score"] if sim_result else "N/A"}\n'
             f'Consensus: {agreement_text}\n'
             f'Final confidence: {consensus_confidence}%\n'
-            f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-            f'Return JSON: {{"answer":"3-5 sentence expert analysis mentioning both engines, percentages, and consensus",'
-            f'"key_factors":["factor1","factor2","factor3"],'
-            f'"betting_insight":"one sentence about the best bet"}}',
-            max_tokens=700,
+            f'Data sources: {", ".join(data_sources) or "defaults"}\n\n'
+            f'Using the CURRENT information above, provide an expert analysis. '
+            f'Mention current form, recent news, and standings where relevant. '
+            f'Return JSON: {{"answer":"4-6 sentence expert analysis referencing current information, both engine results, percentages, and consensus",'
+            f'"key_factors":["current factor 1","current factor 2","current factor 3"],'
+            f'"current_info":"1 sentence summary of the most relevant current news/standings",'
+            f'"betting_insight":"one sentence about the best bet based on current form"}}',
+            max_tokens=900,
         )
 
         if ai_answer:
             final_answer = ai_answer.get('answer', '')
             key_factors = ai_answer.get('key_factors', [])
             betting_insight = ai_answer.get('betting_insight', '')
+            current_info = ai_answer.get('current_info', '')
         else:
             final_answer = (
-                f"Based on live internet data, Engine A predicts {consensus['engine_a_verdict']} "
+                f"As of {TODAY}, based on current web data, Engine A predicts {consensus['engine_a_verdict']} "
                 f"({match_result['home_win']}% home / {match_result['draw']}% draw / "
                 f"{match_result['away_win']}% away). "
                 f"Engine D ({sim_result['simulations'] if sim_result else 10000} simulations) "
@@ -254,6 +292,7 @@ def smart_predict(question):
                 if consensus['agreement']
                 else "Mixed signals from engines — consider smaller stake or avoid."
             )
+            current_info = ''
 
         return {
             'success': True,
@@ -273,6 +312,7 @@ def smart_predict(question):
             'consensus': consensus,
             'key_factors': key_factors,
             'betting_insight': betting_insight,
+            'current_info': current_info,
             'home_win': match_result['home_win'],
             'draw': match_result['draw'],
             'away_win': match_result['away_win'],
@@ -283,7 +323,7 @@ def smart_predict(question):
     if intent == 'player_comparison' and players:
         ratings = []
         for player in players:
-            search_q = f"{player} football stats goals assists 2024 season"
+            search_q = f"{player} football stats goals assists 2025 season"
             results = search_web(search_q)
             if results:
                 data_sources.append('web_search')
@@ -300,12 +340,27 @@ def smart_predict(question):
                 f"insight={r['result'].get('insight','')}"
                 for r in ratings
             )
+            # Fetch current news for each player
+            player_news_ctx = ''
+            for r in ratings:
+                pname = r['player']
+                news = fetch_team_news(pname, max_results=2)
+                if news:
+                    snippets = ' | '.join(n.get('snippet', '')[:150] for n in news)
+                    player_news_ctx += f"{pname} news: {snippets}\n"
+
             ai_answer = call_ai(
-                'You are MatchOracle AI. Compare football players expertly. Return ONLY valid JSON.',
+                (
+                    f'You are MatchOracle AI, a football expert with access to CURRENT information '
+                    f'as of {TODAY}. Compare football players using current stats and news. '
+                    f'Return ONLY valid JSON.'
+                ),
                 f'User asked: "{question}"\n'
+                f'Today\'s date: {TODAY}\n'
                 f'Engine B player ratings:\n{comparison_text}\n'
+                f'Current player news:\n{player_news_ctx}\n'
                 f'Data sources: {", ".join(data_sources) or "defaults"}\n'
-                f'Return JSON: {{"answer":"3-4 sentence comparison with ratings",'
+                f'Return JSON: {{"answer":"3-4 sentence comparison referencing current form and ratings",'
                 f'"verdict":"name of better player",'
                 f'"key_factors":["factor1","factor2","factor3"],'
                 f'"confidence":75}}',
@@ -332,7 +387,7 @@ def smart_predict(question):
     if intent == 'simulation':
         if len(teams) >= 2:
             home_team, away_team = teams[0], teams[1]
-            search_q = f"{home_team} vs {away_team} stats attack defence 2024"
+            search_q = f"{home_team} vs {away_team} stats attack defence 2025"
             results = search_web(search_q)
             if results:
                 data_sources.append('web_search')
@@ -357,12 +412,14 @@ def smart_predict(question):
 
         if sim_result:
             ai_answer = call_ai(
-                'You are MatchOracle AI. Explain simulation results. Return ONLY valid JSON.',
+                f'You are MatchOracle AI with access to current information as of {TODAY}. '
+                f'Explain simulation results. Return ONLY valid JSON.',
                 f'User asked: "{question}"\n'
+                f'Today\'s date: {TODAY}\n'
                 f'Simulation ({sim_result["simulations"]} runs): '
                 f'Home {sim_result["home_win"]}% Draw {sim_result["draw"]}% Away {sim_result["away_win"]}%\n'
                 f'Most likely score: {sim_result["likely_score"]}\n'
-                f'Return JSON: {{"answer":"3-4 sentence simulation analysis",'
+                f'Return JSON: {{"answer":"3-4 sentence simulation analysis with current context",'
                 f'"verdict":"most likely outcome",'
                 f'"key_factors":["f1","f2","f3"],"confidence":75}}',
                 max_tokens=500,
@@ -385,12 +442,34 @@ def smart_predict(question):
                 'data_sources': data_sources,
             }
 
-    # ── 6. General football question (Claude only) ──────────────────────────
+    # ── 6. General football question — Claude + current context ─────────────
+    # Fetch current context (standings, news) relevant to the question
+    try:
+        general_context = build_general_context(question)
+        if general_context.strip():
+            data_sources.append('live_news')
+    except Exception as e:
+        logger.warning(f"General context fetch failed: {e}")
+        general_context = ''
+
     ai = call_ai(
-        'You are MatchOracle AI, a football expert assistant. Answer football questions. Return ONLY valid JSON.',
+        (
+            f'You are MatchOracle Smart AI, a football expert assistant with access to '
+            f'CURRENT real-world information as of {TODAY}. '
+            f'You have been provided with live news and standings fetched from the web. '
+            f'Use this current information to give accurate, up-to-date answers. '
+            f'Do NOT say you lack access to current information — you have it. '
+            f'Return ONLY valid JSON.'
+        ),
         f'Football question: "{question}"\n'
-        f'Return: {{"answer":"3-4 sentence expert answer","key_factors":["f1","f2","f3"],"verdict":"Your recommendation"}}',
-        max_tokens=500,
+        f'Today\'s date: {TODAY}\n\n'
+        f'{general_context[:600]}\n\n'
+        f'Using the current information above, answer the question accurately. '
+        f'Return: {{"answer":"3-5 sentence expert answer referencing current standings/news where relevant",'
+        f'"key_factors":["current factor 1","current factor 2","current factor 3"],'
+        f'"verdict":"Your recommendation based on current information",'
+        f'"confidence":70}}',
+        max_tokens=600,
     )
     return {
         'success': True,
@@ -398,11 +477,12 @@ def smart_predict(question):
         'home_team': None,
         'away_team': None,
         'answer': (ai or {}).get('answer',
-            'Please mention two team names for a full prediction, e.g. "Who will win Arsenal vs Chelsea?"'),
+            f'As of {TODAY}, please mention two team names for a full prediction, '
+            f'e.g. "Who will win Arsenal vs Chelsea?"'),
         'verdict': (ai or {}).get('verdict', ''),
         'key_factors': (ai or {}).get('key_factors', []),
         'match_prediction': None,
         'simulation': None,
-        'confidence': 0,
+        'confidence': (ai or {}).get('confidence', 0),
         'data_sources': data_sources,
     }
