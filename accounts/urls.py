@@ -6,6 +6,7 @@ from django.contrib.auth.views import (
     PasswordResetCompleteView,
 )
 from . import views
+from .views_test import test_email
 
 urlpatterns = [
     path('register/', views.register, name='register'),
@@ -14,7 +15,10 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('subscribe/<str:plan>/', views.subscribe, name='subscribe'),
     path('verify-payment/', views.verify_payment, name='verify_payment'),
-    
+
+    # Test email endpoint (remove after testing)
+    path('test-email/', test_email, name='test_email'),
+
     # Password reset URLs
     path('password-reset/', PasswordResetView.as_view(
         template_name='accounts/password_reset_form.html',
