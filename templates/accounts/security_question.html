@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Verify Identity{% endblock %}
+{% block content %}
+<div class="wrap" style="max-width:440px;margin:70px auto">
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font-size:40px;margin-bottom:12px">🛡️</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Verify Your Identity</div>
+    <div style="color:var(--text2);font-size:14px">Answer your security question to continue.</div>
+  </div>
+  <div class="card">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}al-s{% elif message.tags == 'error' %}al-e{% else %}al-i{% endif %}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">
+      Resetting password for: <strong style="color:var(--text2)">{{ email }}</strong>
+    </div>
+    <form method="POST" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label>Security Question</label>
+        <input type="text" value="{{ question }}" disabled style="color:var(--text2);cursor:default">
+      </div>
+      <div class="field">
+        <label>Your Answer</label>
+        <input type="text" name="answer" placeholder="Enter your answer" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-p btn-full" style="margin-top:8px;padding:13px">Verify Answer</button>
+    </form>
+    <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text2)">
+      Wrong account? <a href="{% url 'password_reset' %}" style="color:var(--accent);font-weight:600">Try a different email</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

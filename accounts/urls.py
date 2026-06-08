@@ -1,12 +1,5 @@
 from django.urls import path
-from django.contrib.auth.views import (
-    PasswordResetView,
-    PasswordResetDoneView,
-    PasswordResetConfirmView,
-    PasswordResetCompleteView,
-)
 from . import views
-from .views_test import test_email
 
 urlpatterns = [
     path('register/', views.register, name='register'),
@@ -16,22 +9,8 @@ urlpatterns = [
     path('subscribe/<str:plan>/', views.subscribe, name='subscribe'),
     path('verify-payment/', views.verify_payment, name='verify_payment'),
 
-    # Test email endpoint (remove after testing)
-    path('test-email/', test_email, name='test_email'),
-
-    # Password reset URLs
-    path('password-reset/', PasswordResetView.as_view(
-        template_name='accounts/password_reset_form.html',
-        email_template_name='accounts/password_reset_email.html',
-        subject_template_name='accounts/password_reset_subject.txt',
-    ), name='password_reset'),
-    path('password-reset/done/', PasswordResetDoneView.as_view(
-        template_name='accounts/password_reset_done.html',
-    ), name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(
-        template_name='accounts/password_reset_confirm.html',
-    ), name='password_reset_confirm'),
-    path('password-reset/complete/', PasswordResetCompleteView.as_view(
-        template_name='accounts/password_reset_complete.html',
-    ), name='password_reset_complete'),
+    # Security question-based password reset
+    path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset/question/', views.security_question, name='security_question'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
 ]

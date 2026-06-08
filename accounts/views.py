@@ -23,6 +23,8 @@ def register(request):
         password = request.POST.get('password', '')
         password2 = request.POST.get('password2', '')
         first_name = request.POST.get('first_name', '').strip()
+        security_question = request.POST.get('security_question', '').strip()
+        security_answer = request.POST.get('security_answer', '').strip()
 
         if not email or not password:
             error = 'Email and password are required.'
@@ -30,6 +32,8 @@ def register(request):
             error = 'Passwords do not match.'
         elif len(password) < 6:
             error = 'Password must be at least 6 characters.'
+        elif not security_question or not security_answer:
+            error = 'Please set a security question and answer for account recovery.'
         elif User.objects.filter(email=email).exists():
             error = 'An account with this email already exists. Please login.'
         else:
@@ -40,6 +44,9 @@ def register(request):
                     password=password,
                     first_name=first_name,
                 )
+                user.security_question = security_question
+                user.security_answer = security_answer
+                user.save()
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, f'Welcome to MatchOracle! You have 3 free predictions per day.')
                 return redirect('dashboard')
@@ -145,3 +152,86 @@ def verify_payment(request):
         logger.error(f"Payment verify error: {e}", exc_info=True)
     messages.error(request, 'Payment verification failed. Contact support.')
     return redirect('dashboard')
+
+
+def password_reset_request(request):
+    """User enters email to start password reset"""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        try:
+            user = User.objects.get(email=email)
+            if not user.security_question:
+                messages.error(request, 'No security question set for this account. Please contact support.')
+                return render(request, 'accounts/password_reset_request.html')
+            # Store user ID in session for next step
+            request.session['reset_user_id'] = user.id
+            request.session['reset_email'] = email
+            return redirect('security_question')
+        except User.DoesNotExist:
+            messages.error(request, 'No account found with that email address.')
+    return render(request, 'accounts/password_reset_request.html')
+
+
+def security_question(request):
+    """Display security question for verification"""
+    user_id = request.session.get('reset_user_id')
+    if not user_id:
+        return redirect('password_reset')
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect('password_reset')
+
+    if request.method == 'POST':
+        answer = request.POST.get('answer', '').strip().lower()
+        stored_answer = user.security_answer.strip().lower()
+
+        if answer == stored_answer:
+            request.session['reset_verified'] = True
+            return redirect('password_reset_confirm')
+        else:
+            messages.error(request, 'Incorrect answer. Please try again.')
+
+    return render(request, 'accounts/security_question.html', {
+        'question': user.security_question,
+        'email': user.email,
+    })
+
+
+def password_reset_confirm(request):
+    """User sets new password after answering security question"""
+    user_id = request.session.get('reset_user_id')
+    verified = request.session.get('reset_verified')
+
+    if not user_id or not verified:
+        return redirect('password_reset')
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect('password_reset')
+
+    if request.method == 'POST':
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if not password1 or not password2:
+            messages.error(request, 'Please fill in all fields.')
+        elif password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+        elif len(password1) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+        else:
+            user.set_password(password1)
+            user.save()
+
+            # Clear reset session keys
+            request.session.pop('reset_user_id', None)
+            request.session.pop('reset_email', None)
+            request.session.pop('reset_verified', None)
+
+            messages.success(request, 'Password reset successful! Please log in with your new password.')
+            return redirect('login')
+
+    return render(request, 'accounts/password_reset_confirm.html')

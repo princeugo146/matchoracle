@@ -13,6 +13,27 @@
       <div class="field"><label>First Name (optional)</label><input type="text" name="first_name" placeholder="Your name"></div>
       <div class="field"><label>Password (min 6 characters)</label><input type="password" name="password" placeholder="Choose a password" required></div>
       <div class="field"><label>Confirm Password</label><input type="password" name="password2" placeholder="Repeat password" required></div>
+      <div style="border-top:1px solid var(--border);margin:18px 0 14px;padding-top:14px">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px">Account Recovery</div>
+        <div class="field">
+          <label>Security Question</label>
+          <select name="security_question" required>
+            <option value="" disabled selected>Choose a security question…</option>
+            <option>What was the name of your first pet?</option>
+            <option>What is your mother's maiden name?</option>
+            <option>What city were you born in?</option>
+            <option>What was the name of your primary school?</option>
+            <option>What is the name of your favourite sports team?</option>
+            <option>What was the make of your first car?</option>
+            <option>What is your oldest sibling's middle name?</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Security Answer</label>
+          <input type="text" name="security_answer" placeholder="Your answer (case-insensitive)" required>
+          <span style="font-size:11px;color:var(--muted);margin-top:3px">Used to verify your identity if you forget your password.</span>
+        </div>
+      </div>
       <button type="submit" class="btn btn-p btn-full" style="margin-top:8px;padding:13px">Create Free Account</button>
     </form>
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text2)">Already have an account? <a href="/accounts/login/" style="color:var(--accent);font-weight:600">Login</a></div>

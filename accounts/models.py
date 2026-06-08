@@ -26,6 +26,8 @@ class User(AbstractUser):
     total_predictions = models.IntegerField(default=0)
     correct_predictions = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    security_question = models.CharField(max_length=255, blank=True, default='')
+    security_answer = models.CharField(max_length=255, blank=True, default='')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
