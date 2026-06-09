@@ -30,6 +30,98 @@ INSTALLED_APPS = [
     'api',
 ]
 
+JAZZMIN_CUSTOM_CSS = """
+:root {
+    --primary-color: #10b981;
+    --secondary-color: #3b82f6;
+    --accent-color: #f59e0b;
+}
+
+.navbar-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.sidebar-dark-success {
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+    border-right: 3px solid #10b981 !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: none !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+.card {
+    border-left: 4px solid #10b981 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1) !important;
+}
+
+.main-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.content-header {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+}
+
+.nav-link.active {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%) !important;
+    border-left: 4px solid #fbbf24 !important;
+}
+
+.nav-link:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.form-control:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25) !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #10b981 !important;
+}
+
+.pagination .page-link.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border-color: #10b981 !important;
+}
+
+.breadcrumb {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+}
+
+.breadcrumb-item.active {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+}
+"""
+
 JAZZMIN_SETTINGS = {
     "site_title": "MatchOracle Admin",
     "site_header": "MatchOracle",
@@ -70,7 +162,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     "related_modal_active": True,
-    "custom_css": None,
+    "custom_css": JAZZMIN_CUSTOM_CSS,
     "custom_js": None,
     "use_google_fonts_cdn": True,
     "show_ui_builder": False,
@@ -86,30 +178,30 @@ JAZZMIN_UI_TWEAKS = {
     "footer_small_text": False,
     "body_small_text": False,
     "brand_small_text": False,
-    "brand_colour": "navbar-dark",
-    "accent": "accent-primary",
-    "navbar": "navbar-dark",
-    "no_navbar_border": True,
+    "brand_colour": "navbar-success",  # Green navbar
+    "accent": "accent-success",  # Green accent
+    "navbar": "navbar-success",  # Green navbar
+    "no_navbar_border": False,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-primary",
+    "sidebar": "sidebar-dark-success",  # Green sidebar
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": True,
     "sidebar_nav_compact_style": False,
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": False,
-    "theme": "darkly",
+    "theme": "lumen",  # Light theme with colors
     "dark_mode_theme": "darkly",
     "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
+        "primary": "btn-success",  # Green buttons
+        "secondary": "btn-info",  # Blue buttons
+        "info": "btn-info",  # Blue
+        "warning": "btn-warning",  # Orange
+        "danger": "btn-danger",  # Red
+        "success": "btn-success",  # Green
     },
     "actions_sticky_top": True,
 }
