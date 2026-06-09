@@ -8,6 +8,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'jazzmin',  # Must be first!
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -21,6 +22,90 @@ INSTALLED_APPS = [
     'predictions',
     'api',
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "MatchOracle Admin",
+    "site_header": "MatchOracle",
+    "site_brand": "MatchOracle",
+    "site_logo": None,
+    "welcome_sign": "Welcome to MatchOracle Intelligence Dashboard",
+    "copyright": "MatchOracle 2026",
+    "search_model": ["accounts.User", "predictions.Prediction"],
+    "topmenu_links": [
+        {"name": "Live Site", "url": "https://matchoracle-production.up.railway.app", "new_window": True},
+        {"name": "View Predictions", "model": "predictions.Prediction"},
+        {"name": "View Users", "model": "accounts.User"},
+    ],
+    "usermenu_links": [
+        {"name": "Live Site", "url": "https://matchoracle-production.up.railway.app", "new_window": True},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [
+        "accounts",
+        "predictions",
+        "core",
+    ],
+    "icons": {
+        "accounts.User": "fas fa-users",
+        "accounts.Payment": "fas fa-credit-card",
+        "predictions.Prediction": "fas fa-chart-line",
+        "predictions.TeamProfile": "fas fa-shield-alt",
+        "predictions.TeamRanking": "fas fa-trophy",
+        "predictions.WeeklyTip": "fas fa-lightbulb",
+        "predictions.EngineAccuracy": "fas fa-brain",
+        "predictions.ConversationMemory": "fas fa-comments",
+        "predictions.MatchResult": "fas fa-futbol",
+        "auth.Group": "fas fa-users-cog",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "custom_css": None,
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+    },
+    "language_chooser": False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark",
+    "no_navbar_border": True,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "darkly",
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+    "actions_sticky_top": True,
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
