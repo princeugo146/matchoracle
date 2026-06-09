@@ -14,6 +14,10 @@ class Prediction(models.Model):
     away_team = models.CharField(max_length=100, blank=True)
     predicted_result = models.CharField(max_length=50, blank=True)
     was_correct = models.BooleanField(null=True, blank=True)
+    result_label = models.CharField(max_length=20, blank=True, default='')  # 'correct', 'close', 'wrong'
+    result_checked = models.BooleanField(default=False)
+    actual_result = models.CharField(max_length=100, blank=True)
+    actual_score = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         ordering = ['-created_at']
@@ -451,3 +455,195 @@ class ConversationMemory(models.Model):
                 messages=[],
                 expires_at=timezone.now() + timedelta(hours=24),
             )
+
+
+# ─── Match Result Admin Panel ─────────────────────────────────────────────────
+
+class MatchResult(models.Model):
+    """
+    Stores real match results entered manually via the admin panel.
+    Automatically marks related Predictions as correct / close / wrong
+    and updates TeamProfile stats when saved.
+    """
+    home_team = models.CharField(max_length=100)
+    away_team = models.CharField(max_length=100)
+    home_score = models.IntegerField()
+    away_score = models.IntegerField()
+    match_date = models.DateField()
+    competition = models.CharField(max_length=100, default='Unknown')
+    match_type = models.CharField(max_length=50, default='league')
+
+    # Team stats entered manually
+    home_possession = models.FloatField(default=50)
+    away_possession = models.FloatField(default=50)
+    home_shots = models.IntegerField(default=0)
+    away_shots = models.IntegerField(default=0)
+    home_tactical_style = models.CharField(max_length=50, default='balanced')
+    away_tactical_style = models.CharField(max_length=50, default='balanced')
+    home_key_player = models.CharField(max_length=100, blank=True)
+    away_key_player = models.CharField(max_length=100, blank=True)
+    match_summary = models.TextField(blank=True)
+    what_decided_match = models.TextField(blank=True)
+
+    # Auto-populated fields
+    result = models.CharField(max_length=10, blank=True)
+    processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate result from scores
+        if self.home_score > self.away_score:
+            self.result = 'home'
+        elif self.away_score > self.home_score:
+            self.result = 'away'
+        else:
+            self.result = 'draw'
+        super().save(*args, **kwargs)
+
+        # Process predictions only once
+        if not self.processed:
+            self.process_predictions()
+
+    def process_predictions(self):
+        """Mark predictions correct/wrong/close and update team profiles."""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Find all unverified predictions for this match
+            preds = Prediction.objects.filter(
+                home_team__icontains=self.home_team,
+                away_team__icontains=self.away_team,
+                result_checked=False,
+            )
+
+            for pred in preds:
+                predicted = pred.predicted_result.lower() if pred.predicted_result else ''
+                actual = self.result
+
+                # Determine correct / close / wrong
+                if actual == 'home' and self.home_team.lower() in predicted:
+                    pred.was_correct = True
+                    pred.result_label = 'correct'
+                elif actual == 'away' and self.away_team.lower() in predicted:
+                    pred.was_correct = True
+                    pred.result_label = 'correct'
+                elif actual == 'draw' and 'draw' in predicted:
+                    pred.was_correct = True
+                    pred.result_label = 'correct'
+                else:
+                    # Close = the actual outcome had ≥35 % predicted probability
+                    output = pred.output_data or {}
+                    if actual == 'home':
+                        pct = output.get('home_win', 0)
+                    elif actual == 'away':
+                        pct = output.get('away_win', 0)
+                    else:
+                        pct = output.get('draw', 0)
+
+                    if pct >= 35:
+                        pred.was_correct = False
+                        pred.result_label = 'close'
+                    else:
+                        pred.was_correct = False
+                        pred.result_label = 'wrong'
+
+                pred.actual_result = self.result
+                pred.actual_score = f"{self.home_score}-{self.away_score}"
+                pred.result_checked = True
+                pred.save()
+
+                # Refresh user accuracy counters
+                user = pred.user
+                user.total_predictions = Prediction.objects.filter(user=user).count()
+                user.correct_predictions = Prediction.objects.filter(
+                    user=user, was_correct=True
+                ).count()
+                user.save(update_fields=['total_predictions', 'correct_predictions'])
+
+            # Update both team profiles with real stats
+            self._update_team_profile(
+                self.home_team,
+                won=(self.result == 'home'),
+                drew=(self.result == 'draw'),
+                goals_scored=self.home_score,
+                goals_conceded=self.away_score,
+                possession=self.home_possession,
+                tactical_style=self.home_tactical_style,
+                key_player=self.home_key_player,
+                is_home=True,
+            )
+            self._update_team_profile(
+                self.away_team,
+                won=(self.result == 'away'),
+                drew=(self.result == 'draw'),
+                goals_scored=self.away_score,
+                goals_conceded=self.home_score,
+                possession=self.away_possession,
+                tactical_style=self.away_tactical_style,
+                key_player=self.away_key_player,
+                is_home=False,
+            )
+
+            # Mark this record as processed so it won't run again
+            MatchResult.objects.filter(pk=self.pk).update(processed=True)
+
+        except Exception as e:
+            logger.error(
+                f"Error processing predictions for match {self}: {e}", exc_info=True
+            )
+
+    def _update_team_profile(
+        self, team_name, won, drew, goals_scored, goals_conceded,
+        possession, tactical_style, key_player, is_home,
+    ):
+        """Update a TeamProfile with stats from this match result."""
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            profile, _ = TeamProfile.objects.get_or_create(team_name=team_name)
+
+            # Prepend this result to last_20_results (capped at 20)
+            recent = profile.last_20_results or []
+            recent.insert(0, {
+                'date': str(self.match_date),
+                'score': f"{goals_scored}-{goals_conceded}",
+                'location': 'home' if is_home else 'away',
+                'outcome': 'W' if won else ('D' if drew else 'L'),
+                'possession': possession,
+                'tactical_style': tactical_style,
+            })
+            profile.last_20_results = recent[:20]
+
+            # Update tactical style when a non-default style is consistently used
+            if tactical_style and tactical_style != 'balanced':
+                profile.tactical_style = tactical_style
+
+            # Update key players list (unique, most recent first, capped at 10)
+            if key_player and key_player not in (profile.key_players or []):
+                kp = profile.key_players or []
+                kp.insert(0, key_player)
+                profile.key_players = kp[:10]
+
+            # Recalculate rolling goal averages from the last 10 results
+            recent_10 = profile.last_20_results[:10]
+            if recent_10:
+                profile.avg_goals_scored = sum(
+                    int(r['score'].split('-')[0]) for r in recent_10
+                ) / len(recent_10)
+                profile.avg_goals_conceded = sum(
+                    int(r['score'].split('-')[1]) for r in recent_10
+                ) / len(recent_10)
+
+            profile.save()
+        except Exception as e:
+            logger.error(f"Team profile update error for {team_name}: {e}", exc_info=True)
+
+    def __str__(self):
+        return (
+            f"{self.home_team} {self.home_score}-{self.away_score} "
+            f"{self.away_team} ({self.match_date})"
+        )
+
+    class Meta:
+        ordering = ['-match_date']
