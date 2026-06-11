@@ -1,0 +1,117 @@
+<div class="ai-form-filler-section" style="margin-top:18px">
+  <div class="card" style="border-color:rgba(16,185,129,.25)">
+    <div id="aiFormFillerHeader" onclick="toggleAIFiller()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;padding-bottom:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🤖</span>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--green)">AI Form Filler</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Get real-time stats via Google Gemini or ChatGPT</div>
+        </div>
+      </div>
+      <span id="aiFillerChevron" style="font-size:16px;color:var(--green);transition:transform .3s">▼</span>
+    </div>
+
+    <div id="aiFormFillerCollapse" style="display:none;margin-top:16px">
+      <div class="alert al-i" style="margin-bottom:16px">
+        <strong>💡 How to use:</strong> Copy this prompt, replace <strong>[HOME TEAM]</strong> and <strong>[AWAY TEAM]</strong> with your teams, then paste it into Google Gemini, ChatGPT, or any AI assistant. Paste the results back into the form above.
+      </div>
+
+      <div class="field">
+        <label style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px">Copy this prompt and paste into Google Gemini or ChatGPT:</label>
+        <textarea id="aiFormFillerPrompt" rows="25" readonly style="font-size:12px;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:9px;padding:12px 14px;color:var(--text2);font-family:'Courier New',monospace;resize:vertical;line-height:1.6">I want to predict [HOME TEAM] vs [AWAY TEAM] in [COMPETITION].
+Please fill in these stats with the most current and accurate data available:
+
+HOME TEAM - [HOME TEAM]:
+- Goals scored per game (last 10 matches):
+- Goals conceded per game (last 10 matches):
+- Last 5 form (W/D/L format e.g. W W D W L):
+- Win rate % (this season):
+- Key injuries (number of injured starters):
+- Current league position:
+- Tactical style (high_press / counter_attack / possession / defensive_block / wing_play / long_ball / balanced):
+- Tournament experience (0-10):
+- Knockout mentality (0-10):
+- Coach years in charge:
+- Starting XI consistency % (how often same 11 plays):
+- Key partnerships (0-10):
+
+AWAY TEAM - [AWAY TEAM]:
+- Goals scored per game (last 10 matches):
+- Goals conceded per game (last 10 matches):
+- Last 5 form (W/D/L format e.g. W W D W L):
+- Win rate % (this season):
+- Key injuries (number of injured starters):
+- Current league position:
+- Tactical style (high_press / counter_attack / possession / defensive_block / wing_play / long_ball / balanced):
+- Tournament experience (0-10):
+- Knockout mentality (0-10):
+- Coach years in charge:
+- Starting XI consistency % (how often same 11 plays):
+- Key partnerships (0-10):
+
+HEAD TO HEAD (last 10 meetings):
+- Home team wins:
+- Draws:
+- Away team wins:
+
+MATCH CONTEXT:
+- Match type (league / champions / knockout / worldcup / final):
+- Competition venue:
+
+FOR ENGINE D SIMULATION:
+HOME TEAM - [HOME TEAM]:
+- Attack rating (1-100):
+- Defence rating (1-100):
+- ELO rating:
+
+AWAY TEAM - [AWAY TEAM]:
+- Attack rating (1-100):
+- Defence rating (1-100):
+- ELO rating:
+
+Please provide the most current stats available as of today. Be as accurate as possible.</textarea>
+      </div>
+
+      <button class="btn btn-full" onclick="copyAIFillerPrompt()" style="background:linear-gradient(135deg,#10b981,#059669);color:#030508;padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;margin-top:4px">
+        📋 COPY PROMPT TO CLIPBOARD
+      </button>
+
+      <div id="aiFillerCopySuccess" class="alert al-s" style="display:none;margin-top:12px;margin-bottom:0">
+        ✅ Prompt copied! Paste it into Google Gemini or ChatGPT now.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleAIFiller() {
+  const body = document.getElementById('aiFormFillerCollapse');
+  const chevron = document.getElementById('aiFillerChevron');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function copyAIFillerPrompt() {
+  const textarea = document.getElementById('aiFormFillerPrompt');
+  textarea.select();
+  textarea.setSelectionRange(0, 99999);
+  try {
+    navigator.clipboard.writeText(textarea.value).then(function() {
+      showAIFillerSuccess();
+    }).catch(function() {
+      document.execCommand('copy');
+      showAIFillerSuccess();
+    });
+  } catch(e) {
+    document.execCommand('copy');
+    showAIFillerSuccess();
+  }
+}
+
+function showAIFillerSuccess() {
+  const msg = document.getElementById('aiFillerCopySuccess');
+  msg.style.display = 'block';
+  setTimeout(function() { msg.style.display = 'none'; }, 3000);
+}
+</script>
