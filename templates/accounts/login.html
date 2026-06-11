@@ -1,22 +1,322 @@
 {% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+{% block title %}Login - MatchOracle{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Login Page Styles ─────────────────────────────────────── */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #12103a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-wrap::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, .12) 0%, transparent 70%);
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+.login-wrap::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, .1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+}
+
+.login-container {
+  max-width: 480px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Hero Section ──────────────────────────────────────────── */
+.login-hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.login-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, .7);
+  margin: 0;
+}
+
+/* ── Form Card ─────────────────────────────────────────────── */
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+  backdrop-filter: blur(10px);
+}
+
+@media(max-width: 480px) {
+  .login-card { padding: 28px 20px; }
+}
+
+/* ── Form Fields ───────────────────────────────────────────── */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, .2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all .3s;
+}
+
+.form-group input::placeholder {
+  color: var(--muted);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(0, 212, 255, .05);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, .1);
+}
+
+/* ── Error Alert ───────────────────────────────────────────── */
+.login-alert {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(239, 68, 68, .3);
+  background: rgba(239, 68, 68, .1);
+  color: #ef4444;
+  line-height: 1.6;
+}
+
+/* ── Submit Button ─────────────────────────────────────────── */
+.login-btn {
+  padding: 13px 24px;
+  background: linear-gradient(135deg, var(--accent), #0077ff);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all .3s;
+  text-transform: uppercase;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 212, 255, .3);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Footer Links ──────────────────────────────────────────── */
+.login-footer {
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-footer-link {
+  text-align: center;
+  font-size: 13px;
+}
+
+.login-footer-link a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+  transition: opacity .2s;
+}
+
+.login-footer-link a:hover {
+  opacity: .8;
+}
+
+.login-footer-text {
+  color: var(--text2);
+}
+
+/* ── Trust Section ─────────────────────────────────────────── */
+.login-trust {
+  margin-top: 28px;
+  padding: 16px;
+  background: rgba(0, 212, 255, .04);
+  border: 1px solid rgba(0, 212, 255, .12);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.trust-items {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.trust-item strong {
+  color: var(--accent);
+  font-weight: 800;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="wrap" style="max-width:440px;margin:70px auto">
-  <div style="text-align:center;margin-bottom:28px">
-    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Welcome Back</div>
-    <div style="color:var(--text2);font-size:14px">Login to your MatchOracle account</div>
-  </div>
-  <div class="card">
-    {% if error %}<div class="alert al-e">{{ error }}</div>{% endif %}
-    <form method="post" novalidate>{% csrf_token %}
-      <div class="field"><label>Email Address</label><input type="email" name="email" placeholder="your@email.com" required autofocus></div>
-      <div class="field"><label>Password</label><input type="password" name="password" placeholder="Your password" required></div>
-      <button type="submit" class="btn btn-p btn-full" style="margin-top:8px;padding:13px">Login to Dashboard</button>
-    </form>
-    <div style="text-align:center;margin-top:14px;font-size:13px">
-      <a href="{% url 'password_reset' %}" style="color:var(--text2);text-decoration:none">Forgot your password?</a>
+<div class="login-wrap">
+  <div class="login-container">
+
+    <!-- ── HERO SECTION ──────────────────────────────────────── -->
+    <div class="login-hero">
+      <div class="login-logo">⚽ MatchOracle</div>
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-subtitle">Login to your account and start predicting</p>
     </div>
-    <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text2)">No account? <a href="/accounts/register/" style="color:var(--accent);font-weight:600">Sign up free</a></div>
+
+    <!-- ── LOGIN FORM ────────────────────────────────────────── -->
+    <div class="login-card">
+      {% if error %}
+      <div class="login-alert">
+        <strong>⚠️ Login Failed</strong><br>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate class="login-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="your@email.com"
+            required
+            autofocus
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Your password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="login-btn">🚀 Login to Dashboard</button>
+      </form>
+
+      <!-- ── FOOTER LINKS ─────────────────────────────────────── -->
+      <div class="login-footer">
+        <div class="login-footer-link">
+          <a href="{% url 'password_reset' %}">🔐 Forgot your password?</a>
+        </div>
+        <div class="login-footer-link">
+          <span class="login-footer-text">No account yet?</span><br>
+          <a href="/accounts/register/">✨ Sign up free - Get 3 free predictions</a>
+        </div>
+      </div>
+
+      <!-- ── TRUST SECTION ────────────────────────────────────── -->
+      <div class="login-trust">
+        <div>🔒 Secure • 🚀 Fast • 📊 Accurate</div>
+        <div class="trust-items">
+          <div class="trust-item">✓ <strong>72%</strong> Accuracy</div>
+          <div class="trust-item">✓ <strong>4</strong> AI Engines</div>
+          <div class="trust-item">✓ <strong>Free</strong> to Start</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}
