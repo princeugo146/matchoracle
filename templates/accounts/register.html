@@ -1,42 +1,386 @@
 {% extends 'base.html' %}
-{% block title %}Sign Up Free{% endblock %}
+{% block title %}Sign Up Free - MatchOracle{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Auth Pages ────────────────────────────────────────────── */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #12103a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, .1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+.auth-container::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, .08) 0%, transparent 70%);
+  pointer-events: none;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+}
+
+.auth-wrapper {
+  width: 100%;
+  max-width: 520px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+}
+
+@media(max-width: 480px) {
+  .auth-card { padding: 28px 20px; }
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.auth-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.auth-form {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, .2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all .2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, .1);
+  background: rgba(0, 0, 0, .3);
+}
+
+.form-input::placeholder {
+  color: var(--muted);
+}
+
+.form-error {
+  background: rgba(239, 68, 68, .1);
+  border: 1px solid rgba(239, 68, 68, .3);
+  color: #ef4444;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-error::before {
+  content: '⚠️';
+  font-size: 16px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: block;
+}
+
+.form-section {
+  padding: 18px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+}
+
+.form-section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, var(--accent), #0077ff);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all .3s;
+  text-transform: uppercase;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 212, 255, .3);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.auth-link {
+  font-size: 13px;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color .2s;
+}
+
+.auth-link:hover {
+  color: var(--accent);
+}
+
+.auth-link-primary {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.auth-link-primary:hover {
+  text-decoration: underline;
+}
+
+.trust-badges {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.trust-badge::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 800;
+}
+
+.feature-list {
+  background: rgba(0, 212, 255, .04);
+  border: 1px solid rgba(0, 212, 255, .12);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+
+.feature-list li {
+  list-style: none;
+  margin-bottom: 6px;
+}
+
+.feature-list li::before {
+  content: '⚡ ';
+  color: var(--accent);
+  font-weight: 800;
+  margin-right: 4px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="wrap" style="max-width:460px;margin:70px auto">
-  <div style="text-align:center;margin-bottom:28px">
-    <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Create Account</div>
-    <div style="color:var(--text2);font-size:14px">3 free predictions per day - no credit card needed</div>
-  </div>
-  <div class="card">
-    {% if error %}<div class="alert al-e">{{ error }}</div>{% endif %}
-    <form method="post" novalidate>{% csrf_token %}
-      <div class="field"><label>Email Address</label><input type="email" name="email" placeholder="your@email.com" required autofocus></div>
-      <div class="field"><label>First Name (optional)</label><input type="text" name="first_name" placeholder="Your name"></div>
-      <div class="field"><label>Password (min 6 characters)</label><input type="password" name="password" placeholder="Choose a password" required></div>
-      <div class="field"><label>Confirm Password</label><input type="password" name="password2" placeholder="Repeat password" required></div>
-      <div style="border-top:1px solid var(--border);margin:18px 0 14px;padding-top:14px">
-        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px">Account Recovery</div>
-        <div class="field">
-          <label>Security Question</label>
-          <select name="security_question" required>
-            <option value="" disabled selected>Choose a security question…</option>
-            <option>What was the name of your first pet?</option>
-            <option>What is your mother's maiden name?</option>
-            <option>What city were you born in?</option>
-            <option>What was the name of your primary school?</option>
-            <option>What is the name of your favourite sports team?</option>
-            <option>What was the make of your first car?</option>
-            <option>What is your oldest sibling's middle name?</option>
-          </select>
+<div class="auth-container">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">⚽</div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">Join thousands of football enthusiasts predicting with AI</p>
+      </div>
+
+      {% if error %}
+      <div class="form-error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" novalidate class="auth-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-input" placeholder="your@email.com" required autofocus>
         </div>
-        <div class="field">
-          <label>Security Answer</label>
-          <input type="text" name="security_answer" placeholder="Your answer (case-insensitive)" required>
-          <span style="font-size:11px;color:var(--muted);margin-top:3px">Used to verify your identity if you forget your password.</span>
+
+        <div class="form-group">
+          <label class="form-label">First Name (optional)</label>
+          <input type="text" name="first_name" class="form-input" placeholder="Your name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-input" placeholder="Choose a strong password" required>
+          <span class="form-hint">Minimum 6 characters</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" name="password2" class="form-input" placeholder="Repeat your password" required>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🔐 Account Recovery</div>
+          
+          <div class="form-group">
+            <label class="form-label">Security Question</label>
+            <select name="security_question" class="form-select" required>
+              <option value="" disabled selected>Choose a security question…</option>
+              <option>What was the name of your first pet?</option>
+              <option>What is your mother's maiden name?</option>
+              <option>What city were you born in?</option>
+              <option>What was the name of your primary school?</option>
+              <option>What is the name of your favourite sports team?</option>
+              <option>What was the make of your first car?</option>
+              <option>What is your oldest sibling's middle name?</option>
+            </select>
+            <span class="form-hint">Used to verify your identity if you forget your password</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Security Answer</label>
+            <input type="text" name="security_answer" class="form-input" placeholder="Your answer (case-insensitive)" required>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn">🚀 Create Free Account</button>
+      </form>
+
+      <div class="feature-list">
+        <ul>
+          <li>3 free predictions per day</li>
+          <li>Access to all 4 AI engines</li>
+          <li>No credit card required</li>
+        </ul>
+      </div>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-links">
+        <div style="font-size: 13px; color: var(--text2);">
+          Already have an account? <a href="/accounts/login/" class="auth-link auth-link-primary">Login here</a>
         </div>
       </div>
-      <button type="submit" class="btn btn-p btn-full" style="margin-top:8px;padding:13px">Create Free Account</button>
-    </form>
-    <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text2)">Already have an account? <a href="/accounts/login/" style="color:var(--accent);font-weight:600">Login</a></div>
+
+      <div class="trust-badges">
+        <div class="trust-badge">Instant access</div>
+        <div class="trust-badge">72% accuracy</div>
+        <div class="trust-badge">4 AI engines</div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
