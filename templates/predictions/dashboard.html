@@ -506,9 +506,15 @@
         <div style="font-size:10px;color:var(--green);margin-top:2px">&#8593; Trending up</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;color:var(--text2)">Predictions left</div>
-        <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--green)">{{ stats.left_today }}</div>
-        <div style="font-size:10px;color:var(--muted)">of {{ stats.limit }} today</div>
+        {% if user.plan == 'free' %}
+          <div style="font-size:11px;color:var(--text2)">Free Trials Left</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:{% if user.free_trials_remaining == 0 %}#ef4444{% elif user.free_trials_remaining == 1 %}#f59e0b{% else %}var(--green){% endif %}">{{ user.free_trials_remaining }}</div>
+          <div style="font-size:10px;color:var(--muted)">of 3 trials</div>
+        {% else %}
+          <div style="font-size:11px;color:var(--text2)">Predictions left</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--green)">{{ stats.left_today }}</div>
+          <div style="font-size:10px;color:var(--muted)">of {{ stats.limit }} today</div>
+        {% endif %}
       </div>
     </div>
     {% if user.plan == 'free' %}
@@ -521,8 +527,13 @@
   <!-- ── QUICK STATS ────────────────────────────────────────── -->
   <div class="stats-row">
     <div class="stat-chip"><div class="sv" style="color:var(--accent)">{{ stats.total }}</div><div class="sl">Total Predictions</div></div>
+    {% if user.plan == 'free' %}
+    <div class="stat-chip"><div class="sv" style="color:{% if user.free_trials_remaining == 0 %}#ef4444{% elif user.free_trials_remaining == 1 %}#f59e0b{% else %}var(--green){% endif %}">{{ user.free_trials_remaining }}</div><div class="sl">Trials Left</div></div>
+    <div class="stat-chip"><div class="sv" style="color:var(--gold)">3</div><div class="sl">Trial Limit</div></div>
+    {% else %}
     <div class="stat-chip"><div class="sv" style="color:var(--green)">{{ stats.left_today }}</div><div class="sl">Left Today</div></div>
     <div class="stat-chip"><div class="sv" style="color:var(--gold)">{{ stats.limit }}</div><div class="sl">Daily Limit</div></div>
+    {% endif %}
     <div class="stat-chip"><div class="sv" style="color:#a78bfa">{{ stats.accuracy }}%</div><div class="sl">Accuracy</div></div>
   </div>
 
@@ -1759,5 +1770,56 @@ function escHtml(s){
   if(!s&&s!==0)return'';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Free Trials Upgrade Modal ──────────────────────────────────────────────
+function checkTrialsExhausted() {
+  var trialsLeft = {{ user.free_trials_remaining }};
+  if (trialsLeft === 0 && '{{ user.plan }}' === 'free') {
+    showUpgradeModal();
+  }
+}
+
+function showUpgradeModal() {
+  if (document.getElementById('upgradeModal')) return; // prevent duplicates
+  var modal = document.createElement('div');
+  modal.id = 'upgradeModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:linear-gradient(135deg,#0a1628,#0d1f3c);border:2px solid #ef4444;border-radius:20px;padding:40px 32px;max-width:480px;width:100%;text-align:center;color:#fff;position:relative;">
+      <div style="font-size:48px;margin-bottom:20px;">🎯</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;margin-bottom:16px;color:#ef4444;letter-spacing:1px;">FREE TRIALS EXHAUSTED</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.8);margin-bottom:28px;line-height:1.8;">
+        You've used all <strong style="color:#fff;">3 free trial predictions</strong>. To continue using MatchOracle and unlock unlimited predictions, please upgrade your plan.
+      </div>
+      <a href="/pricing/" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#030508;border-radius:12px;font-weight:800;text-decoration:none;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;">
+        ⚡ UPGRADE NOW
+      </a>
+      <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:8px;">
+        Basic Plan: ₦2,999/month &nbsp;|&nbsp; Pro Plan: ₦9,999/month
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Also intercept prediction attempts when trials are exhausted
+(function patchFetch() {
+  var _fetch = window.fetch;
+  window.fetch = function(url, opts) {
+    return _fetch.apply(this, arguments).then(function(resp) {
+      if (!resp.ok) {
+        resp.clone().json().then(function(data) {
+          if (data && data.error === 'free_trials_exhausted') {
+            showUpgradeModal();
+          }
+        }).catch(function(){});
+      }
+      return resp;
+    });
+  };
+})();
+
+// Check on page load
+document.addEventListener('DOMContentLoaded', checkTrialsExhausted);
 </script>
 {% endblock %}

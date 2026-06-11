@@ -39,6 +39,14 @@ def run_engine(request, engine):
         return JsonResponse({'error': 'POST only'}, status=405)
     user = request.user
 
+    # Check free trial limit before anything else
+    if user.plan == 'free':
+        if not user.has_free_trials_left:
+            return JsonResponse({
+                'error': 'free_trials_exhausted',
+                'message': 'You have used all 3 free trial predictions. Please upgrade to continue.',
+            }, status=403)
+
     # Reset counter if new day
     today = timezone.now().date()
     if user.predictions_date != today:
@@ -103,7 +111,11 @@ def run_engine(request, engine):
             )
             user.predictions_today += 1
             user.total_predictions += 1
-            user.save(update_fields=['predictions_today', 'total_predictions'])
+            if user.plan == 'free':
+                user.free_trials_used += 1
+                user.save(update_fields=['predictions_today', 'total_predictions', 'free_trials_used'])
+            else:
+                user.save(update_fields=['predictions_today', 'total_predictions'])
             return JsonResponse({
                 'success': True,
                 'result': result,
@@ -169,6 +181,14 @@ def smart_ai_view(request):
 
     user = request.user
 
+    # Check free trial limit before anything else
+    if user.plan == 'free':
+        if not user.has_free_trials_left:
+            return JsonResponse({
+                'error': 'free_trials_exhausted',
+                'message': 'You have used all 3 free trial predictions. Please upgrade to continue.',
+            }, status=403)
+
     # Reset daily counter if new day
     today = timezone.now().date()
     if user.predictions_date != today:
@@ -223,7 +243,11 @@ def smart_ai_view(request):
         )
         user.predictions_today += 1
         user.total_predictions += 1
-        user.save(update_fields=['predictions_today', 'total_predictions'])
+        if user.plan == 'free':
+            user.free_trials_used += 1
+            user.save(update_fields=['predictions_today', 'total_predictions', 'free_trials_used'])
+        else:
+            user.save(update_fields=['predictions_today', 'total_predictions'])
     except Exception as e:
         logger.warning(f"Smart AI save error: {e}")
 
