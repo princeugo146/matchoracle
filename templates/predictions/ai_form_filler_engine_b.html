@@ -1,0 +1,122 @@
+<div class="ai-filler-card">
+    <div class="ai-filler-header" onclick="toggleAIFillerB(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">&#129302;</span>
+            <div>
+                <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:#a78bfa;">AI PLAYER STATS FILLER</div>
+                <div style="font-size:11px;color:rgba(167,139,250,.7);margin-top:2px;">Copy prompt → paste into ChatGPT / Gemini → get player stats instantly</div>
+            </div>
+        </div>
+        <span class="ai-filler-chevron" style="font-size:14px;color:#a78bfa;transition:transform .3s;">&#9660;</span>
+    </div>
+    <div class="ai-filler-body" style="display:none;">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7;padding:12px 14px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);border-radius:10px;">
+            <strong style="color:#a78bfa;">&#128161; How to use:</strong> Copy this prompt, replace <code style="background:rgba(0,212,255,.1);color:var(--accent);padding:1px 5px;border-radius:4px;">[PLAYER NAME]</code> and <code style="background:rgba(0,212,255,.1);color:var(--accent);padding:1px 5px;border-radius:4px;">[TEAM]</code> with your player and team,
+            then paste it into <strong style="color:#fff;">Google Gemini</strong>, <strong style="color:#fff;">ChatGPT</strong>, or any AI assistant.
+            Paste the results back into the form above.
+        </p>
+
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:8px;">Copy this prompt and paste into your AI:</label>
+            <textarea id="aiFormFillerPromptB" readonly style="width:100%;height:380px;resize:vertical;background:rgba(0,0,0,.3);border:2px solid rgba(167,139,250,.3);border-radius:10px;color:var(--text2);font-family:'Courier New',monospace;font-size:11px;padding:14px;line-height:1.7;outline:none;">I want to get detailed stats for [PLAYER NAME] from [TEAM].
+Please provide the most current and accurate data available:
+
+PLAYER INFO:
+- Full name:
+- Position (GK / CB / LB / RB / CM / CAM / ST):
+- Current team:
+- Jersey number:
+- Age:
+- Nationality:
+
+CURRENT SEASON STATS (last 10 matches):
+- Matches played:
+- Goals scored:
+- Assists:
+- Shots on target:
+- Pass accuracy %:
+- Tackles per match:
+- Aerial duels won %:
+- Distance covered per match (km):
+- Dribbles per match:
+- Yellow cards:
+- Red cards:
+
+FORM & PERFORMANCE:
+- Current form (last 5 matches: W/D/L format):
+- Average rating (1-10):
+- Best position on field:
+- Weak foot (left/right/both):
+- Injury status (fit / doubt / minor / major):
+- Days since last match:
+
+ADVANCED METRICS:
+- Expected goals (xG):
+- Expected assists (xA):
+- Progressive passes per 90:
+- Defensive actions per 90:
+- Pressures success %:
+
+COMPARISON:
+- How does this player rank in their position this season?
+- Top 3 strengths:
+- Top 3 weaknesses:
+- Consistency rating (0-10):
+
+Please provide the most current stats available as of today. Be as accurate as possible.</textarea>
+        </div>
+
+        <button onclick="copyAIFillerPromptB(this)" style="width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;transition:opacity .2s;margin-bottom:16px;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+            &#128203; COPY PROMPT TO CLIPBOARD
+        </button>
+
+        <div style="padding:14px;background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.12);border-radius:10px;">
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;font-weight:700;margin-bottom:10px;">Workflow</div>
+            <div style="font-size:12px;color:var(--text2);line-height:2;">
+                1&#65039;&#8419; Copy the prompt above<br>
+                2&#65039;&#8419; Replace [PLAYER NAME] and [TEAM] with your player and team<br>
+                3&#65039;&#8419; Paste into Google Gemini, ChatGPT, or Claude<br>
+                4&#65039;&#8419; Copy the AI's response<br>
+                5&#65039;&#8419; Paste stats into the form above<br>
+                6&#65039;&#8419; Run your player analysis!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAIFillerB(headerEl) {
+    var body = headerEl.parentElement.querySelector('.ai-filler-body');
+    var chevron = headerEl.querySelector('.ai-filler-chevron');
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function copyAIFillerPromptB(btn) {
+    var textarea = document.getElementById('aiFormFillerPromptB');
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    try {
+        navigator.clipboard.writeText(textarea.value).then(function() {
+            showCopiedB(btn);
+        }).catch(function() {
+            document.execCommand('copy');
+            showCopiedB(btn);
+        });
+    } catch(e) {
+        document.execCommand('copy');
+        showCopiedB(btn);
+    }
+}
+
+function showCopiedB(btn) {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '&#10003; COPIED TO CLIPBOARD!';
+    btn.style.background = 'linear-gradient(135deg,#7c3aed,#6d28d9)';
+    setTimeout(function() {
+        btn.innerHTML = orig;
+        btn.style.background = 'linear-gradient(135deg,#a78bfa,#7c3aed)';
+    }, 2000);
+}
+</script>
