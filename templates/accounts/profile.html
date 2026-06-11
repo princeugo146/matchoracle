@@ -1,45 +1,511 @@
 {% extends 'base.html' %}
-{% block title %}Profile{% endblock %}
+{% block title %}Profile - MatchOracle{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Profile Page Styles ─────────────────────────────────────── */
+.profile-wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 100px; }
+@media(min-width: 768px) { .profile-wrap { padding: 40px 20px 60px; } }
+
+/* ── Hero Card ───────────────────────────────────────────────── */
+.profile-hero {
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #12103a 100%);
+  border: 1px solid rgba(0, 212, 255, .18);
+  border-radius: 20px;
+  padding: 32px 24px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.profile-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, .12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.profile-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  left: 30%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, .1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.profile-hero-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4ff, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 40px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 30px rgba(0, 212, 255, .3);
+}
+.profile-hero-info h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 8px;
+}
+.profile-hero-info .email {
+  font-size: 14px;
+  color: rgba(255, 255, 255, .6);
+  margin-bottom: 12px;
+}
+.profile-hero-info .plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.plan-badge.free {
+  background: rgba(100, 116, 139, .2);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, .3);
+}
+.plan-badge.basic {
+  background: rgba(0, 212, 255, .15);
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, .3);
+}
+.plan-badge.pro {
+  background: linear-gradient(135deg, rgba(124, 58, 237, .3), rgba(167, 139, 250, .2));
+  color: #a78bfa;
+  border: 1px solid rgba(124, 58, 237, .4);
+}
+
+/* ── Stats Grid ──────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: all .3s;
+}
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, .1);
+  transform: translateY(-2px);
+}
+.stat-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.stat-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Section Cards ───────────────────────────────────────────── */
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ── Form Fields ─────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 6px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, .2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color .2s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, .1);
+}
+
+/* ── API Key Display ─────────────────────────────────────────── */
+.api-key-box {
+  background: rgba(0, 212, 255, .04);
+  border: 1px solid rgba(0, 212, 255, .15);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+  line-height: 1.6;
+}
+.api-key-actions {
+  display: flex;
+  gap: 10px;
+}
+.api-key-actions button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-show {
+  background: rgba(0, 212, 255, .15);
+  color: var(--accent);
+  border: 1px solid rgba(0, 212, 255, .3);
+}
+.btn-show:hover {
+  background: rgba(0, 212, 255, .25);
+}
+.btn-copy {
+  background: linear-gradient(135deg, var(--accent), #0077ff);
+  color: #030508;
+  font-weight: 800;
+}
+.btn-copy:hover {
+  opacity: .9;
+}
+
+/* ── Referral Box ────────────────────────────────────────────── */
+.referral-box {
+  background: linear-gradient(135deg, rgba(16, 185, 129, .08), rgba(5, 150, 105, .05));
+  border: 1px solid rgba(16, 185, 129, .2);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.referral-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.referral-content {
+  flex: 1;
+}
+.referral-label {
+  font-size: 11px;
+  color: rgba(16, 185, 129, .7);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.referral-code {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #10b981;
+}
+.referral-copy {
+  padding: 8px 14px;
+  background: rgba(16, 185, 129, .2);
+  border: 1px solid rgba(16, 185, 129, .3);
+  border-radius: 8px;
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.referral-copy:hover {
+  background: rgba(16, 185, 129, .3);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-primary {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent), #0077ff);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.btn-primary:hover {
+  opacity: .9;
+}
+.btn-secondary {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, .05);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, .1);
+  border-color: var(--accent);
+}
+
+/* ── Two Column Layout ───────────────────────────────────────── */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Member Since Badge ──────────────────────────────────────── */
+.member-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(124, 58, 237, .15);
+  border: 1px solid rgba(124, 58, 237, .3);
+  border-radius: 20px;
+  font-size: 11px;
+  color: #a78bfa;
+  font-weight: 700;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="wrap" style="padding-top:36px">
-  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700;margin-bottom:24px">My Profile</div>
-  <div class="g2" style="margin-bottom:20px">
-    <div class="card">
-      <div class="ct">Account Info</div>
-      <div style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:16px;margin-bottom:4px">{{ user.first_name|default:user.email }}</div>
-        <div style="color:var(--muted);font-size:13px">{{ user.email }}</div>
-        <div style="margin-top:8px"><span class="p{{ user.plan|slice:':1' }}{% if user.plan == 'free' %}f{% elif user.plan == 'basic' %}b{% else %}p{% endif %}">{{ user.plan|upper }}</span></div>
-      </div>
-      <div style="font-size:13px;color:var(--text2);line-height:2.4">
-        <div>Member since: {{ user.created_at|date:"d M Y" }}</div>
-        <div>Total predictions: {{ user.total_predictions }}</div>
-        <div>Accuracy: {{ user.accuracy_rate }}%</div>
-        <div>Predictions left today: {{ user.predictions_left_today }}</div>
-        <div>Referral code: <strong style="color:var(--accent)">{{ user.referral_code }}</strong></div>
-      </div>
-      {% if user.plan == 'free' %}
-      <div style="margin-top:16px"><a href="/pricing/" class="btn btn-p btn-full" style="padding:11px">Upgrade Plan</a></div>
-      {% endif %}
-    </div>
-    <div class="card">
-      <div class="ct">API Key</div>
-      <div style="font-family:monospace;font-size:11px;color:var(--accent);background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);border-radius:8px;padding:12px;word-break:break-all;margin-bottom:12px" id="apiK">{{ user.api_key|slice:":24" }}...</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="toggleK()" class="btn btn-s" style="flex:1;padding:8px;font-size:12px">Show</button>
-        <button onclick="copyK()" class="btn btn-p" style="flex:1;padding:8px;font-size:12px">Copy</button>
-      </div>
-      <div style="margin-top:14px;font-size:13px;color:var(--text2)">
-        <div style="margin-bottom:6px;font-weight:600">Your Plan:</div>
-        <div style="color:var(--accent)">{{ plan_info.name }} - {{ plan_info.predictions_per_day }} predictions/day</div>
-        {% if user.plan != 'free' %}<div style="color:var(--muted);font-size:12px;margin-top:4px">Expires: {{ user.days_remaining }} days</div>{% endif %}
+<div class="profile-wrap">
+
+  <!-- ── HERO CARD ─────────────────────────────────────────────── -->
+  <div class="profile-hero">
+    <div class="profile-hero-content">
+      <div class="profile-avatar">{{ user.first_name|first|default:user.email|first|upper }}</div>
+      <div class="profile-hero-info">
+        <h1>{{ user.first_name|default:user.email }}</h1>
+        <div class="email">{{ user.email }}</div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <span class="plan-badge {% if user.plan == 'free' %}free{% elif user.plan == 'basic' %}basic{% else %}pro{% endif %}">
+            {% if user.plan == 'free' %}🎯{% elif user.plan == 'basic' %}⭐{% else %}👑{% endif %} {{ user.plan|upper }}
+          </span>
+          <span class="member-badge">📅 Member since {{ user.created_at|date:"M Y" }}</span>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- ── STATS GRID ────────────────────────────────────────────── -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">{{ user.total_predictions }}</div>
+      <div class="stat-label">Total Predictions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value">{{ user.accuracy_rate }}%</div>
+      <div class="stat-label">Accuracy Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-value">{{ user.correct_predictions }}</div>
+      <div class="stat-label">Correct Predictions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-value">
+        {% if user.is_staff or user.is_superuser %}∞{% else %}{{ user.predictions_left_today }}{% endif %}
+      </div>
+      <div class="stat-label">{% if user.is_staff or user.is_superuser %}Admin Access{% else %}Left Today{% endif %}</div>
+    </div>
+  </div>
+
+  <!-- ── ACCOUNT SETTINGS ──────────────────────────────────────── -->
+  <div class="profile-grid">
+    <div class="section-card">
+      <div class="section-title">Account Settings</div>
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" value="{{ user.first_name }}" readonly style="opacity: .7;">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" value="{{ user.email }}" readonly style="opacity: .7;">
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" value="{{ user.phone|default:'' }}" readonly style="opacity: .7;">
+      </div>
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="/accounts/password-reset/" class="btn-secondary" style="display: inline-block;">🔐 Reset Password</a>
+      </div>
+    </div>
+
+    <!-- ── SUBSCRIPTION INFO ─────────────────────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">Subscription</div>
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px;">Current Plan</div>
+        <div style="font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--accent); margin-bottom: 12px;">
+          {% if user.plan == 'free' %}FREE PLAN{% elif user.plan == 'basic' %}BASIC PLAN{% else %}PRO PLAN{% endif %}
+        </div>
+        {% if user.plan != 'free' %}
+        <div style="font-size: 12px; color: var(--text2);">
+          ⏰ Expires in <strong style="color: var(--accent);">{{ user.days_remaining }} days</strong>
+        </div>
+        {% else %}
+        <div style="font-size: 12px; color: var(--text2);">
+          {% if user.is_staff or user.is_superuser %}
+            👑 Admin Access - Unlimited Predictions
+          {% else %}
+            🎯 {{ user.free_trials_remaining }}/3 Free Trials Remaining
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% if user.plan == 'free' and not user.is_staff and not user.is_superuser %}
+      <a href="/pricing/" class="btn-primary" style="display: block; text-align: center; text-decoration: none;">⚡ Upgrade Now</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── API KEY MANAGEMENT ───────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-title">API Key</div>
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; letter-spacing: .5px; text-transform: uppercase;">Your API Key</div>
+      <div class="api-key-box" id="apiKeyDisplay">{{ user.api_key|slice:":24" }}...</div>
+      <div class="api-key-actions">
+        <button class="btn-show" onclick="toggleAPIKey()">👁️ Show</button>
+        <button class="btn-copy" onclick="copyAPIKey()">📋 Copy</button>
+      </div>
+    </div>
+    <div style="padding-top: 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text2); line-height: 1.8;">
+      <strong style="color: var(--text);">💡 How to use:</strong><br>
+      Use your API key to authenticate requests to the MatchOracle API. Keep it secret and never share it publicly.
+    </div>
+  </div>
+
+  <!-- ── REFERRAL SYSTEM ───────────────────────────────────────── -->
+  <div class="section-card">
+    <div class="section-title">Referral Program</div>
+    <div class="referral-box">
+      <div class="referral-icon">🎁</div>
+      <div class="referral-content">
+        <div class="referral-label">Your Referral Code</div>
+        <div class="referral-code">{{ user.referral_code }}</div>
+      </div>
+      <button class="referral-copy" onclick="copyReferralCode()">Copy</button>
+    </div>
+    <div style="margin-top: 16px; padding: 14px; background: rgba(0, 212, 255, .04); border: 1px solid rgba(0, 212, 255, .12); border-radius: 10px; font-size: 12px; color: var(--text2); line-height: 1.8;">
+      <strong style="color: var(--accent);">📢 Share & Earn:</strong><br>
+      Share your referral code with friends. When they sign up and upgrade, you both get rewards!
+    </div>
+  </div>
+
 </div>
+
 <script>
-const K='{{ user.api_key }}';let sh=false;
-function toggleK(){sh=!sh;document.getElementById('apiK').textContent=sh?K:K.slice(0,24)+'...';}
-function copyK(){navigator.clipboard.writeText(K).then(()=>{event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy',2000);});}
+const API_KEY = '{{ user.api_key }}';
+let apiKeyVisible = false;
+
+function toggleAPIKey() {
+  apiKeyVisible = !apiKeyVisible;
+  const display = document.getElementById('apiKeyDisplay');
+  display.textContent = apiKeyVisible ? API_KEY : API_KEY.slice(0, 24) + '...';
+  event.target.textContent = apiKeyVisible ? '🙈 Hide' : '👁️ Show';
+}
+
+function copyAPIKey() {
+  navigator.clipboard.writeText(API_KEY).then(() => {
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = original, 2000);
+  });
+}
+
+function copyReferralCode() {
+  navigator.clipboard.writeText('{{ user.referral_code }}').then(() => {
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = original, 2000);
+  });
+}
 </script>
 {% endblock %}
