@@ -1,0 +1,128 @@
+<div class="ai-filler-card">
+    <div class="ai-filler-header" onclick="toggleAIFiller(this)">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">&#129302;</span>
+            <div>
+                <div style="font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;color:#10b981;">AI FORM FILLER</div>
+                <div style="font-size:11px;color:rgba(16,185,129,.7);margin-top:2px;">Copy prompt → paste into ChatGPT / Gemini → get stats instantly</div>
+            </div>
+        </div>
+        <span class="ai-filler-chevron" style="font-size:14px;color:#10b981;transition:transform .3s;">&#9660;</span>
+    </div>
+    <div class="ai-filler-body" style="display:none;">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.7;padding:12px 14px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:10px;">
+            <strong style="color:#10b981;">&#128161; How to use:</strong> Copy this prompt, replace <code style="background:rgba(0,212,255,.1);color:var(--accent);padding:1px 5px;border-radius:4px;">[HOME TEAM]</code> and <code style="background:rgba(0,212,255,.1);color:var(--accent);padding:1px 5px;border-radius:4px;">[AWAY TEAM]</code> with your teams,
+            then paste it into <strong style="color:#fff;">Google Gemini</strong>, <strong style="color:#fff;">ChatGPT</strong>, or any AI assistant.
+            Paste the results back into the form above.
+        </p>
+
+        <div style="margin-bottom:14px;">
+            <label style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:8px;">Copy this prompt and paste into your AI:</label>
+            <textarea id="aiFormFillerPrompt" readonly style="width:100%;height:420px;resize:vertical;background:rgba(0,0,0,.3);border:2px solid rgba(16,185,129,.3);border-radius:10px;color:var(--text2);font-family:'Courier New',monospace;font-size:11px;padding:14px;line-height:1.7;outline:none;">I want to predict [HOME TEAM] vs [AWAY TEAM] in [COMPETITION].
+Please fill in these stats with the most current and accurate data available:
+
+HOME TEAM - [HOME TEAM]:
+- Goals scored per game (last 10 matches):
+- Goals conceded per game (last 10 matches):
+- Last 5 form (W/D/L format e.g. W W D W L):
+- Win rate % (this season):
+- Key injuries (number of injured starters):
+- Current league position:
+- Tactical style (high_press / counter_attack / possession / defensive_block / wing_play / long_ball / balanced):
+- Tournament experience (0-10):
+- Knockout mentality (0-10):
+- Coach years in charge:
+- Starting XI consistency % (how often same 11 plays):
+- Key partnerships (0-10):
+
+AWAY TEAM - [AWAY TEAM]:
+- Goals scored per game (last 10 matches):
+- Goals conceded per game (last 10 matches):
+- Last 5 form (W/D/L format e.g. W W D W L):
+- Win rate % (this season):
+- Key injuries (number of injured starters):
+- Current league position:
+- Tactical style (high_press / counter_attack / possession / defensive_block / wing_play / long_ball / balanced):
+- Tournament experience (0-10):
+- Knockout mentality (0-10):
+- Coach years in charge:
+- Starting XI consistency % (how often same 11 plays):
+- Key partnerships (0-10):
+
+HEAD TO HEAD (last 10 meetings):
+- Home team wins:
+- Draws:
+- Away team wins:
+
+MATCH CONTEXT:
+- Match type (league / champions / knockout / worldcup / final):
+- Competition venue:
+
+FOR ENGINE D SIMULATION:
+HOME TEAM - [HOME TEAM]:
+- Attack rating (1-100):
+- Defence rating (1-100):
+- ELO rating:
+
+AWAY TEAM - [AWAY TEAM]:
+- Attack rating (1-100):
+- Defence rating (1-100):
+- ELO rating:
+
+Please provide the most current stats available as of today. Be as accurate as possible.</textarea>
+        </div>
+
+        <button onclick="copyAIFillerPrompt(this)" style="width:100%;padding:13px;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:800;letter-spacing:2px;transition:opacity .2s;margin-bottom:16px;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+            &#128203; COPY PROMPT TO CLIPBOARD
+        </button>
+
+        <div style="padding:14px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.12);border-radius:10px;">
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#10b981;font-weight:700;margin-bottom:10px;">Workflow</div>
+            <div style="font-size:12px;color:var(--text2);line-height:2;">
+                1&#65039;&#8419; Copy the prompt above<br>
+                2&#65039;&#8419; Replace [HOME TEAM] and [AWAY TEAM] with your teams<br>
+                3&#65039;&#8419; Paste into Google Gemini, ChatGPT, or Claude<br>
+                4&#65039;&#8419; Copy the AI's response<br>
+                5&#65039;&#8419; Paste stats into the form above<br>
+                6&#65039;&#8419; Run your prediction!
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAIFiller(headerEl) {
+    var body = headerEl.parentElement.querySelector('.ai-filler-body');
+    var chevron = headerEl.querySelector('.ai-filler-chevron');
+    var isOpen = body.style.display !== 'none';
+    body.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function copyAIFillerPrompt(btn) {
+    var textarea = document.getElementById('aiFormFillerPrompt');
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    try {
+        navigator.clipboard.writeText(textarea.value).then(function() {
+            showCopied(btn);
+        }).catch(function() {
+            document.execCommand('copy');
+            showCopied(btn);
+        });
+    } catch(e) {
+        document.execCommand('copy');
+        showCopied(btn);
+    }
+}
+
+function showCopied(btn) {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '&#10003; COPIED TO CLIPBOARD!';
+    btn.style.background = 'linear-gradient(135deg,#059669,#047857)';
+    setTimeout(function() {
+        btn.innerHTML = orig;
+        btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+    }, 2000);
+}
+</script>
