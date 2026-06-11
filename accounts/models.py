@@ -25,6 +25,7 @@ class User(AbstractUser):
     referral_code = models.CharField(max_length=10, blank=True, default='')
     total_predictions = models.IntegerField(default=0)
     correct_predictions = models.IntegerField(default=0)
+    free_trials_used = models.IntegerField(default=0)  # Track free trial predictions
     created_at = models.DateTimeField(auto_now_add=True)
     security_question = models.CharField(max_length=255, blank=True, default='')
     security_answer = models.CharField(max_length=255, blank=True, default='')
@@ -52,21 +53,41 @@ class User(AbstractUser):
     @property
     def can_predict(self):
         from django.conf import settings
-        today = timezone.now().date()
-        # Reset counter if new day
-        if self.predictions_date != today:
-            return True
-        limit = settings.MATCHORACLE['PLANS'].get(self.plan, {}).get('predictions_per_day', 3)
-        return self.predictions_today < limit
+
+        # If user has active paid subscription, they can predict
+        if self.plan != 'free':
+            if self.is_subscription_active:
+                today = timezone.now().date()
+                if self.predictions_date != today:
+                    return True
+                limit = settings.MATCHORACLE['PLANS'].get(self.plan, {}).get('predictions_per_day', 50)
+                return self.predictions_today < limit
+            return False
+
+        # Free plan: only 3 trials allowed
+        return self.free_trials_used < 3
 
     @property
     def predictions_left_today(self):
         from django.conf import settings
-        today = timezone.now().date()
-        limit = settings.MATCHORACLE['PLANS'].get(self.plan, {}).get('predictions_per_day', 3)
-        if self.predictions_date != today:
-            return limit
-        return max(0, limit - self.predictions_today)
+
+        if self.plan != 'free':
+            today = timezone.now().date()
+            limit = settings.MATCHORACLE['PLANS'].get(self.plan, {}).get('predictions_per_day', 50)
+            if self.predictions_date != today:
+                return limit
+            return max(0, limit - self.predictions_today)
+
+        # Free plan: show remaining trials
+        return max(0, 3 - self.free_trials_used)
+
+    @property
+    def free_trials_remaining(self):
+        return max(0, 3 - self.free_trials_used)
+
+    @property
+    def has_free_trials_left(self):
+        return self.free_trials_used < 3
 
     @property
     def days_remaining(self):
