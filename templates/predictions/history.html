@@ -437,7 +437,7 @@
 
         <div class="prediction-match">
           <div class="match-teams">
-            <div class="team-name">{{ p.home_team|default:p.input_data.name|default:"—" }}</div>
+            <div class="team-name">{% if p.home_team %}{{ p.home_team }}{% elif p.input_data.name %}{{ p.input_data.name }}{% else %}—{% endif %}</div>
             <div class="vs-text">VS</div>
             <div class="team-name" style="text-align: right;">{{ p.away_team|default:"—" }}</div>
           </div>
