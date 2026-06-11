@@ -506,7 +506,11 @@
         <div style="font-size:10px;color:var(--green);margin-top:2px">&#8593; Trending up</div>
       </div>
       <div style="text-align:right">
-        {% if user.plan == 'free' %}
+        {% if user.is_staff or user.is_superuser %}
+          <div style="font-size:11px;color:var(--text2)">Admin Access</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#00d4ff;letter-spacing:1px;">&#8734;</div>
+          <div style="font-size:10px;color:var(--muted)">Unlimited Predictions</div>
+        {% elif user.plan == 'free' %}
           <div style="font-size:11px;color:var(--text2)">Free Trials Left</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:{% if user.free_trials_remaining == 0 %}#ef4444{% elif user.free_trials_remaining == 1 %}#f59e0b{% else %}var(--green){% endif %}">{{ user.free_trials_remaining }}</div>
           <div style="font-size:10px;color:var(--muted)">of 3 trials</div>
@@ -532,7 +536,10 @@
   <!-- ── QUICK STATS ────────────────────────────────────────── -->
   <div class="stats-row">
     <div class="stat-chip"><div class="sv" style="color:var(--accent)">{{ stats.total }}</div><div class="sl">Total Predictions</div></div>
-    {% if user.plan == 'free' %}
+    {% if user.is_staff or user.is_superuser %}
+    <div class="stat-chip"><div class="sv" style="color:#00d4ff">&#8734;</div><div class="sl">Admin Access</div></div>
+    <div class="stat-chip"><div class="sv" style="color:var(--gold)">Unlimited</div><div class="sl">Daily Limit</div></div>
+    {% elif user.plan == 'free' %}
     <div class="stat-chip"><div class="sv" style="color:{% if user.free_trials_remaining == 0 %}#ef4444{% elif user.free_trials_remaining == 1 %}#f59e0b{% else %}var(--green){% endif %}">{{ user.free_trials_remaining }}</div><div class="sl">Trials Left</div></div>
     <div class="stat-chip"><div class="sv" style="color:var(--gold)">3</div><div class="sl">Trial Limit</div></div>
     {% else %}
@@ -1778,8 +1785,9 @@ function escHtml(s){
 
 // ── Free Trials Upgrade Modal ──────────────────────────────────────────────
 function checkTrialsExhausted() {
+  var isAdmin = '{{ user.is_staff }}' === 'True' || '{{ user.is_superuser }}' === 'True';
   var trialsLeft = {{ user.free_trials_remaining }};
-  if (trialsLeft === 0 && '{{ user.plan }}' === 'free') {
+  if (trialsLeft === 0 && '{{ user.plan }}' === 'free' && !isAdmin) {
     showUpgradeModal();
   }
 }

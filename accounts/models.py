@@ -54,6 +54,10 @@ class User(AbstractUser):
     def can_predict(self):
         from django.conf import settings
 
+        # Admins/staff have unlimited predictions
+        if self.is_staff or self.is_superuser:
+            return True
+
         # If user has active paid subscription, they can predict
         if self.plan != 'free':
             if self.is_subscription_active:
@@ -64,12 +68,16 @@ class User(AbstractUser):
                 return self.predictions_today < limit
             return False
 
-        # Free plan: only 3 trials allowed
+        # Free plan: only 3 trials allowed (unless admin)
         return self.free_trials_used < 3
 
     @property
     def predictions_left_today(self):
         from django.conf import settings
+
+        # Admins/staff have unlimited predictions
+        if self.is_staff or self.is_superuser:
+            return 999  # Show "unlimited" as 999
 
         if self.plan != 'free':
             today = timezone.now().date()
@@ -83,10 +91,16 @@ class User(AbstractUser):
 
     @property
     def free_trials_remaining(self):
+        # Admins/staff have unlimited trials
+        if self.is_staff or self.is_superuser:
+            return 999
         return max(0, 3 - self.free_trials_used)
 
     @property
     def has_free_trials_left(self):
+        # Admins/staff always have trials left
+        if self.is_staff or self.is_superuser:
+            return True
         return self.free_trials_used < 3
 
     @property
