@@ -48,8 +48,8 @@ def run_engine(request, engine):
         return JsonResponse({'error': 'POST only'}, status=405)
     user = request.user
 
-    # Check free trial limit before anything else
-    if user.plan == 'free':
+    # Check free trial limit before anything else (skip for admins)
+    if user.plan == 'free' and not (user.is_staff or user.is_superuser):
         if not user.has_free_trials_left:
             return JsonResponse({
                 'error': 'free_trials_exhausted',
@@ -120,7 +120,7 @@ def run_engine(request, engine):
             )
             user.predictions_today += 1
             user.total_predictions += 1
-            if user.plan == 'free':
+            if user.plan == 'free' and not (user.is_staff or user.is_superuser):
                 user.free_trials_used += 1
                 user.save(update_fields=['predictions_today', 'total_predictions', 'free_trials_used'])
             else:
@@ -190,8 +190,8 @@ def smart_ai_view(request):
 
     user = request.user
 
-    # Check free trial limit before anything else
-    if user.plan == 'free':
+    # Check free trial limit before anything else (skip for admins)
+    if user.plan == 'free' and not (user.is_staff or user.is_superuser):
         if not user.has_free_trials_left:
             return JsonResponse({
                 'error': 'free_trials_exhausted',
@@ -252,7 +252,7 @@ def smart_ai_view(request):
         )
         user.predictions_today += 1
         user.total_predictions += 1
-        if user.plan == 'free':
+        if user.plan == 'free' and not (user.is_staff or user.is_superuser):
             user.free_trials_used += 1
             user.save(update_fields=['predictions_today', 'total_predictions', 'free_trials_used'])
         else:
