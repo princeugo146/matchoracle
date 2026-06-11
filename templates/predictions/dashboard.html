@@ -522,6 +522,11 @@
       &#9889; Upgrade for unlimited predictions
     </a>
     {% endif %}
+    {% if pending_predictions > 0 %}
+    <div style="margin-top:12px;padding:10px 14px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);border-radius:10px;font-size:11px;color:rgba(0,212,255,.8);">
+      &#9203; Checking {{ pending_predictions }} prediction{{ pending_predictions|pluralize }}… (updates every 30 minutes)
+    </div>
+    {% endif %}
   </div>
 
   <!-- ── QUICK STATS ────────────────────────────────────────── -->

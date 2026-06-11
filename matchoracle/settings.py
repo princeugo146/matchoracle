@@ -323,6 +323,18 @@ STATICFILES_DIRS = [
 # main app is completely unaffected.
 LEARNING_ENABLED = os.environ.get('LEARNING_ENABLED', 'False') == 'True'
 
+# Fine-grained configuration for the learning system.
+# These values are read by ResultChecker and the Celery tasks.
+LEARNING_CONFIG = {
+    'ENABLED': LEARNING_ENABLED,
+    'CHECK_INTERVAL_MINUTES': 30,       # How often the beat task fires
+    'MIN_HOURS_BEFORE_CHECK': 1,        # Wait at least 1 hour after prediction
+    'MAX_HOURS_BEFORE_CHECK': 24,       # Check up to 24 hours after prediction
+    'MAX_PREDICTIONS_PER_CHECK': 100,   # Cap per beat-task run
+    'RETRY_FAILED_CHECKS': True,        # Retry predictions whose result wasn't found
+    'RETRY_AFTER_HOURS': 6,             # Hours to wait before retrying a failed check
+}
+
 # ─── Celery Configuration ─────────────────────────────────────────────────────
 # Requires a Redis instance.  Set REDIS_URL in your Railway environment.
 # If Redis is not configured, Celery tasks simply won't run — the app still works.
@@ -353,11 +365,11 @@ try:
     from celery.schedules import crontab as _crontab
 
     CELERY_BEAT_SCHEDULE = {
-        # Check match results every 6 hours
+        # Check match results every 30 minutes
         'check-match-results': {
             'task': 'predictions.learning_tasks.check_match_results',
-            'schedule': _crontab(minute=0, hour='*/6'),
-            'options': {'expires': 21600},
+            'schedule': _crontab(minute='*/30'),
+            'options': {'expires': 1800},
         },
         # Update team profiles daily at 03:00
         'update-team-profiles': {

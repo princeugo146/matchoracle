@@ -27,10 +27,19 @@ def dashboard(request):
         'left_today': user.predictions_left_today,
         'limit': plan_info.get('predictions_per_day', 3),
     }
+    # Count predictions that have been made but not yet verified (no result record)
+    pending_predictions = Prediction.objects.filter(
+        user=user,
+        engine__in=['A', 'NL'],
+        home_team__gt='',
+        away_team__gt='',
+        was_correct__isnull=True,
+    ).count()
     return render(request, 'predictions/dashboard.html', {
         'recent': recent, 'rankings': rankings, 'stats': stats,
         'tips': tips, 'forecasts': forecasts, 'live_scores': live_scores,
         'plan_info': plan_info,
+        'pending_predictions': pending_predictions,
     })
 
 @login_required

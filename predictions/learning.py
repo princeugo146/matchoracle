@@ -110,10 +110,13 @@ class ResultChecker:
             logger.warning(f"ResultChecker.check_prediction({prediction_id}) failed: {exc}")
             return {'found': False, 'reason': str(exc)}
 
-    def check_pending(self, max_predictions=50, days_old_min=2, days_old_max=3):
+    def check_pending(self, max_predictions=50, days_old_min=0.04, days_old_max=1):
         """
         Scan for predictions made `days_old_min`–`days_old_max` days ago that
         have no result record yet, and attempt to fill them in.
+
+        Default: checks predictions from 1 hour (0.04 days) to 24 hours (1 day) old
+        This allows time for match to complete while still being fast.
 
         Returns {'checked': int, 'found': int, 'errors': int}
         """

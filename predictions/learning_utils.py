@@ -228,6 +228,36 @@ def extract_key_players_from_text(text):
     return seen
 
 
+# ─── Retry Logic ─────────────────────────────────────────────────────────────
+
+def should_retry_check(prediction):
+    """
+    Determine if a failed result check should be retried.
+
+    Retry if:
+    - The prediction has fewer than 5 prior check attempts
+    - The prediction is less than 48 hours old
+
+    Returns True when a retry is warranted, False otherwise.
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+
+    if not hasattr(prediction, 'result_check_attempts'):
+        return True
+
+    if prediction.result_check_attempts >= 5:
+        return False  # Don't retry more than 5 times
+
+    now = timezone.now()
+    age = now - prediction.created_at
+
+    if age > timedelta(hours=48):
+        return False  # Don't retry if prediction is > 48 hours old
+
+    return True
+
+
 # ─── Session ID Helpers ───────────────────────────────────────────────────────
 
 def make_session_id(request):

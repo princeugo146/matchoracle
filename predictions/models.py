@@ -18,9 +18,18 @@ class Prediction(models.Model):
     result_checked = models.BooleanField(default=False)
     actual_result = models.CharField(max_length=100, blank=True)
     actual_score = models.CharField(max_length=20, blank=True)
+    result_check_attempts = models.IntegerField(default=0)
+    last_result_check_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         ordering = ['-created_at']
+
+    def increment_check_attempt(self):
+        """Record that a result-check attempt was made for this prediction."""
+        self.result_check_attempts += 1
+        self.last_result_check_at = timezone.now()
+        self.save(update_fields=['result_check_attempts', 'last_result_check_at'])
 
 class TeamRanking(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rankings')
