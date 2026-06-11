@@ -45,9 +45,9 @@ except ImportError:
 @shared_task(bind=True, max_retries=3, default_retry_delay=300)
 def check_match_results(self, prediction_id=None):
     """
-    Runs every 6 hours.  Finds predictions from 2–3 days ago that haven't
-    been verified yet, searches the web for the real result, and stores it
-    in PredictionResult.  Also triggers downstream accuracy updates.
+    Runs every 30 minutes.  Finds predictions from 1 hour–24 hours ago that
+    haven't been verified yet, searches the web for the real result, and
+    stores it in PredictionResult.  Also triggers downstream accuracy updates.
 
     If prediction_id is supplied, only that prediction is checked (used when
     a prediction is first saved so we can queue a deferred check).
@@ -69,9 +69,9 @@ def check_match_results(self, prediction_id=None):
                 away_team__gt='',
             ).exclude(result_record__isnull=False)
         else:
-            # Predictions made 2–3 days ago that still have no result record
-            window_start = now - timedelta(days=3)
-            window_end = now - timedelta(days=2)
+            # Predictions made 1 hour–24 hours ago that still have no result record
+            window_start = now - timedelta(hours=24)
+            window_end = now - timedelta(hours=1)
             qs = Prediction.objects.filter(
                 created_at__range=(window_start, window_end),
                 engine__in=['A', 'NL'],
@@ -449,10 +449,10 @@ def _update_accuracy_for_prediction(prediction_id):
 
 # ─── Convenience: queue a deferred result check ───────────────────────────────
 
-def queue_result_check(prediction_id, delay_seconds=172800):
+def queue_result_check(prediction_id, delay_seconds=3600):
     """
     Queue check_match_results for a specific prediction after `delay_seconds`
-    (default 2 days).  Called from views.py after saving a new prediction.
+    (default 1 hour).  Called from views.py after saving a new prediction.
 
     Safe to call even when Celery is not available — fails silently.
     """
