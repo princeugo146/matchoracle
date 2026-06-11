@@ -448,6 +448,27 @@
   position:relative;z-index:1;
 }
 
+/* ── AI Form Filler ───────────────────────────────────────── */
+.ai-filler-card{
+  background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(5,150,105,.04));
+  border:1px solid rgba(16,185,129,.25);
+  border-left:4px solid #10b981;
+  border-radius:16px;
+  margin-top:16px;
+  overflow:hidden;
+}
+.ai-filler-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;cursor:pointer;
+  transition:background .2s;
+}
+.ai-filler-header:hover{background:rgba(16,185,129,.08);}
+.ai-filler-body{padding:0 18px 18px;}
+#aiFormFillerPrompt:focus{
+  border-color:rgba(16,185,129,.6);
+  box-shadow:0 0 0 3px rgba(16,185,129,.12);
+}
+
 </style>
 {% endblock %}
 
@@ -883,6 +904,7 @@
             <div id="apenalty-result" style="margin-top:10px;display:none;padding:12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);border-radius:10px"></div>
             <div class="ai-box"><div class="ai-lbl">AI INSIGHT</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="ainsight"></div></div>
           </div>
+          {% include 'predictions/ai_form_filler.html' %}
         </div>
 
         <!-- ENGINE B -->
@@ -944,6 +966,7 @@
           <button class="btn btn-full" style="padding:13px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:12px;background:linear-gradient(135deg,#fb923c,#d97706);color:#030508" onclick="run('D')">RUN FULL SIMULATION</button>
           <div class="ld" id="ld"><div class="spin" style="border-top-color:var(--orange)"></div><div style="color:var(--text2)">Running Monte Carlo Simulation...</div></div>
           <div class="res card" id="rd" style="border-top:3px solid var(--orange)"><div class="ct">SIMULATION RESULT</div><div id="doutput"></div><div class="ai-box"><div class="ai-lbl">AI MATCH ANALYSIS</div><div style="font-size:13px;line-height:1.8;color:var(--text2)" id="dinsight"></div></div></div>
+          {% include 'predictions/ai_form_filler.html' %}
         </div>
 
         <!-- ENGINE NL -->
