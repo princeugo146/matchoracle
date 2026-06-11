@@ -164,9 +164,16 @@ def add_ranking(request):
 @login_required
 def history(request):
     predictions = Prediction.objects.filter(user=request.user)[:50]
+    correct = sum(1 for p in predictions if p.was_correct is True)
+    wrong = sum(1 for p in predictions if p.was_correct is False)
     return render(request, 'predictions/history.html', {
         'predictions': predictions,
-        'stats': {'total': predictions.count(), 'accuracy': request.user.accuracy_rate}
+        'stats': {
+            'total': len(predictions),
+            'accuracy': request.user.accuracy_rate,
+            'correct': correct,
+            'wrong': wrong,
+        }
     })
 
 @login_required
