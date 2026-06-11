@@ -1,22 +1,329 @@
 {% extends 'base.html' %}
-{% block title %}API Documentation{% endblock %}
+{% block title %}API Documentation - MatchOracle{% endblock %}
+{% block extra_css %}
+<style>
+/* ── API Docs Page ─────────────────────────────────────────── */
+.api-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 100px; }
+@media(min-width: 768px) { .api-wrap { padding: 40px 20px 60px; } }
+
+/* ── Hero Section ──────────────────────────────────────────── */
+.api-hero {
+  background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #12103a 100%);
+  border: 1px solid rgba(0, 212, 255, .18);
+  border-radius: 20px;
+  padding: 48px 32px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.api-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, .12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.api-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  left: 20%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, .1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.api-hero-content {
+  position: relative;
+  z-index: 1;
+}
+.api-hero h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 12px;
+  letter-spacing: 1px;
+}
+.api-hero p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, .7);
+  margin: 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── API Section ───────────────────────────────────────────── */
+.api-section {
+  margin-bottom: 40px;
+}
+.api-section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.api-section-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ── Auth Card ─────────────────────────────────────────────── */
+.auth-card {
+  background: linear-gradient(135deg, rgba(0, 212, 255, .08), rgba(124, 58, 237, .05));
+  border: 1px solid rgba(0, 212, 255, .2);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.auth-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.auth-card p {
+  font-size: 13px;
+  color: var(--text2);
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+.code-block {
+  background: rgba(0, 0, 0, .4);
+  border: 1px solid rgba(0, 212, 255, .15);
+  border-radius: 10px;
+  padding: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  overflow-x: auto;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.code-block code {
+  color: var(--accent);
+}
+
+/* ── Endpoint Card ─────────────────────────────────────────── */
+.endpoint-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  transition: all .3s;
+}
+.endpoint-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, .1);
+  transform: translateY(-2px);
+}
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 32px;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+}
+.method-get { background: rgba(16, 185, 129, .2); color: #10b981; border: 1px solid rgba(16, 185, 129, .3); }
+.method-post { background: rgba(0, 212, 255, .2); color: var(--accent); border: 1px solid rgba(0, 212, 255, .3); }
+.method-put { background: rgba(245, 158, 11, .2); color: var(--gold); border: 1px solid rgba(245, 158, 11, .3); }
+.method-delete { background: rgba(239, 68, 68, .2); color: #ef4444; border: 1px solid rgba(239, 68, 68, .3); }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--text);
+  flex: 1;
+  min-width: 200px;
+}
+.endpoint-desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+.endpoint-example {
+  background: rgba(0, 0, 0, .3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  overflow-x: auto;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+/* ── Feature Grid ──────────────────────────────────────────── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.feature-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+}
+.feature-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.feature-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.feature-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* ── CTA Button ────────────────────────────────────────────── */
+.api-cta {
+  display: inline-block;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--accent), #0077ff);
+  color: #030508;
+  border: none;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.api-cta:hover {
+  opacity: .9;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="wrap" style="padding-top:40px;max-width:800px">
-  <div style="margin-bottom:36px"><div style="font-family:'Orbitron',sans-serif;font-size:26px;font-weight:700;margin-bottom:8px">API Documentation</div><div style="color:var(--text2)">Integrate MatchOracle into your own apps</div></div>
-  <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.2)">
-    <div class="ct">Authentication</div>
-    <div style="font-size:14px;color:var(--text2);margin-bottom:10px">Include your API key in every request:</div>
-    <div style="font-family:monospace;font-size:13px;background:rgba(0,0,0,.3);border-radius:8px;padding:14px;color:var(--accent)">X-API-Key: mo_your_api_key_here</div>
-    <div style="margin-top:10px;font-size:13px;color:var(--muted)">Get your key from <a href="/accounts/profile/" style="color:var(--accent)">Profile</a>. Requires Basic or Pro plan.</div>
-  </div>
-  {% for ep in endpoints %}
-  <div class="card" style="margin-bottom:10px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <span style="background:rgba(124,58,237,.2);color:#a78bfa;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;font-family:monospace">{{ ep.method }}</span>
-      <code style="font-family:monospace;font-size:13px;color:var(--accent)">{{ ep.path }}</code>
+<div class="api-wrap">
+
+  <!-- ── HERO SECTION ──────────────────────────────────────── -->
+  <div class="api-hero">
+    <div class="api-hero-content">
+      <h1>🔌 API Documentation</h1>
+      <p>Integrate MatchOracle's powerful prediction engines into your own applications</p>
     </div>
-    <div style="font-size:13px;color:var(--text2)">{{ ep.desc }}</div>
-    {% if ep.example %}<div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,.3);border-radius:8px;padding:10px;color:var(--text2);margin-top:8px">{{ ep.example }}</div>{% endif %}
-  </div>{% endfor %}
+  </div>
+
+  <!-- ── FEATURES ──────────────────────────────────────────── -->
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Fast & Reliable</div>
+      <div class="feature-desc">Sub-second response times with 99.9% uptime</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">Secure</div>
+      <div class="feature-desc">API key authentication with rate limiting</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📚</div>
+      <div class="feature-title">Well Documented</div>
+      <div class="feature-desc">Complete examples and code snippets</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🚀</div>
+      <div class="feature-title">Easy Integration</div>
+      <div class="feature-desc">REST API with JSON responses</div>
+    </div>
+  </div>
+
+  <!-- ── AUTHENTICATION ───────────────────────────────────── -->
+  <div class="api-section">
+    <div class="api-section-title">Authentication</div>
+    <div class="auth-card">
+      <h3>🔐 API Key</h3>
+      <p>All API requests require authentication using your API key. Include it in the <code style="background: rgba(0, 212, 255, .1); padding: 2px 6px; border-radius: 4px; color: var(--accent);">X-API-Key</code> header:</p>
+      <div class="code-block">X-API-Key: mo_your_api_key_here</div>
+      <p style="margin-bottom: 0; font-size: 12px; color: var(--muted);">
+        📌 Get your API key from your <a href="/accounts/profile/" style="color: var(--accent); text-decoration: none;">Profile</a>. Requires Basic or Pro plan.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── ENDPOINTS ────────────────────────────────────────── -->
+  <div class="api-section">
+    <div class="api-section-title">Endpoints</div>
+    {% for ep in endpoints %}
+    <div class="endpoint-card">
+      <div class="endpoint-header">
+        <span class="method-badge method-{{ ep.method|lower }}">{{ ep.method }}</span>
+        <code class="endpoint-path">{{ ep.path }}</code>
+      </div>
+      <div class="endpoint-desc">{{ ep.desc }}</div>
+      {% if ep.example %}
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Example Request:</div>
+      <div class="endpoint-example">{{ ep.example }}</div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px; color: var(--muted);">
+      No endpoints available yet. Check back soon!
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── GETTING STARTED ──────────────────────────────────── -->
+  <div class="api-section">
+    <div class="api-section-title">Getting Started</div>
+    <div class="auth-card">
+      <h3>📖 Quick Start</h3>
+      <p>1. Get your API key from your profile<br>
+         2. Include it in the <code style="background: rgba(0, 212, 255, .1); padding: 2px 6px; border-radius: 4px; color: var(--accent);">X-API-Key</code> header<br>
+         3. Make requests to the endpoints above<br>
+         4. Parse the JSON response</p>
+      <a href="/accounts/profile/" class="api-cta">Get Your API Key</a>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
