@@ -90,9 +90,20 @@ def check_match_results(self, prediction_id=None):
                 actual_score = result_data['score']
                 predicted_verdict = pred.predicted_result or pred.output_data.get('verdict', '')
 
-                # Determine correctness: compare winner strings case-insensitively
+                # Extract the predicted winner from the verdict
+                # The verdict might be "Chelsea to win 3-1" or just "Chelsea" or "Chelsea wins"
+                # We need to extract just the team name and compare with actual_winner
+                predicted_winner = _extract_winner_from_verdict(
+                    predicted_verdict,
+                    pred.home_team,
+                    pred.away_team
+                )
+
+                # Determine correctness: compare only the match outcome (who won), not the scoreline
+                # If predicted Chelsea to win and Chelsea won (regardless of score), it's correct
                 was_correct = (
-                    predicted_verdict.lower().strip() == actual_winner.lower().strip()
+                    predicted_winner and
+                    predicted_winner.lower().strip() == actual_winner.lower().strip()
                 )
 
                 # Score margin of error
@@ -445,6 +456,48 @@ def _update_accuracy_for_prediction(prediction_id):
 
     except Exception as e:
         logger.warning(f"_update_accuracy_for_prediction failed: {e}")
+
+
+# ─── Helper: extract winner from verdict string ───────────────────────────────
+
+def _extract_winner_from_verdict(verdict, home_team, away_team):
+    """
+    Extract the predicted winner from a verdict string.
+
+    Examples:
+        "Chelsea to win 3-1" → "Chelsea"
+        "Chelsea wins" → "Chelsea"
+        "Draw 1-1" → "Draw"
+        "Arsenal" → "Arsenal"
+
+    Returns the team name or "Draw", or None if unparseable.
+    """
+    if not verdict:
+        return None
+
+    verdict_lower = verdict.lower().strip()
+    home_lower = home_team.lower().strip()
+    away_lower = away_team.lower().strip()
+
+    # Check for draw
+    if 'draw' in verdict_lower or 'tie' in verdict_lower:
+        return 'Draw'
+
+    # Check if home team is mentioned
+    if home_lower in verdict_lower:
+        return home_team
+
+    # Check if away team is mentioned
+    if away_lower in verdict_lower:
+        return away_team
+
+    # If verdict is just a team name, return it
+    if verdict_lower == home_lower:
+        return home_team
+    if verdict_lower == away_lower:
+        return away_team
+
+    return None
 
 
 # ─── Convenience: queue a deferred result check ───────────────────────────────
