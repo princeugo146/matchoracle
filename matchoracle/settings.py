@@ -266,7 +266,6 @@ CSRF_COOKIE_SECURE = True  # Always use HTTPS for CSRF cookies
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token (needed for forms)
 CSRF_COOKIE_SAMESITE = 'Lax'  # Prevent CSRF attacks
 CSRF_COOKIE_AGE = 31449600  # 1 year
-CSRF_FAILURE_VIEW = 'core.views.csrf_failure'  # Custom CSRF error page
 
 # Trust the X-Forwarded-Proto header from Railway's load balancer
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
