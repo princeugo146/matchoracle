@@ -254,24 +254,11 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ─── Session & CSRF Configuration ─────────────────────────────────────────────
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 2592000  # 30 days
-SESSION_COOKIE_SECURE = True  # Always use HTTPS for session cookies
-SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
-SESSION_COOKIE_SAMESITE = 'Lax'  # Prevent CSRF attacks
+SESSION_COOKIE_AGE = 2592000
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
-# CSRF Configuration
-CSRF_COOKIE_SECURE = True  # Always use HTTPS for CSRF cookies
-CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token (needed for forms)
-CSRF_COOKIE_SAMESITE = 'Lax'  # Prevent CSRF attacks
-CSRF_COOKIE_AGE = 31449600  # 1 year
-CSRF_FAILURE_VIEW = 'core.views.csrf_failure'  # Custom CSRF error page
-
-# Trust the X-Forwarded-Proto header from Railway's load balancer
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# CSRF Trusted Origins - allow requests from these domains
 CSRF_TRUSTED_ORIGINS = [
     'https://matchoracle-production.up.railway.app',
     'https://*.railway.app',
@@ -279,20 +266,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
-# Add Railway public domain if available
 RAILWAY_PUBLIC_DOMAIN = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
 if RAILWAY_PUBLIC_DOMAIN:
     CSRF_TRUSTED_ORIGINS.append('https://' + RAILWAY_PUBLIC_DOMAIN)
 
-# CORS Configuration
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True  # Allow cookies in CORS requests
-
-# Security Headers
-SECURE_SSL_REDIRECT = not DEBUG  # Redirect HTTP to HTTPS in production
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year HSTS in production
-SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
-SECURE_HSTS_PRELOAD = not DEBUG
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
