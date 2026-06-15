@@ -127,6 +127,11 @@ def check_match_results(self, prediction_id=None):
                 pred.was_correct = was_correct
                 pred.save(update_fields=['was_correct'])
 
+                # Update user's correct_predictions counter if prediction was correct
+                if was_correct:
+                    pred.user.correct_predictions += 1
+                    pred.user.save(update_fields=['correct_predictions'])
+
                 checked += 1
 
                 # Trigger downstream updates asynchronously
